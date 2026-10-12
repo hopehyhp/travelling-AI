@@ -138,6 +138,8 @@ export interface Destination {
 export interface TravelPreferences {
   destinationId: string;
   customDestination: string;
+  /** 用户输入的自由旅行想法，用作 AI 生成的原始上下文 */
+  travelIdea?: string;
   days: number;
   people: number;
   companion: CompanionId;
@@ -151,6 +153,7 @@ export interface TravelPreferences {
 export const DEFAULT_PREFERENCES: TravelPreferences = {
   destinationId: 'chengdu',
   customDestination: '',
+  travelIdea: '',
   days: 3,
   people: 2,
   companion: 'couple',

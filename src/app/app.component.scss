@@ -232,6 +232,135 @@
   animation: fadeUp 0.6s ease 0.24s both;
 }
 
+.secondary-btn {
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: 0 12px 22px rgba(28, 42, 77, 0.08);
+}
+
+.idea-screen {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vh, 3rem) clamp(1rem, 5vw, 2rem) calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+}
+
+.idea-wrap {
+  width: min(100%, 35rem);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.idea-card {
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  padding: clamp(1.25rem, 5vw, 2rem);
+  box-shadow: var(--shadow);
+}
+
+.idea-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  font-weight: 800;
+}
+
+.idea-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  color: var(--text);
+}
+
+.idea-hint {
+  margin: 12px 0 16px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.idea-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.idea-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  resize: vertical;
+  min-height: 11.25rem;
+  padding: 1rem 1.125rem;
+  font: inherit;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.idea-input:focus {
+  outline: 2px solid rgba(107, 94, 242, 0.26);
+  border-color: rgba(107, 94, 242, 0.54);
+}
+
+.idea-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 18px;
+  color: var(--text-soft);
+  font-size: 0.875rem;
+}
+
+.idea-error {
+  flex: 1 1 100%;
+  color: #cc3b4d;
+  font-weight: 700;
+}
+
+.idea-card .start-btn {
+  display: flex;
+  width: 100%;
+  max-width: 22.5rem;
+  min-height: 3.25rem;
+  box-sizing: border-box;
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .idea-screen {
+    align-items: center;
+  }
+
+  .idea-error {
+    flex-basis: auto;
+    text-align: right;
+  }
+}
+
 /* ---------- AI 生成中 ---------- */
 .generating {
   min-height: 100dvh;

@@ -4,7 +4,11 @@ function normalize(data, prefs) {
   const days = Number(prefs.days) > 0 ? Number(prefs.days) : 1;
   const people = Number(prefs.people) > 0 ? Number(prefs.people) : 1;
   const budget = Number(prefs.budget) > 0 ? Number(prefs.budget) : 0;
-  const destinationName = prefs.destinationName || prefs.customDestination || '目的地';
+  const requestDestination = prefs.destinationName || prefs.customDestination || '目的地';
+  const hasTravelIdea = typeof prefs.travelIdea === 'string' && prefs.travelIdea.trim();
+  const destinationName = hasTravelIdea && typeof data.destinationName === 'string' && data.destinationName.trim()
+    ? data.destinationName.trim()
+    : requestDestination;
 
   const rawDays = Array.isArray(data.days) ? data.days : [];
   const dayPlans = rawDays.slice(0, days).map((d, i) => normalizeDay(d, i));

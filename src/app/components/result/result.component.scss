@@ -523,6 +523,7 @@
 .spot-modal-backdrop {
   position: fixed;
   inset: 0;
+  overscroll-behavior: contain;
   background: rgba(16, 23, 36, 0.52);
   display: flex;
   align-items: center;
@@ -533,6 +534,9 @@
 
 .spot-modal {
   width: min(100%, 420px);
+  max-height: calc(100dvh - 2.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 24px;
   background: rgba(255,255,255,0.96);
   border: 1px solid var(--border);

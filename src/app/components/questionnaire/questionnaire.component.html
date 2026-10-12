@@ -173,6 +173,8 @@
           <input
             class="input date-input"
             type="date"
+            #dateInput
+            (click)="openDatePicker(dateInput)"
             [min]="minDate"
             [ngModel]="startDateValue"
             (ngModelChange)="setStartDate($event)"

@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, Renderer2 } from '@angular/core';
 import {
   COMPANION_LABELS,
   COMPANION_OPTIONS,
@@ -29,7 +30,7 @@ type FieldKey = 'destination' | 'companion' | 'placeTypes' | 'purpose' | 'days' 
   templateUrl: './result.component.html',
   styleUrls: ['./result.component.scss']
 })
-export class ResultComponent implements OnInit {
+export class ResultComponent implements OnInit, OnDestroy {
   @Input() preferences!: TravelPreferences;
   @Input() recommendation!: Recommendation;
   @Output() preferencesChange = new EventEmitter<TravelPreferences>();
@@ -44,6 +45,8 @@ export class ResultComponent implements OnInit {
   selectedSpot: SpotPlan | null = null;
   selectedMapPointName: string | null = null;
   private mapMarkers: L.Marker[] = [];
+  private lockedScrollY = 0;
+  private previousBodyStyles: Record<string, string> | null = null;
 
   destinations = DESTINATIONS;
   companionOptions = COMPANION_OPTIONS;
@@ -56,7 +59,9 @@ export class ResultComponent implements OnInit {
 
   constructor(
     private seasonService: SeasonService,
-    private aiService: AiService
+    private aiService: AiService,
+    private renderer: Renderer2,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   ngOnInit(): void {
@@ -69,6 +74,10 @@ export class ResultComponent implements OnInit {
 
   ngAfterViewInit(): void {
     this.initMap();
+  }
+
+  ngOnDestroy(): void {
+    this.unlockPageScroll();
   }
 
   get destinationName(): string {
@@ -274,12 +283,14 @@ export class ResultComponent implements OnInit {
   openSpotDetail(spot: SpotPlan): void {
     this.selectedSpot = spot;
     this.selectedMapPointName = spot.name;
+    this.lockPageScroll();
     this.syncMapHighlight();
   }
 
   closeSpotDetail(): void {
     this.selectedSpot = null;
     this.selectedMapPointName = null;
+    this.unlockPageScroll();
     this.syncMapHighlight();
   }
 
@@ -291,8 +302,50 @@ export class ResultComponent implements OnInit {
     if (matchedSpot) {
       this.selectedSpot = matchedSpot;
       this.selectedMapPointName = pointName;
+      this.lockPageScroll();
     }
     this.syncMapHighlight();
+  }
+
+  private lockPageScroll(): void {
+    if (this.previousBodyStyles) {
+      return;
+    }
+
+    const body = this.document.body;
+    this.lockedScrollY = this.document.defaultView?.scrollY ?? 0;
+    this.previousBodyStyles = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow
+    };
+
+    this.renderer.setStyle(body, 'position', 'fixed');
+    this.renderer.setStyle(body, 'top', `-${this.lockedScrollY}px`);
+    this.renderer.setStyle(body, 'left', '0');
+    this.renderer.setStyle(body, 'right', '0');
+    this.renderer.setStyle(body, 'width', '100%');
+    this.renderer.setStyle(body, 'overflow', 'hidden');
+  }
+
+  private unlockPageScroll(): void {
+    if (!this.previousBodyStyles) {
+      return;
+    }
+
+    const body = this.document.body;
+    Object.entries(this.previousBodyStyles).forEach(([property, value]) => {
+      if (value) {
+        this.renderer.setStyle(body, property, value);
+      } else {
+        this.renderer.removeStyle(body, property);
+      }
+    });
+    this.previousBodyStyles = null;
+    this.document.defaultView?.scrollTo(0, this.lockedScrollY);
   }
 
   private syncMapHighlight(): void {
@@ -374,6 +427,12 @@ export class ResultComponent implements OnInit {
   setStartDate(value: string): void {
     this.form.startDate = value;
     this.emitChange();
+  }
+
+  openDatePicker(input: HTMLInputElement): void {
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    }
   }
 
   decrease(field: 'days' | 'people'): void {

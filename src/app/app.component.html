@@ -24,7 +24,41 @@
       开始定制
       <span class="start-arrow">→</span>
     </button>
+    <button class="start-btn secondary-btn" type="button" (click)="onIdeaStart()">
+      我有旅行想法
+    </button>
     <p class="landing-foot">已为你准备 12 个旅行灵感地 · 适配不同风格偏好</p>
+  </section>
+
+  <section *ngIf="view === 'idea'" class="idea-screen">
+    <div class="idea-wrap">
+      <button class="back-link" type="button" (click)="onIdeaBack()">← 返回首页</button>
+      <div class="idea-card">
+        <p class="idea-kicker">我有旅行想法</p>
+        <h2 class="idea-title">告诉我们你想去哪里、想怎么玩</h2>
+        <p class="idea-hint">未填写的行程条件将按 3 天、2 人、情侣同行和 ¥5000 规划。</p>
+
+        <label class="idea-label" for="travel-idea-input">描述你的旅行想法</label>
+        <textarea
+          id="travel-idea-input"
+          [(ngModel)]="ideaDraft"
+          class="idea-input"
+          rows="6"
+          maxlength="500"
+          placeholder="例如：我想去三亚度假，想看亚龙湾和蜈支洲岛，想吃海鲜、放松海边散步。"
+        ></textarea>
+
+        <div class="idea-meta">
+          <span>{{ ideaDraft.length }}/500</span>
+          <span *ngIf="ideaError" class="idea-error">{{ ideaError }}</span>
+        </div>
+
+        <button class="start-btn" type="button" (click)="onIdeaSubmit()">
+          开始生成攻略
+          <span class="start-arrow">→</span>
+        </button>
+      </div>
+    </div>
   </section>
 
   <!-- 分步选择向导 -->

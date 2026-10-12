@@ -189,7 +189,7 @@
             </div>
 
             <div class="editor" *ngIf="editing === 'startDate'">
-              <input class="input date-input" type="date" [min]="minDate" [ngModel]="form.startDate" (ngModelChange)="setStartDate($event)" name="editStartDate" />
+              <input #dateInput class="input date-input" type="date" (click)="openDatePicker(dateInput)" [min]="minDate" [ngModel]="form.startDate" (ngModelChange)="setStartDate($event)" name="editStartDate" />
               <div class="chips date-chips">
                 <button *ngFor="let q of quickDateOptions" type="button" class="chip" [class.active]="form.startDate === q.value" (click)="setStartDate(q.value)">{{ q.label }}</button>
               </div>

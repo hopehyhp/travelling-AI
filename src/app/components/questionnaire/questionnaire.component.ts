@@ -183,6 +183,12 @@ export class QuestionnaireComponent implements OnInit {
     this.form.startDate = value;
   }
 
+  openDatePicker(input: HTMLInputElement): void {
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    }
+  }
+
   destIcon(id: string): string {
     return this.destIcons[id] ?? '📍';
   }

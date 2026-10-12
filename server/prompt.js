@@ -8,6 +8,7 @@ function buildPrompt(prefs) {
   const seasonLabel = prefs.seasonLabel || '';
   const tempLabel = prefs.tempLabel || '';
   const climateNote = prefs.climateNote || '';
+  const travelIdea = typeof prefs.travelIdea === 'string' ? prefs.travelIdea.trim() : '';
 
   const seasonLines = [`- 出发日期：${dateLabel}`];
   if (seasonLabel) {
@@ -24,10 +25,15 @@ function buildPrompt(prefs) {
     ? `9. 行程必须贴合「${dateLabel}」的${seasonLabel}气候：优先安排当季最合适的项目，主动避开反季节活动（例如严寒时避免长时间户外徒步、雨季避免涉水项目），并在 tips 中给出针对该季节的穿衣、防晒或防雨提醒。`
     : `9. 用户尚未确定出发日期，请安排四季皆宜的行程，并在 tips 中提醒不同季节的注意事项。`;
 
+  const ideaInstruction = travelIdea
+    ? `- 用户原始旅行想法：${travelIdea}\n- 若其中明确提到目的地、城市、景点、活动或路线名称，优先保留并安排这些地点，输出中不要泛化为“当地景点”“城市打卡点”等模糊表述。\n- 如果想法里没有给出全部旅行条件，未填写的条件默认按 3 天、2 人、情侣同行、¥5000 规划。\n- 生成时优先使用用户提到的具体景点、主目的地和路线关键词，确保攻略主题和景点安排与描述一致。`
+    : '- 用户未提供自由文本想法，按常规偏好生成标准旅行攻略。';
+
   return `你是一位资深的旅行规划师，请根据用户提供的旅行偏好，生成一份详细、专业、个性化的旅行攻略。
 
 ## 用户偏好
 - 目的地：${destinationName}
+- 旅行想法：${travelIdea || '未提供'}
 - 出行天数：${days} 天
 - 出行人数：${people} 人
 - 同行人：${prefs.companionLabel || '朋友'}
@@ -35,6 +41,8 @@ function buildPrompt(prefs) {
 - 旅行目的：${prefs.purposeLabel || '休闲'}
 - 总预算：${budget} 元（人民币）
 ${seasonLines.join('\n')}
+
+${ideaInstruction}
 
 ## 生成要求
 1. 每天安排 2~4 个景点，必须是真实存在、知名度高的具体地点（不要用"当地博物馆""城市地标""网红打卡点"这类泛指名称）。

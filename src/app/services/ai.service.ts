@@ -86,6 +86,7 @@ export class AiService {
       destinationId: prefs.destinationId,
       destinationName,
       customDestination: prefs.customDestination,
+      travelIdea: (prefs.travelIdea ?? '').trim(),
       days: prefs.days,
       people: prefs.people,
       companion: prefs.companion,

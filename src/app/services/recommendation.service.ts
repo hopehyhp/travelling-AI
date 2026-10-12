@@ -90,6 +90,11 @@ export class RecommendationService {
     const costs = this.estimateCost(prefs, destination, picked, budgetLevel);
     const season = this.seasonService.buildContext(destination, prefs);
     const summary = `${destination.name} · ${prefs.days}天${prefs.people}人 · ${COMPANION_LABELS[prefs.companion]} · ${PURPOSE_LABELS[prefs.purpose]}主题，为你精选 ${picked.length} 个打卡点。`;
+    const tips = this.buildTips(prefs, destination, budgetLevel);
+
+    if ((prefs.travelIdea || '').trim()) {
+      tips.unshift(`你提交的旅行想法是：${this.truncateIdea(prefs.travelIdea!)}。本地兜底仅作参考，不代表自由文本已被完整逐项落实。`);
+    }
 
     return {
       destinationName: destination.name,
@@ -101,7 +106,7 @@ export class RecommendationService {
       overBudget: costs.total > prefs.budget * 1.1,
       attractionCount: picked.length,
       days,
-      tips: this.buildTips(prefs, destination, budgetLevel),
+      tips,
       season
     };
   }
@@ -111,14 +116,14 @@ export class RecommendationService {
       const name = prefs.customDestination.trim() || '自定义目的地';
       return this.buildCustomDestination(prefs, name);
     }
-    return DESTINATIONS.find(d => d.id === prefs.destinationId) ?? DESTINATIONS[0];
+    return DESTINATIONS.find((d) => d.id === prefs.destinationId) ?? DESTINATIONS[0];
   }
 
   private buildCustomDestination(prefs: TravelPreferences, name: string): Destination {
     const types: PlaceTypeId[] = prefs.placeTypes.length ? prefs.placeTypes : ['city', 'food'];
     const attractions: Attraction[] = [];
-    types.forEach(type => {
-      (GENERIC_SPOTS[type] ?? []).forEach(spot => {
+    types.forEach((type) => {
+      (GENERIC_SPOTS[type] ?? []).forEach((spot) => {
         attractions.push({
           name: spot.name,
           category: type,
@@ -144,7 +149,7 @@ export class RecommendationService {
 
   private score(a: Attraction, prefs: TravelPreferences): number {
     let s = 0;
-    prefs.placeTypes.forEach(t => {
+    prefs.placeTypes.forEach((t) => {
       if (a.category === t) {
         s += 2;
       }
@@ -173,12 +178,12 @@ export class RecommendationService {
   private pickAttractions(prefs: TravelPreferences, destination: Destination): Attraction[] {
     const capacity = this.spotsPerDay(prefs.companion) * prefs.days;
     const ranked = destination.attractions
-      .map(a => ({ a, score: this.score(a, prefs) }))
+      .map((a) => ({ a, score: this.score(a, prefs) }))
       .sort((x, y) => y.score - x.score);
 
-    const top = ranked.filter(r => r.score > 0);
+    const top = ranked.filter((r) => r.score > 0);
     const pool = top.length ? top : ranked;
-    const picked = pool.slice(0, capacity).map(r => r.a);
+    const picked = pool.slice(0, capacity).map((r) => r.a);
 
     if (picked.length === 0 && destination.attractions.length > 0) {
       picked.push(destination.attractions[0]);
@@ -207,7 +212,7 @@ export class RecommendationService {
       const title = d === 0
         ? `抵达 · 初见${prefs.destinationId === 'custom' ? '这座城' : this.shortName(prefs)}`
         : d === prefs.days - 1
-          ? `返程 · 从容收尾`
+          ? '返程 · 从容收尾'
           : `第${d + 1}天 · ${focus}`;
       days.push({ day: d + 1, title, focus, spots });
     }
@@ -215,7 +220,7 @@ export class RecommendationService {
   }
 
   private shortName(prefs: TravelPreferences): string {
-    const dest = DESTINATIONS.find(d => d.id === prefs.destinationId);
+    const dest = DESTINATIONS.find((d) => d.id === prefs.destinationId);
     return dest ? dest.name : '目的地';
   }
 
@@ -241,7 +246,7 @@ export class RecommendationService {
     const reasons: string[] = [];
     const categoryLabel = PLACE_TYPE_LABELS[a.category];
 
-    if (prefs.placeTypes.some(t => a.categories.includes(t))) {
+    if (prefs.placeTypes.some((t) => a.categories.includes(t))) {
       reasons.push(`贴合你想去的「${categoryLabel}」，与本次偏好高度匹配。`);
     } else {
       reasons.push(`作为「${categoryLabel}」体验补充，让行程安排更丰富。`);
@@ -268,7 +273,7 @@ export class RecommendationService {
       return '自由活动';
     }
     const counts = new Map<string, number>();
-    spots.forEach(s => counts.set(s.category, (counts.get(s.category) ?? 0) + 1));
+    spots.forEach((s) => counts.set(s.category, (counts.get(s.category) ?? 0) + 1));
     let best = spots[0].category;
     let bestCount = 0;
     counts.forEach((count, category) => {
@@ -312,7 +317,7 @@ export class RecommendationService {
     seasonLabel: string
   ): string[] {
     const tags = [destination.region, COMPANION_LABELS[prefs.companion], PURPOSE_LABELS[prefs.purpose], BUDGET_LEVEL_LABELS[level]];
-    prefs.placeTypes.slice(0, 2).forEach(t => tags.push(PLACE_TYPE_LABELS[t]));
+    prefs.placeTypes.slice(0, 2).forEach((t) => tags.push(PLACE_TYPE_LABELS[t]));
     if (seasonLabel) {
       tags.push(seasonLabel);
     }
@@ -349,5 +354,10 @@ export class RecommendationService {
       tips.push('预算充裕，可升级景观酒店并提前预订热门餐厅。');
     }
     return tips;
+  }
+
+  private truncateIdea(text: string): string {
+    const cleaned = text.replace(/\s+/g, ' ').trim();
+    return cleaned.length > 32 ? `${cleaned.slice(0, 32)}…` : cleaned;
   }
 }
