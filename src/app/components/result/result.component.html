@@ -1,0 +1,323 @@
+<div class="result">
+  <div class="result-layout">
+    <main class="result-main">
+      <section class="summary-card">
+        <div class="summary-header">
+          <div>
+            <span class="eyebrow">专属旅行方案</span>
+            <h1 class="destination-name">{{ recommendation.destinationName }}</h1>
+          </div>
+          <button type="button" class="ghost-btn" (click)="restart.emit()">重选条件</button>
+        </div>
+
+        <p class="summary">{{ recommendation.summary }}</p>
+
+        <div class="tags">
+          <span class="tag" *ngFor="let t of recommendation.tags">{{ t }}</span>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span>💰 预算档位</span>
+            <strong>{{ recommendation.budgetLevelLabel }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>💎 预计支出</span>
+            <strong>¥ {{ recommendation.estimatedTotal.toLocaleString('zh-CN') }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>📍 景点数量</span>
+            <strong>{{ recommendation.attractionCount }} 个</strong>
+          </div>
+        </div>
+
+        <div class="over-budget" *ngIf="recommendation.overBudget">
+          预算略超出预期，可缩短一两处景点或下调住宿档次。
+        </div>
+      </section>
+
+      <section class="insight-strip" *ngIf="routeOptimization.length || smartAdvice.length || recommendation.tips.length">
+        <div class="insight-item" *ngFor="let item of routeOptimization.slice(0, 3)">
+          <span class="insight-tag">{{ item.tag }}</span>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </div>
+
+        <div class="insight-item compact" *ngIf="smartAdvice.length && !routeOptimization.length">
+          <span class="insight-tag">智能提示</span>
+          <h3>本地风向</h3>
+          <p>{{ smartAdvice[0] }}</p>
+        </div>
+      </section>
+
+      <section class="card itinerary-card" *ngIf="recommendation?.days?.length">
+        <div class="section-head">
+          <div>
+            <span class="kicker">旅行安排</span>
+            <h2>每日行程</h2>
+          </div>
+          <span class="mini-meta">{{ recommendation.days.length }} 天</span>
+        </div>
+
+        <div class="day-card" *ngFor="let day of recommendation.days; let i = index">
+          <div class="day-topbar">
+            <div class="day-topbar__left">
+              <span class="day-badge">第 {{ day.day }} 天</span>
+              <span class="day-focus" style="padding-left: 1rem;">{{ day.focus }}</span>
+            </div>
+
+            <div class="day-advice" *ngIf="dailyAdjustments[i] as advice">
+              <span class="advice-label">☀️ 天气适配</span>
+              <p>{{ advice.note }}</p>
+            </div>
+          </div>
+
+          <h3 class="day-title">{{ day.title }}</h3>
+
+          <div class="timeline">
+            <div class="spot-row" *ngFor="let spot of day.spots">
+              <span class="spot-time">{{ spot.time }}</span>
+              <button type="button" class="spot-card" (click)="openSpotDetail(spot)">
+                <div class="spot-card__header">
+                  <span class="spot-name">{{ spot.name }}</span>
+                  <span class="spot-cost">¥ {{ spot.cost }}</span>
+                </div>
+                <div class="spot-card__meta">
+                  <span>{{ spot.category }}</span>
+                  <span>·</span>
+                  <span>{{ spot.description }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="result-side">
+      <section class="card side-card">
+        <div class="section-head compact">
+          <div>
+            <span class="kicker">旅程参数</span>
+            <h2>我的偏好</h2>
+          </div>
+          <button type="button" class="text-btn" (click)="openEdit('destination')">
+            调整
+          </button>
+        </div>
+
+        <div class="preference-grid">
+          <button type="button" class="pref-tile" [class.edited]="editing === 'destination'" (click)="openEdit('destination')">
+            <span class="pref-label">📍 目的地</span>
+            <strong>{{ destinationName }}</strong>
+          </button>
+          <button type="button" class="pref-tile" [class.edited]="editing === 'startDate'" (click)="openEdit('startDate')">
+            <span class="pref-label">📅 日期</span>
+            <strong>{{ startDateSummary }}</strong>
+          </button>
+          <button type="button" class="pref-tile" [class.edited]="editing === 'people' || editing === 'days'" (click)="openEdit('days')">
+            <span class="pref-label">👥 成员</span>
+            <strong>{{ form.people }} 人 · {{ companionLabel }}</strong>
+          </button>
+          <button type="button" class="pref-tile" [class.edited]="editing === 'budget'" (click)="openEdit('budget')">
+            <span class="pref-label">💰 预算</span>
+            <strong>¥ {{ form.budget.toLocaleString('zh-CN') }}</strong>
+          </button>
+        </div>
+
+        <div class="pref-edit-zone" *ngIf="editing">
+          <div class="edit-panel">
+            <div class="editor" *ngIf="editing === 'destination'">
+              <select class="select" [ngModel]="form.destinationId" (ngModelChange)="selectDestination($event)" name="editDestination">
+                <option *ngFor="let d of destinations" [value]="d.id">{{ d.name }} · {{ d.region }}</option>
+                <option value="custom">✏️ 其他 / 自定义</option>
+              </select>
+              <input
+                *ngIf="isCustomDestination"
+                class="input"
+                type="text"
+                placeholder="输入你想去的地方"
+                [ngModel]="form.customDestination"
+                (ngModelChange)="onCustomDestinationChange($event)"
+                name="editCustomDestination"
+              />
+            </div>
+
+            <div class="editor" *ngIf="editing === 'companion'">
+              <div class="chips">
+                <button *ngFor="let o of companionOptions" type="button" class="chip" [class.active]="form.companion === o.id" (click)="selectCompanion(o.id)">
+                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
+                </button>
+              </div>
+            </div>
+
+            <div class="editor" *ngIf="editing === 'placeTypes'">
+              <div class="chips">
+                <button *ngFor="let o of placeTypeOptions" type="button" class="chip" [class.active]="form.placeTypes.includes(o.id)" (click)="togglePlaceType(o.id)">
+                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
+                </button>
+              </div>
+            </div>
+
+            <div class="editor" *ngIf="editing === 'purpose'">
+              <div class="chips">
+                <button *ngFor="let o of purposeOptions" type="button" class="chip" [class.active]="form.purpose === o.id" (click)="selectPurpose(o.id)">
+                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
+                </button>
+              </div>
+            </div>
+
+            <div class="editor" *ngIf="editing === 'days' || editing === 'people'">
+              <div class="stepper-row">
+                <div class="stepper">
+                  <span class="stepper-label">天数</span>
+                  <div class="stepper-control">
+                    <button type="button" class="stepper-btn" (click)="decrease('days')">−</button>
+                    <span class="stepper-value">{{ form.days }} 天</span>
+                    <button type="button" class="stepper-btn" (click)="increase('days')">＋</button>
+                  </div>
+                </div>
+                <div class="stepper">
+                  <span class="stepper-label">人数</span>
+                  <div class="stepper-control">
+                    <button type="button" class="stepper-btn" (click)="decrease('people')">−</button>
+                    <span class="stepper-value">{{ form.people }} 人</span>
+                    <button type="button" class="stepper-btn" (click)="increase('people')">＋</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="editor" *ngIf="editing === 'startDate'">
+              <input class="input date-input" type="date" [min]="minDate" [ngModel]="form.startDate" (ngModelChange)="setStartDate($event)" name="editStartDate" />
+              <div class="chips date-chips">
+                <button *ngFor="let q of quickDateOptions" type="button" class="chip" [class.active]="form.startDate === q.value" (click)="setStartDate(q.value)">{{ q.label }}</button>
+              </div>
+            </div>
+
+            <div class="editor" *ngIf="editing === 'budget'">
+              <div class="budget-value">¥ {{ form.budget.toLocaleString('zh-CN') }}</div>
+              <input class="slider" type="range" [min]="budgetMin" [max]="budgetMax" [step]="budgetStep" [ngModel]="form.budget" (ngModelChange)="onBudgetChange($event)" name="editBudget" />
+              <div class="slider-scale">
+                <span>¥{{ budgetMin.toLocaleString('zh-CN') }}</span>
+                <span>¥{{ budgetMax.toLocaleString('zh-CN') }}</span>
+              </div>
+            </div>
+
+            <button type="button" class="done-btn" (click)="closeEdit()">完成</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card side-card" *ngIf="travelContext || !hasSeason || showSeasonAdvice">
+        <div class="section-head compact">
+          <div>
+            <span class="kicker">环境信息</span>
+            <h2>出行提醒</h2>
+          </div>
+        </div>
+
+        <div class="weather-summary" *ngIf="weatherToday as today; else noWeatherTpl">
+          <div class="weather-pill">{{ today.summary }}</div>
+          <div class="weather-temp">
+            <strong>{{ today.min ?? '-' }}°</strong>
+            <span>~</span>
+            <strong>{{ today.max ?? '-' }}°</strong>
+          </div>
+          <div class="weather-meta">
+            <span>降雨 {{ today.rainChance ?? 0 }}%</span>
+            <span>{{ today.date }}</span>
+          </div>
+        </div>
+
+        <ng-template #noWeatherTpl>
+          <div class="weather-empty" *ngIf="!hasSeason">
+            还没定日期？先设定出发日期，行程会更贴合天气。
+          </div>
+          <div class="weather-empty" *ngIf="hasSeason && showSeasonAdvice">
+            {{ season.dateLabel }} · {{ season.seasonLabel }} · {{ season.weatherTips[0] || '适合按季节舒适度安排' }}
+          </div>
+        </ng-template>
+
+        <div class="forecast-row" *ngIf="weatherForecast.length">
+          <div class="forecast-item" *ngFor="let item of weatherForecast">
+            <span class="forecast-date">{{ item.date.slice(5) }}</span>
+            <strong>{{ item.max ?? '-' }}°</strong>
+            <small>{{ item.summary }}</small>
+          </div>
+        </div>
+
+        <div class="smart-advice" *ngIf="smartAdvice.length">
+          <h3>AI 提示</h3>
+          <ul>
+            <li *ngFor="let item of smartAdvice">{{ item }}</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card side-card" *ngIf="travelContext || recommendation.tips.length">
+        <div class="section-head compact">
+          <div>
+            <span class="kicker">地图</span>
+            <h2>地区概览</h2>
+          </div>
+        </div>
+
+        <div class="map-wrap">
+          <div id="travel-map" class="travel-map"></div>
+          <div class="map-meta" *ngIf="mapPoints.length">
+            <span>{{ mapPoints.length }} 个重点地点</span>
+            <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card side-card" *ngIf="recommendation.tips.length">
+        <div class="section-head compact">
+          <div>
+            <span class="kicker">建议</span>
+            <h2>旅游贴士</h2>
+          </div>
+        </div>
+
+        <ul class="tips">
+          <li class="tip" *ngFor="let tip of recommendation.tips">{{ tip }}</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+
+  <div class="spot-modal-backdrop" *ngIf="selectedSpot" (click)="closeSpotDetail()">
+    <div class="spot-modal" (click)="$event.stopPropagation()">
+      <div class="spot-modal-header">
+        <span class="spot-modal-time">{{ selectedSpot.time }}</span>
+        <span class="spot-modal-tag">{{ selectedSpot.category }}</span>
+      </div>
+      <h3>{{ selectedSpot.name }}</h3>
+      <p class="spot-modal-desc">{{ selectedSpot.description }}</p>
+
+      <div class="spot-modal-grid">
+        <div class="spot-modal-stat">
+          <span class="label">参考预算</span>
+          <strong>¥ {{ selectedSpot.cost }}</strong>
+        </div>
+        <div class="spot-modal-stat">
+          <span class="label">推荐停留</span>
+          <strong>{{ selectedSpot.stay || '1.5–2 小时' }}</strong>
+        </div>
+      </div>
+
+      <div class="spot-modal-insight">
+        <div class="insight-title">为什么推荐它</div>
+        <ul *ngIf="selectedSpot.reasons?.length; else noReasonsTpl">
+          <li *ngFor="let reason of selectedSpot.reasons">{{ reason }}</li>
+        </ul>
+        <ng-template #noReasonsTpl>
+          <p class="spot-modal-desc">这个地点与你的行程偏好匹配，值得安排到路线中。</p>
+        </ng-template>
+      </div>
+
+      <button type="button" class="spot-modal-btn" (click)="closeSpotDetail()">了解了</button>
+    </div>
+  </div>
+</div>
