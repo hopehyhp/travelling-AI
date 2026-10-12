@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Backend server
+/server/node_modules
+/server/.env
+
 # IDEs and editors
 .idea/
 .project
@@ -30,6 +34,9 @@ yarn-error.log
 
 # Miscellaneous
 /.angular/cache
+/.agents/
+/_bmad/
+/_bmad-output/
 .sass-cache/
 /connect.lock
 /coverage

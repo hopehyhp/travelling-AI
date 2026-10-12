@@ -1,1 +1,250 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --bg: #f5f6fb;
+  --bg-strong: #ebeaf7;
+  --card: rgba(255, 255, 255, 0.8);
+  --card-strong: #ffffff;
+  --text: #1d2433;
+  --text-soft: #5f6d82;
+  --primary: #6d6ae9;
+  --primary-2: #8b88ef;
+  --primary-3: #dfe4ff;
+  --accent: #b89dff;
+  --accent-soft: rgba(184, 157, 255, 0.14);
+  --border: rgba(98, 109, 143, 0.12);
+  --shadow: 0 18px 42px rgba(38, 55, 89, 0.08);
+  --radius: 22px;
+  --grad: linear-gradient(135deg, #6d6ae9 0%, #8a9bff 48%, #c9d3ff 100%);
+  --muted-grad: linear-gradient(135deg, rgba(109, 106, 233, 0.08), rgba(201, 211, 255, 0.12));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.96), transparent 30%),
+    linear-gradient(180deg, var(--bg-strong) 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.5;
+  height: 100%;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #edf3ff;
+}
+
+.travel-map {
+  width: 100%;
+  height: 240px;
+  min-height: 240px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #edf3ff;
+}
+
+button {
+  font-family: inherit;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.card-desc {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.chip.active {
+  background: var(--grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 18px rgba(109, 106, 233, 0.18);
+}
+
+.chip-icon {
+  font-size: 15px;
+}
+
+.select,
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.select:focus,
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(109, 106, 233, 0.1);
+  background: #fff;
+}
+
+.stepper-row {
+  display: flex;
+  gap: 12px;
+}
+
+.stepper {
+  flex: 1;
+  text-align: center;
+}
+
+.stepper-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+.stepper-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stepper-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stepper-btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 16px rgba(109, 106, 233, 0.08);
+}
+
+.stepper-value {
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 60px;
+}
+
+.budget-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.slider-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 4px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: var(--grad);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 16px 32px rgba(109, 106, 233, 0.18);
+  transition: transform 0.1s ease, opacity 0.1s ease, box-shadow 0.2s ease;
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+}
