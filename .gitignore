@@ -37,6 +37,9 @@ yarn-error.log
 /.agents/
 /_bmad/
 /_bmad-output/
+/dist.zip
+/server.zip
+/docs/
 .sass-cache/
 /connect.lock
 /coverage
