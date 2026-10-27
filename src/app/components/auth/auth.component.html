@@ -1,0 +1,58 @@
+<section class="auth-screen">
+  <div class="auth-wrap">
+    <button class="back-link" type="button" (click)="onBack()">← 返回</button>
+
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab" [class.active]="mode === 'login'" (click)="mode = 'login'">登录</button>
+      <button type="button" class="auth-tab" [class.active]="mode === 'register'" (click)="mode = 'register'">注册</button>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="auth-title">{{ mode === 'login' ? '欢迎回来' : '创建账号' }}</h2>
+      <p class="auth-sub">登录后可以保存旅行方案、分享给朋友。</p>
+
+      <form class="auth-form" (ngSubmit)="onSubmit()" #form="ngForm">
+        <label class="auth-field">
+          <span>用户名</span>
+          <input
+            type="text"
+            name="username"
+            [(ngModel)]="username"
+            required
+            minlength="3"
+            maxlength="20"
+            [disabled]="loading"
+            autocomplete="username"
+            placeholder="3-20 个字符，支持中英文和数字"
+          />
+        </label>
+
+        <label class="auth-field">
+          <span>密码</span>
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="4"
+            maxlength="64"
+            [disabled]="loading"
+            [autocomplete]="mode === 'login' ? 'current-password' : 'new-password'"
+            placeholder="至少 4 位"
+          />
+        </label>
+
+        <div *ngIf="error" class="auth-error">{{ error }}</div>
+
+        <button
+          type="submit"
+          class="auth-submit"
+          [disabled]="loading || !form.form.valid"
+        >
+          <span *ngIf="loading">处理中…</span>
+          <span *ngIf="!loading">{{ mode === 'login' ? '登录' : '创建账号' }} →</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>

@@ -1,13 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
-import {
-  DEFAULT_PREFERENCES,
-  Recommendation,
-  TravelPreferences
-} from './models/travel.model';
 import { AiService } from './services/ai.service';
 import { RecommendationService } from './services/recommendation.service';
+import { TravelStateService } from './services/travel-state.service';
+import { AuthService, AuthUser } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -15,49 +13,58 @@ import { RecommendationService } from './services/recommendation.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
-  view: 'landing' | 'wizard' | 'idea' | 'generating' | 'result' = 'landing';
-  generating = false;
-  preferences: TravelPreferences = { ...DEFAULT_PREFERENCES, placeTypes: [...DEFAULT_PREFERENCES.placeTypes] };
-  recommendation: Recommendation | null = null;
-  ideaDraft = '';
-  ideaError = '';
+  isGenerating = false;
 
-  private regenerate$ = new Subject<TravelPreferences>();
+  private regenerate$ = new Subject<void>();
   private destroy$ = new Subject<void>();
 
   constructor(
+    public router: Router,
+    public auth: AuthService,
     private aiService: AiService,
-    private recommendationService: RecommendationService
+    private recommendationService: RecommendationService,
+    private state: TravelStateService
   ) {
-    this.regenerate$
+    // 从 state 订阅 regenerate$ 的 preferences
+    this.state.regenerate$
       .pipe(
         takeUntil(this.destroy$),
         debounceTime(500),
         switchMap((prefs) => {
-          this.generating = true;
+          this.isGenerating = true;
           return this.aiService.generate(prefs);
         })
       )
       .subscribe({
         next: (rec) => {
-          this.recommendation = rec;
-          this.generating = false;
-          if (this.view === 'generating') {
-            this.view = 'result';
+          this.state.setRecommendation(rec);
+          this.isGenerating = false;
+          if (this.router.url !== '/result') {
+            this.router.navigate(['/result']);
           }
         },
         error: () => {
-          this.recommendation = this.recommendationService.generate(this.preferences);
-          this.generating = false;
-          if (this.view === 'generating') {
-            this.view = 'result';
+          const fallback = this.recommendationService.generate(this.state.preferences);
+          this.state.setRecommendation(fallback);
+          this.isGenerating = false;
+          if (this.router.url !== '/result') {
+            this.router.navigate(['/result']);
           }
         }
       });
   }
 
   ngOnInit(): void {
-    // static premium travel palette, no theme switching
+    // 页面启动时校验登录态（读取 localStorage + /api/auth/me 验证）
+    this.auth.init();
+
+    const restored = this.state.restore();
+    if (restored && this.state.recommendation) {
+      const currentUrl = this.router.url;
+      if (currentUrl === '/' || currentUrl === '') {
+        this.router.navigate(['/result']);
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -65,67 +72,24 @@ export class AppComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onStart(): void {
-    this.view = 'wizard';
+  goAuth(): void {
+    this.router.navigate(['/auth'], { state: { redirectUrl: this.router.url } });
   }
 
-  onIdeaStart(): void {
-    this.ideaDraft = '';
-    this.ideaError = '';
-    this.view = 'idea';
+  goProfile(): void {
+    this.router.navigate(['/profile']);
   }
 
-  onIdeaBack(): void {
-    this.ideaDraft = '';
-    this.ideaError = '';
-    this.view = 'landing';
+  userLabel(user: AuthUser): string {
+    return user.nickname?.trim() || user.username;
   }
 
-  onIdeaSubmit(): void {
-    const idea = this.ideaDraft.trim();
-
-    if (!idea) {
-      this.ideaError = '请填写你的旅行想法，告诉我们想去哪里、想怎么玩。';
-      return;
-    }
-
-    if (idea.length > 500) {
-      this.ideaError = '旅行想法最多 500 字，请精简后再提交。';
-      return;
-    }
-
-    this.ideaError = '';
-    this.applyPreferences({
-      ...DEFAULT_PREFERENCES,
-      destinationId: 'custom',
-      customDestination: '',
-      travelIdea: idea,
-      placeTypes: [...DEFAULT_PREFERENCES.placeTypes]
-    });
-    this.view = 'generating';
-    this.regenerate$.next(this.preferences);
+  userInitial(user: AuthUser): string {
+    return this.userLabel(user).slice(0, 1).toUpperCase();
   }
 
-  onHome(): void {
-    this.view = 'landing';
-  }
-
-  onGenerate(prefs: TravelPreferences): void {
-    this.applyPreferences(prefs);
-    this.view = 'generating';
-    this.regenerate$.next(this.preferences);
-  }
-
-  onPreferencesChange(prefs: TravelPreferences): void {
-    this.applyPreferences(prefs);
-    this.regenerate$.next(this.preferences);
-  }
-
-  onRestart(): void {
-    this.view = 'wizard';
-  }
-
-  private applyPreferences(prefs: TravelPreferences): void {
-    this.preferences = { ...prefs, placeTypes: [...prefs.placeTypes] };
+  doLogout(): void {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 }

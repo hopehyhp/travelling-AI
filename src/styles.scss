@@ -248,3 +248,93 @@ button {
     font-size: 16px;
   }
 }
+
+/* ---------- AI 生成中 loading（全局，landing/result 页共用） ---------- */
+.generating {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+  background:
+    radial-gradient(60% 40% at 50% 0%, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0) 100%),
+    var(--bg);
+}
+
+.gen-visual {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 26px;
+}
+
+.gen-emoji {
+  font-size: 60px;
+  line-height: 1;
+  animation: genPulse 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 10px 20px rgba(107, 94, 242, 0.2));
+}
+
+.gen-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(107, 94, 242, 0.14);
+  border-top-color: var(--primary);
+  animation: genSpin 1s linear infinite;
+}
+
+.gen-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.gen-sub {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.gen-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.gen-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: genBounce 1.2s ease-in-out infinite;
+}
+
+.gen-dots span:nth-child(2) { animation-delay: 0.15s; }
+.gen-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes genSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes genPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes genBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ---------- 全局弹窗滚动锁 ---------- */
+body.modal-locked {
+  overflow: hidden !important;
+}

@@ -1,14 +1,59 @@
 <div class="result">
+  <!-- Loading -->
+  <section *ngIf="isLoading || !recommendation" class="generating" style="padding: 4rem 0;">
+    <div class="gen-visual">
+      <span class="gen-emoji">🧭</span>
+      <span class="gen-ring"></span>
+    </div>
+    <h2 class="gen-title">AI 正在为你规划…</h2>
+    <p class="gen-sub">根据你的偏好生成专属行程，通常只需几秒</p>
+    <div class="gen-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <ng-container *ngIf="recommendation">
   <div class="result-layout">
     <main class="result-main">
+      <!-- 未登录价值引导卡 -->
+      <section class="login-cta-card" *ngIf="!user">
+        <div class="login-cta-left">
+          <span class="login-cta-badge">✨ 登录后解锁更多</span>
+          <h3>登录 Travelling AI，让这份攻略真正属于你</h3>
+          <ul class="login-benefits">
+            <li>💾 永久保存攻略，随时查看和修改</li>
+            <li>🔗 一键生成分享链接发给朋友</li>
+            <li>📱 多设备同步，手机电脑无缝切换</li>
+            <li>📊 看到谁浏览了你的分享，导入次数一目了然</li>
+          </ul>
+        </div>
+        <div class="login-cta-right">
+          <button type="button" class="primary-btn" (click)="goLogin()">立即登录 / 注册</button>
+          <span class="login-cta-sub">免费注册，30 秒搞定</span>
+        </div>
+      </section>
+
       <section class="summary-card">
         <div class="summary-header">
           <div>
             <span class="eyebrow">专属旅行方案</span>
             <h1 class="destination-name">{{ recommendation.destinationName }}</h1>
           </div>
-          <button type="button" class="ghost-btn" (click)="restart.emit()">重选条件</button>
+          <div class="header-actions">
+            <button type="button" class="ghost-btn" (click)="saveCurrentPlan()">保存攻略</button>
+            <button type="button" class="ghost-btn" (click)="shareCurrentPlan()">分享</button>
+            <button type="button" class="ghost-btn" (click)="onRestart()">重选条件</button>
+          </div>
         </div>
+
+        <div class="action-status" *ngIf="saveNotice || shareNotice">
+          <span *ngIf="saveNotice">{{ saveNotice }}</span>
+          <span *ngIf="shareNotice">{{ shareNotice }}</span>
+        </div>
+
+        <p class="saved-hint" *ngIf="savedPlanId">
+          已关联账户方案「{{ savedPlanName }}」，再次保存会更新该方案。
+        </p>
 
         <p class="summary">{{ recommendation.summary }}</p>
 
@@ -75,20 +120,36 @@
           <h3 class="day-title">{{ day.title }}</h3>
 
           <div class="timeline">
-            <div class="spot-row" *ngFor="let spot of day.spots">
+            <div class="spot-row" *ngFor="let spot of day.spots; let spotIndex = index">
               <span class="spot-time">{{ spot.time }}</span>
-              <button type="button" class="spot-card" (click)="openSpotDetail(spot)">
-                <div class="spot-card__header">
-                  <span class="spot-name">{{ spot.name }}</span>
-                  <span class="spot-cost">¥ {{ spot.cost }}</span>
+              <div class="spot-card-shell">
+                <button type="button" class="spot-card" (click)="openSpotDetail(spot)">
+                  <div class="spot-card__header">
+                    <span class="spot-name">{{ spot.name }}</span>
+                    <span class="spot-cost">¥ {{ spot.cost || '参考' }}</span>
+                  </div>
+                  <div class="spot-card__meta">
+                    <span>{{ spot.category }}</span>
+                    <span>·</span>
+                    <span>{{ spot.description }}</span>
+                  </div>
+                </button>
+
+                <div class="spot-inline-tools">
+                  <button type="button" class="tool-btn" [disabled]="spotIndex === 0" (click)="moveSpot(i, spotIndex, -1)">↑</button>
+                  <button type="button" class="tool-btn" [disabled]="spotIndex === day.spots.length - 1" (click)="moveSpot(i, spotIndex, 1)">↓</button>
+                  <button type="button" class="tool-btn tool-btn--accent" (click)="requestReplacement(i, spotIndex, spot)">换景点</button>
                 </div>
-                <div class="spot-card__meta">
-                  <span>{{ spot.category }}</span>
-                  <span>·</span>
-                  <span>{{ spot.description }}</span>
-                </div>
-              </button>
+              </div>
             </div>
+
+            <app-spot-replacement-panel
+              *ngIf="replacementContext && replacementContext.dayIndex === i"
+              [options]="replacementOptions"
+              [notice]="replacementNotice"
+              (cancel)="cancelReplacement()"
+              (apply)="applyReplacement($event)"
+            ></app-spot-replacement-panel>
           </div>
         </div>
       </section>
@@ -265,9 +326,20 @@
 
         <div class="map-wrap">
           <div id="travel-map" class="travel-map"></div>
-          <div class="map-meta" *ngIf="mapPoints.length">
+          <div class="map-meta" *ngIf="itineraryGeoLoading">
+            <span>正在定位行程景点…</span>
+            <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+          </div>
+          <div class="map-meta" *ngIf="!itineraryGeoLoading && itineraryPoints.length">
+            <span>{{ itineraryPoints.length }} 个行程景点已标注（颜色区分天数，数字为当天顺序）</span>
+            <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+          </div>
+          <div class="map-meta" *ngIf="!itineraryGeoLoading && !itineraryPoints.length && mapPoints.length">
             <span>{{ mapPoints.length }} 个重点地点</span>
             <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+          </div>
+          <div class="map-meta map-meta-warn" *ngIf="!itineraryGeoLoading && geoFailedSpots.length">
+            <span>{{ geoFailedSpots.length }} 个景点暂未定位：{{ geoFailedSpots.join('、') }}</span>
           </div>
         </div>
       </section>
@@ -286,38 +358,33 @@
       </section>
     </aside>
   </div>
+  </ng-container>
 
-  <div class="spot-modal-backdrop" *ngIf="selectedSpot" (click)="closeSpotDetail()">
-    <div class="spot-modal" (click)="$event.stopPropagation()">
-      <div class="spot-modal-header">
-        <span class="spot-modal-time">{{ selectedSpot.time }}</span>
-        <span class="spot-modal-tag">{{ selectedSpot.category }}</span>
-      </div>
-      <h3>{{ selectedSpot.name }}</h3>
-      <p class="spot-modal-desc">{{ selectedSpot.description }}</p>
+  <!-- 景点详情 Modal（抽取为子组件） -->
+  <app-spot-detail-modal
+    *ngIf="selectedSpot"
+    [spot]="selectedSpot"
+    [destinationName]="destinationName"
+    [geoFallback]="travelContext?.geo ?? { lat: 30.5728, lng: 104.0668 }"
+    (close)="closeSpotDetail()"
+  ></app-spot-detail-modal>
 
-      <div class="spot-modal-grid">
-        <div class="spot-modal-stat">
-          <span class="label">参考预算</span>
-          <strong>¥ {{ selectedSpot.cost }}</strong>
-        </div>
-        <div class="spot-modal-stat">
-          <span class="label">推荐停留</span>
-          <strong>{{ selectedSpot.stay || '1.5–2 小时' }}</strong>
-        </div>
-      </div>
+  <!-- 保存方案 Modal（抽取为子组件） -->
+  <app-plan-save-dialog
+    [open]="saveDialog.open"
+    [name]="saveDialog.name"
+    [loading]="saveDialog.loading"
+    [error]="saveDialog.error"
+    (close)="closeSaveDialog()"
+    (save)="confirmSave($event)"
+  ></app-plan-save-dialog>
 
-      <div class="spot-modal-insight">
-        <div class="insight-title">为什么推荐它</div>
-        <ul *ngIf="selectedSpot.reasons?.length; else noReasonsTpl">
-          <li *ngFor="let reason of selectedSpot.reasons">{{ reason }}</li>
-        </ul>
-        <ng-template #noReasonsTpl>
-          <p class="spot-modal-desc">这个地点与你的行程偏好匹配，值得安排到路线中。</p>
-        </ng-template>
-      </div>
-
-      <button type="button" class="spot-modal-btn" (click)="closeSpotDetail()">了解了</button>
-    </div>
-  </div>
+  <!-- 分享方案 Modal（抽取为子组件） -->
+  <app-plan-share-dialog
+    [open]="shareDialog.open"
+    [loading]="shareDialog.loading"
+    [result]="shareDialog.result"
+    [error]="shareDialog.error"
+    (close)="closeShareDialog()"
+  ></app-plan-share-dialog>
 </div>

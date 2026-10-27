@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   COMPANION_LABELS,
   COMPANION_OPTIONS,
@@ -15,6 +16,7 @@ import {
 } from '../../models/travel.model';
 import { DESTINATIONS } from '../../data/travel-data';
 import { SeasonService } from '../../services/season.service';
+import { TravelStateService } from '../../services/travel-state.service';
 
 interface WizardStep {
   key: string;
@@ -29,10 +31,6 @@ interface WizardStep {
   styleUrls: ['./questionnaire.component.scss']
 })
 export class QuestionnaireComponent implements OnInit {
-  @Input() preferences!: TravelPreferences;
-  @Output() generate = new EventEmitter<TravelPreferences>();
-  @Output() home = new EventEmitter<void>();
-
   form!: TravelPreferences;
   step = 1;
 
@@ -47,7 +45,11 @@ export class QuestionnaireComponent implements OnInit {
     { key: 'confirm', title: '确认你的选择', subtitle: '检查无误后生成专属攻略', icon: '✅' }
   ];
 
-  constructor(private seasonService: SeasonService) {}
+  constructor(
+    private seasonService: SeasonService,
+    private state: TravelStateService,
+    private router: Router
+  ) {}
 
   destinations = DESTINATIONS;
   companionOptions = COMPANION_OPTIONS;
@@ -78,8 +80,8 @@ export class QuestionnaireComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = {
-      ...this.preferences,
-      placeTypes: [...this.preferences.placeTypes]
+      ...this.state.preferences,
+      placeTypes: [...this.state.preferences.placeTypes]
     };
   }
 
@@ -238,7 +240,7 @@ export class QuestionnaireComponent implements OnInit {
     if (this.step > 1) {
       this.step--;
     } else {
-      this.home.emit();
+      this.router.navigate(['/']);
     }
   }
 
@@ -250,6 +252,9 @@ export class QuestionnaireComponent implements OnInit {
     if (!this.canNext || this.form.placeTypes.length === 0) {
       return;
     }
-    this.generate.emit({ ...this.form, placeTypes: [...this.form.placeTypes] });
+    const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
+    this.state.clearCurrentPlan();
+    this.state.updateAndRegenerate(prefs);
+    this.router.navigate(['/result']);
   }
 }

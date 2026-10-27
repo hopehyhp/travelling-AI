@@ -1,0 +1,1992 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "testuser",
+      "password_hash": "$2b$10$K1ThutAQlER5vwO66e3OpeBrTjkPhG.5GRdZ3akEFBsGKNB5v5yqG",
+      "created_at": "2026-10-27T01:56:31.060Z"
+    },
+    {
+      "id": 2,
+      "username": "demo_user_01",
+      "password_hash": "$2b$10$XplZkjvXeO5gJbou3A3gY.d0l34CZVAX6tHgQ/qj84SWYbVmn/yHa",
+      "created_at": "2026-10-27T02:10:03.450Z"
+    },
+    {
+      "id": 3,
+      "username": "final_test_user",
+      "password_hash": "$2b$10$zCOKFD.xOlR6MpEgccqqF.Dk.DD79quPWMuiMLIZxv3LA95A5A4MK",
+      "created_at": "2026-10-27T02:18:43.254Z"
+    },
+    {
+      "id": 9,
+      "username": "huyhp",
+      "password_hash": "$2b$10$7tr/f4ERizWUCvef7.dLqOSttCa20nY2MMjX9iAQ11FrnagUcB14a",
+      "nickname": "",
+      "email": "",
+      "bio": "",
+      "created_at": "2026-10-27T06:22:13.129Z",
+      "updated_at": "2026-10-27T06:22:13.129Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "name": "????",
+      "preferences": {
+        "budget": 5000,
+        "days": 3,
+        "companion": "couple",
+        "destinationId": "chengdu",
+        "purpose": "relax",
+        "startDate": "2026-11-01",
+        "people": 2,
+        "placeTypes": [
+          "food",
+          "nature"
+        ]
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "test",
+        "tags": [
+          "test"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 5000,
+        "overBudget": false,
+        "attractionCount": 1,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "????",
+                "category": "??",
+                "description": "test",
+                "cost": 0,
+                "stay": "2??",
+                "reasons": [
+                  "r1"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": []
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": []
+          }
+        ],
+        "tips": [
+          "tip1"
+        ]
+      },
+      "created_at": "2026-10-27T01:56:31.223Z",
+      "updated_at": "2026-10-27T01:56:31.223Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "name": "来自 testuser 的 ????",
+      "preferences": {
+        "budget": 5000,
+        "days": 3,
+        "companion": "couple",
+        "destinationId": "chengdu",
+        "purpose": "relax",
+        "startDate": "2026-11-01",
+        "people": 2,
+        "placeTypes": [
+          "food",
+          "nature"
+        ]
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "test",
+        "tags": [
+          "test"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 5000,
+        "overBudget": false,
+        "attractionCount": 1,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "????",
+                "category": "??",
+                "description": "test",
+                "cost": 0,
+                "stay": "2??",
+                "reasons": [
+                  "r1"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": []
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": []
+          }
+        ],
+        "tips": [
+          "tip1"
+        ]
+      },
+      "created_at": "2026-10-27T01:56:31.252Z",
+      "updated_at": "2026-10-27T01:56:31.252Z"
+    },
+    {
+      "id": 3,
+      "user_id": 2,
+      "name": "成都 · 2026/10/27",
+      "preferences": {
+        "destinationId": "chengdu",
+        "customDestination": "",
+        "travelIdea": "",
+        "days": 3,
+        "people": 2,
+        "companion": "solo",
+        "placeTypes": [
+          "history",
+          "food"
+        ],
+        "purpose": "relax",
+        "budget": 5000,
+        "startDate": ""
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "三天两夜两人成都行，探访历史文化，品尝地道美食，慢节奏放松身心。",
+        "tags": [
+          "历史文化",
+          "美食探店",
+          "休闲慢游",
+          "情侣出行"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 4800,
+        "overBudget": false,
+        "attractionCount": 10,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "武侯祠",
+                "category": "历史文化",
+                "description": "三国圣地，红墙竹影间追忆蜀汉风云，文物与园林相映成趣。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "三国文化代表，契合历史文化偏好",
+                  "红墙竹林出片，适合两人同游",
+                  "动线顺畅，开启成都文化之旅"
+                ]
+              },
+              {
+                "time": "11:30",
+                "name": "锦里古街",
+                "category": "美食街区",
+                "description": "紧邻武侯祠的仿古街，三国主题小吃与川味点心一网打尽。",
+                "cost": 80,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与武侯祠一墙之隔，步行即达不折返",
+                  "集中品尝川味小吃省时省力",
+                  "傍晚灯笼亮起氛围更佳"
+                ]
+              },
+              {
+                "time": "15:00",
+                "name": "人民公园",
+                "category": "城市园林",
+                "description": "百年老公园，喝茶掏耳朵看坝坝舞，最地道的成都慢生活。",
+                "cost": 60,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "鹤鸣茶社喝盖碗茶放松身心",
+                  "符合休闲放松的旅行目的",
+                  "感受老成都市井烟火气"
+                ]
+              },
+              {
+                "time": "18:30",
+                "name": "宽窄巷子",
+                "category": "历史街区",
+                "description": "青砖灰瓦的清代街巷，老建筑里藏着创意店铺与川菜馆。",
+                "cost": 150,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "历史建筑与现代休闲融合",
+                  "晚餐可选地道川菜馆",
+                  "夜游氛围好，适合两人散步"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "金沙遗址博物馆",
+                "category": "博物馆",
+                "description": "商周古蜀王都遗址，太阳神鸟金饰与象牙祭祀坑震撼人心。",
+                "cost": 140,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "古蜀文明精华，历史文化深度体验",
+                  "室内场馆四季皆宜游览",
+                  "游客相对少，观展更从容"
+                ]
+              },
+              {
+                "time": "14:00",
+                "name": "杜甫草堂",
+                "category": "历史文化",
+                "description": "诗圣故居，竹林水榭间读杜甫诗篇，清幽雅致。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与金沙遗址同城西线动线顺",
+                  "园林清幽适合慢逛放松",
+                  "诗文景观兼具文化与休闲"
+                ]
+              },
+              {
+                "time": "18:30",
+                "name": "奎星楼街",
+                "category": "美食街区",
+                "description": "成都本地人爱吃的小吃街，冒菜、甜水面、蛋烘糕应有尽有。",
+                "cost": 200,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "本地人常去，味道正宗价格实惠",
+                  "小吃多样适合两人分食尝鲜",
+                  "离宽窄巷子近，回程方便"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "08:00",
+                "name": "成都大熊猫繁育研究基地",
+                "category": "自然生态",
+                "description": "看圆滚滚的大熊猫憨态可掬，清晨最活跃，萌化人心。",
+                "cost": 110,
+                "stay": "2.5–3 小时",
+                "reasons": [
+                  "成都标志性体验不容错过",
+                  "清晨熊猫活跃，观感最佳",
+                  "郊外园区大，早去避开人潮"
+                ]
+              },
+              {
+                "time": "13:30",
+                "name": "文殊院",
+                "category": "宗教古迹",
+                "description": "川西著名禅院，古木参天香火缭绕，院内素斋与茶座清净。",
+                "cost": 50,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "闹市中的清净地，放松身心",
+                  "院内香园素斋价廉味美",
+                  "回程动线顺路，节奏舒缓"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "春熙路·太古里",
+                "category": "商业街区",
+                "description": "成都最繁华商圈，古今建筑交错，逛街购物与美食一站满足。",
+                "cost": 200,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "逛街购物与美食一次满足",
+                  "适合为旅途画上热闹句号",
+                  "地铁直达，返程交通便利"
+                ]
+              }
+            ]
+          }
+        ],
+        "tips": [
+          "成都地铁发达，建议办交通卡或用手机扫码乘车，减少打车等待。",
+          "春秋两季最舒适但早晚温差大，备一件薄外套；夏季多雨带伞，冬季湿冷注意保暖。",
+          "热门景点如熊猫基地需提前在官方公众号预约门票，避开节假日高峰。",
+          "川菜偏麻辣，点餐时可要求微辣或不辣，备好肠胃药以防不适。",
+          "宽窄巷子、锦里等地小吃价格偏高，想吃地道美食可去奎星楼街或本地人常去的小馆。",
+          "两人出行住宿建议选春熙路或人民公园附近，交通便利、夜生活与美食密集。"
+        ]
+      },
+      "created_at": "2026-10-27T02:12:37.298Z",
+      "updated_at": "2026-10-27T02:12:37.298Z"
+    },
+    {
+      "id": 4,
+      "user_id": 2,
+      "name": "成都 · 分享",
+      "preferences": {
+        "destinationId": "chengdu",
+        "customDestination": "",
+        "travelIdea": "",
+        "days": 3,
+        "people": 2,
+        "companion": "solo",
+        "placeTypes": [
+          "history",
+          "food"
+        ],
+        "purpose": "relax",
+        "budget": 5000,
+        "startDate": ""
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "三天两夜两人成都行，探访历史文化，品尝地道美食，慢节奏放松身心。",
+        "tags": [
+          "历史文化",
+          "美食探店",
+          "休闲慢游",
+          "情侣出行"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 4800,
+        "overBudget": false,
+        "attractionCount": 10,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "武侯祠",
+                "category": "历史文化",
+                "description": "三国圣地，红墙竹影间追忆蜀汉风云，文物与园林相映成趣。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "三国文化代表，契合历史文化偏好",
+                  "红墙竹林出片，适合两人同游",
+                  "动线顺畅，开启成都文化之旅"
+                ]
+              },
+              {
+                "time": "11:30",
+                "name": "锦里古街",
+                "category": "美食街区",
+                "description": "紧邻武侯祠的仿古街，三国主题小吃与川味点心一网打尽。",
+                "cost": 80,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与武侯祠一墙之隔，步行即达不折返",
+                  "集中品尝川味小吃省时省力",
+                  "傍晚灯笼亮起氛围更佳"
+                ]
+              },
+              {
+                "time": "15:00",
+                "name": "人民公园",
+                "category": "城市园林",
+                "description": "百年老公园，喝茶掏耳朵看坝坝舞，最地道的成都慢生活。",
+                "cost": 60,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "鹤鸣茶社喝盖碗茶放松身心",
+                  "符合休闲放松的旅行目的",
+                  "感受老成都市井烟火气"
+                ]
+              },
+              {
+                "time": "18:30",
+                "name": "宽窄巷子",
+                "category": "历史街区",
+                "description": "青砖灰瓦的清代街巷，老建筑里藏着创意店铺与川菜馆。",
+                "cost": 150,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "历史建筑与现代休闲融合",
+                  "晚餐可选地道川菜馆",
+                  "夜游氛围好，适合两人散步"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "金沙遗址博物馆",
+                "category": "博物馆",
+                "description": "商周古蜀王都遗址，太阳神鸟金饰与象牙祭祀坑震撼人心。",
+                "cost": 140,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "古蜀文明精华，历史文化深度体验",
+                  "室内场馆四季皆宜游览",
+                  "游客相对少，观展更从容"
+                ]
+              },
+              {
+                "time": "14:00",
+                "name": "杜甫草堂",
+                "category": "历史文化",
+                "description": "诗圣故居，竹林水榭间读杜甫诗篇，清幽雅致。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与金沙遗址同城西线动线顺",
+                  "园林清幽适合慢逛放松",
+                  "诗文景观兼具文化与休闲"
+                ]
+              },
+              {
+                "time": "18:30",
+                "name": "奎星楼街",
+                "category": "美食街区",
+                "description": "成都本地人爱吃的小吃街，冒菜、甜水面、蛋烘糕应有尽有。",
+                "cost": 200,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "本地人常去，味道正宗价格实惠",
+                  "小吃多样适合两人分食尝鲜",
+                  "离宽窄巷子近，回程方便"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "08:00",
+                "name": "成都大熊猫繁育研究基地",
+                "category": "自然生态",
+                "description": "看圆滚滚的大熊猫憨态可掬，清晨最活跃，萌化人心。",
+                "cost": 110,
+                "stay": "2.5–3 小时",
+                "reasons": [
+                  "成都标志性体验不容错过",
+                  "清晨熊猫活跃，观感最佳",
+                  "郊外园区大，早去避开人潮"
+                ]
+              },
+              {
+                "time": "13:30",
+                "name": "文殊院",
+                "category": "宗教古迹",
+                "description": "川西著名禅院，古木参天香火缭绕，院内素斋与茶座清净。",
+                "cost": 50,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "闹市中的清净地，放松身心",
+                  "院内香园素斋价廉味美",
+                  "回程动线顺路，节奏舒缓"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "春熙路·太古里",
+                "category": "商业街区",
+                "description": "成都最繁华商圈，古今建筑交错，逛街购物与美食一站满足。",
+                "cost": 200,
+                "stay": "2–2.5 小时",
+                "reasons": [
+                  "逛街购物与美食一次满足",
+                  "适合为旅途画上热闹句号",
+                  "地铁直达，返程交通便利"
+                ]
+              }
+            ]
+          }
+        ],
+        "tips": [
+          "成都地铁发达，建议办交通卡或用手机扫码乘车，减少打车等待。",
+          "春秋两季最舒适但早晚温差大，备一件薄外套；夏季多雨带伞，冬季湿冷注意保暖。",
+          "热门景点如熊猫基地需提前在官方公众号预约门票，避开节假日高峰。",
+          "川菜偏麻辣，点餐时可要求微辣或不辣，备好肠胃药以防不适。",
+          "宽窄巷子、锦里等地小吃价格偏高，想吃地道美食可去奎星楼街或本地人常去的小馆。",
+          "两人出行住宿建议选春熙路或人民公园附近，交通便利、夜生活与美食密集。"
+        ]
+      },
+      "created_at": "2026-10-27T02:12:44.429Z",
+      "updated_at": "2026-10-27T02:12:44.429Z"
+    },
+    {
+      "id": 5,
+      "user_id": 3,
+      "name": "成都 · 分享",
+      "preferences": {
+        "destinationId": "chengdu",
+        "customDestination": "",
+        "travelIdea": "",
+        "days": 3,
+        "people": 2,
+        "companion": "solo",
+        "placeTypes": [
+          "history",
+          "food"
+        ],
+        "purpose": "relax",
+        "budget": 5000,
+        "startDate": ""
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "成都3天2人历史文化与美食休闲之旅，漫步古街巷、探访三国遗迹、品尝地道川味，节奏舒缓不赶路。",
+        "tags": [
+          "历史文化",
+          "美食探店",
+          "休闲漫步",
+          "两人同行"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 4800,
+        "overBudget": false,
+        "attractionCount": 11,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "宽窄巷子",
+                "category": "历史文化街区",
+                "description": "青黛砖瓦的清代古街巷，集茶馆、小吃与手作于一体，最适合慢逛。",
+                "cost": 0,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "清晨人少，适合两人悠闲拍照",
+                  "小吃集中，可边逛边尝地道味道",
+                  "免费开放，休闲预算更宽裕"
+                ]
+              },
+              {
+                "time": "13:00",
+                "name": "人民公园",
+                "category": "城市公园",
+                "description": "百年历史的市民公园，鹤鸣茶社里喝盖碗茶、掏耳朵，体验最地道的成都闲适。",
+                "cost": 30,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "喝茶聊天最放松，契合休闲目的",
+                  "与宽窄巷子步行可达，动线顺畅",
+                  "体验老成都茶馆文化，历史感十足"
+                ]
+              },
+              {
+                "time": "16:30",
+                "name": "武侯祠",
+                "category": "历史遗迹",
+                "description": "中国唯一君臣合祀祠庙，红墙竹影间追忆三国风云，文物与园林俱佳。",
+                "cost": 50,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "三国文化爱好者必访，历史氛围浓",
+                  "红墙竹影是经典拍照点，两人同游合适",
+                  "下午光线柔和，游览体验更舒适"
+                ]
+              },
+              {
+                "time": "19:30",
+                "name": "锦里古街",
+                "category": "美食街区",
+                "description": "紧邻武侯祠的仿古美食街，夜幕灯笼亮起，小吃与川剧变脸热闹非凡。",
+                "cost": 80,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与武侯祠一墙之隔，夜游动线顺",
+                  "小吃品种多，轻松解决晚餐",
+                  "夜景灯笼氛围佳，休闲感强"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "杜甫草堂",
+                "category": "历史遗迹",
+                "description": "诗圣杜甫流寓成都的故居，竹林幽径与茅屋古朴，诗意盎然。",
+                "cost": 50,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "园林清幽，适合两人慢走细品",
+                  "历史文化底蕴深厚，贴合偏好",
+                  "上午人少，游览更从容"
+                ]
+              },
+              {
+                "time": "13:30",
+                "name": "四川博物院",
+                "category": "博物馆",
+                "description": "馆藏巴蜀文物精品，张大千书画与汉代陶石艺术尤为精彩，免费参观。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "免费开放，舒适预算更轻松",
+                  "系统了解巴蜀历史，补充文化知识",
+                  "室内场馆，四季皆宜不受天气影响"
+                ]
+              },
+              {
+                "time": "16:30",
+                "name": "青羊宫",
+                "category": "道教宫观",
+                "description": "川西第一道观，始建于唐代，香火缭绕中感受道教文化的静谧。",
+                "cost": 10,
+                "stay": "1–1.5 小时",
+                "reasons": [
+                  "与博物院相距不远，顺路游览",
+                  "游客较少，安静放松不拥挤",
+                  "门票便宜，性价比高"
+                ]
+              },
+              {
+                "time": "19:00",
+                "name": "玉林路小吃街",
+                "category": "美食街区",
+                "description": "成都老牌美食聚集地，串串、兔头、蛋烘糕应有尽有，烟火气十足。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "本地人常去，味道正宗不踩雷",
+                  "小吃种类丰富，两人可分食多尝",
+                  "休闲氛围浓，适合慢慢逛吃"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "文殊院",
+                "category": "佛教寺庙",
+                "description": "闹市中的千年古刹，红墙银杏与香火禅音交织，周边小吃也颇有名气。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "免费开放，清晨禅意最浓",
+                  "寺院素斋与周边小吃可解决午餐",
+                  "历史文化与美食一举两得"
+                ]
+              },
+              {
+                "time": "13:00",
+                "name": "春熙路",
+                "category": "商业街区",
+                "description": "成都最繁华的百年商圈，老字号与潮流店铺并存，感受都市活力。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "逛街购物轻松休闲，节奏舒缓",
+                  "老字号小吃多，可顺带下午茶",
+                  "交通便利，方便安排返程"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "望江楼公园",
+                "category": "文化公园",
+                "description": "为纪念唐代女诗人薛涛而建，竹影婆娑、江景开阔，宁静惬意。",
+                "cost": 20,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "竹林江景清幽，放松身心首选",
+                  "游人不多，适合两人安静散步",
+                  "门票低廉，行程收尾轻松"
+                ]
+              }
+            ]
+          }
+        ],
+        "tips": [
+          "春秋两季最舒适，但早晚温差大，建议带薄外套；夏季闷热多雨，备好雨具和防晒；冬季湿冷，需穿保暖衣物。",
+          "成都小吃偏麻辣，两人可点小份分食多尝几样，肠胃敏感者备好肠胃药。",
+          "武侯祠、杜甫草堂等热门景点建议提前在官方公众号预约购票，避免现场排队。",
+          "市区景点间地铁+步行即可高效串联，下载天府通APP扫码乘车更便捷。",
+          "宽窄巷子、锦里等景区内小吃价格偏高，可到玉林路、文殊院周边寻找本地人常去的老店。",
+          "两人同行预算5000元（不含大交通）较宽裕，住宿建议选春熙路或宽窄巷子附近，方便步行与地铁出行。"
+        ]
+      },
+      "created_at": "2026-10-27T02:22:54.351Z",
+      "updated_at": "2026-10-27T02:22:54.351Z"
+    },
+    {
+      "id": 6,
+      "user_id": 3,
+      "name": "成都 · 分享",
+      "preferences": {
+        "destinationId": "chengdu",
+        "customDestination": "",
+        "travelIdea": "",
+        "days": 3,
+        "people": 2,
+        "companion": "solo",
+        "placeTypes": [
+          "history",
+          "food"
+        ],
+        "purpose": "relax",
+        "budget": 5000,
+        "startDate": ""
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "成都3天2人历史文化与美食休闲之旅，漫步古街巷、探访三国遗迹、品尝地道川味，节奏舒缓不赶路。",
+        "tags": [
+          "历史文化",
+          "美食探店",
+          "休闲漫步",
+          "两人同行"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 4800,
+        "overBudget": false,
+        "attractionCount": 11,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "宽窄巷子",
+                "category": "历史文化街区",
+                "description": "青黛砖瓦的清代古街巷，集茶馆、小吃与手作于一体，最适合慢逛。",
+                "cost": 0,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "清晨人少，适合两人悠闲拍照",
+                  "小吃集中，可边逛边尝地道味道",
+                  "免费开放，休闲预算更宽裕"
+                ]
+              },
+              {
+                "time": "13:00",
+                "name": "人民公园",
+                "category": "城市公园",
+                "description": "百年历史的市民公园，鹤鸣茶社里喝盖碗茶、掏耳朵，体验最地道的成都闲适。",
+                "cost": 30,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "喝茶聊天最放松，契合休闲目的",
+                  "与宽窄巷子步行可达，动线顺畅",
+                  "体验老成都茶馆文化，历史感十足"
+                ]
+              },
+              {
+                "time": "16:30",
+                "name": "武侯祠",
+                "category": "历史遗迹",
+                "description": "中国唯一君臣合祀祠庙，红墙竹影间追忆三国风云，文物与园林俱佳。",
+                "cost": 50,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "三国文化爱好者必访，历史氛围浓",
+                  "红墙竹影是经典拍照点，两人同游合适",
+                  "下午光线柔和，游览体验更舒适"
+                ]
+              },
+              {
+                "time": "19:30",
+                "name": "锦里古街",
+                "category": "美食街区",
+                "description": "紧邻武侯祠的仿古美食街，夜幕灯笼亮起，小吃与川剧变脸热闹非凡。",
+                "cost": 80,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "与武侯祠一墙之隔，夜游动线顺",
+                  "小吃品种多，轻松解决晚餐",
+                  "夜景灯笼氛围佳，休闲感强"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "杜甫草堂",
+                "category": "历史遗迹",
+                "description": "诗圣杜甫流寓成都的故居，竹林幽径与茅屋古朴，诗意盎然。",
+                "cost": 50,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "园林清幽，适合两人慢走细品",
+                  "历史文化底蕴深厚，贴合偏好",
+                  "上午人少，游览更从容"
+                ]
+              },
+              {
+                "time": "13:30",
+                "name": "四川博物院",
+                "category": "博物馆",
+                "description": "馆藏巴蜀文物精品，张大千书画与汉代陶石艺术尤为精彩，免费参观。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "免费开放，舒适预算更轻松",
+                  "系统了解巴蜀历史，补充文化知识",
+                  "室内场馆，四季皆宜不受天气影响"
+                ]
+              },
+              {
+                "time": "16:30",
+                "name": "青羊宫",
+                "category": "道教宫观",
+                "description": "川西第一道观，始建于唐代，香火缭绕中感受道教文化的静谧。",
+                "cost": 10,
+                "stay": "1–1.5 小时",
+                "reasons": [
+                  "与博物院相距不远，顺路游览",
+                  "游客较少，安静放松不拥挤",
+                  "门票便宜，性价比高"
+                ]
+              },
+              {
+                "time": "19:00",
+                "name": "玉林路小吃街",
+                "category": "美食街区",
+                "description": "成都老牌美食聚集地，串串、兔头、蛋烘糕应有尽有，烟火气十足。",
+                "cost": 100,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "本地人常去，味道正宗不踩雷",
+                  "小吃种类丰富，两人可分食多尝",
+                  "休闲氛围浓，适合慢慢逛吃"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "文殊院",
+                "category": "佛教寺庙",
+                "description": "闹市中的千年古刹，红墙银杏与香火禅音交织，周边小吃也颇有名气。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "免费开放，清晨禅意最浓",
+                  "寺院素斋与周边小吃可解决午餐",
+                  "历史文化与美食一举两得"
+                ]
+              },
+              {
+                "time": "13:00",
+                "name": "春熙路",
+                "category": "商业街区",
+                "description": "成都最繁华的百年商圈，老字号与潮流店铺并存，感受都市活力。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "逛街购物轻松休闲，节奏舒缓",
+                  "老字号小吃多，可顺带下午茶",
+                  "交通便利，方便安排返程"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "望江楼公园",
+                "category": "文化公园",
+                "description": "为纪念唐代女诗人薛涛而建，竹影婆娑、江景开阔，宁静惬意。",
+                "cost": 20,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "竹林江景清幽，放松身心首选",
+                  "游人不多，适合两人安静散步",
+                  "门票低廉，行程收尾轻松"
+                ]
+              }
+            ]
+          }
+        ],
+        "tips": [
+          "春秋两季最舒适，但早晚温差大，建议带薄外套；夏季闷热多雨，备好雨具和防晒；冬季湿冷，需穿保暖衣物。",
+          "成都小吃偏麻辣，两人可点小份分食多尝几样，肠胃敏感者备好肠胃药。",
+          "武侯祠、杜甫草堂等热门景点建议提前在官方公众号预约购票，避免现场排队。",
+          "市区景点间地铁+步行即可高效串联，下载天府通APP扫码乘车更便捷。",
+          "宽窄巷子、锦里等景区内小吃价格偏高，可到玉林路、文殊院周边寻找本地人常去的老店。",
+          "两人同行预算5000元（不含大交通）较宽裕，住宿建议选春熙路或宽窄巷子附近，方便步行与地铁出行。"
+        ]
+      },
+      "created_at": "2026-10-27T02:26:46.288Z",
+      "updated_at": "2026-10-27T02:26:46.288Z"
+    },
+    {
+      "id": 12,
+      "user_id": 9,
+      "name": "丽江 · 2026/10/27",
+      "preferences": {
+        "destinationId": "lijiang",
+        "customDestination": "",
+        "travelIdea": "",
+        "days": 3,
+        "people": 2,
+        "companion": "couple",
+        "placeTypes": [
+          "food",
+          "nature",
+          "history"
+        ],
+        "purpose": "relax",
+        "budget": 5000,
+        "startDate": ""
+      },
+      "recommendation": {
+        "destinationName": "目的地",
+        "summary": "为情侣定制的丽江3天放松之旅，融合古城文化、雪山风光与地道美食，预算舒适。",
+        "tags": [
+          "情侣",
+          "自然风光",
+          "历史文化",
+          "美食"
+        ],
+        "budgetLevel": "comfort",
+        "budgetLevelLabel": "舒适型",
+        "estimatedTotal": 4800,
+        "overBudget": false,
+        "attractionCount": 12,
+        "days": [
+          {
+            "day": 1,
+            "title": "第 1 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "丽江古城",
+                "category": "历史文化",
+                "description": "世界文化遗产，石板路与纳西民居交织，清晨静谧宜人。",
+                "cost": 0,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "清晨人少适合情侣漫步拍照",
+                  "免费开放，感受纳西文化底蕴",
+                  "位于市中心，交通便利"
+                ]
+              },
+              {
+                "time": "12:00",
+                "name": "四方街",
+                "category": "美食",
+                "description": "古城中心广场，周边小吃云集，可品尝鸡豆凉粉、纳西烤鱼。",
+                "cost": 100,
+                "stay": "1–1.5 小时",
+                "reasons": [
+                  "地道小吃集中，满足美食偏好",
+                  "用餐同时感受古城热闹氛围",
+                  "选择多样，适合情侣分享"
+                ]
+              },
+              {
+                "time": "14:00",
+                "name": "木府",
+                "category": "历史文化",
+                "description": "纳西土司府邸，建筑恢宏，有“北有故宫，南有木府”之称。",
+                "cost": 60,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "深入了解纳西历史与土司文化",
+                  "建筑精美，适合情侣合影",
+                  "门票性价比高，文化体验丰富"
+                ]
+              },
+              {
+                "time": "19:30",
+                "name": "丽江古城酒吧街",
+                "category": "夜生活",
+                "description": "沿河酒吧灯火阑珊，可小酌听民谣，享受浪漫夜晚。",
+                "cost": 150,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "夜晚氛围浪漫，适合情侣小酌",
+                  "民谣音乐营造放松情调",
+                  "感受古城现代与传统的交融"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "title": "第 2 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "08:00",
+                "name": "玉龙雪山",
+                "category": "自然风光",
+                "description": "纳西族神山，十三峰连绵，乘大索道可近观冰川公园。",
+                "cost": 400,
+                "stay": "4–5 小时",
+                "reasons": [
+                  "丽江标志性景点，必游之地",
+                  "情侣共同挑战高海拔，难忘体验",
+                  "晴朗季节雪山露脸概率高"
+                ]
+              },
+              {
+                "time": "13:00",
+                "name": "蓝月谷",
+                "category": "自然风光",
+                "description": "雪山脚下碧蓝湖水，形似月牙，人称“小九寨”。",
+                "cost": 0,
+                "stay": "1.5–2 小时",
+                "reasons": [
+                  "湖水湛蓝如画，拍照绝佳",
+                  "与雪山行程顺路，免折返",
+                  "免费开放，性价比高"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "甘海子",
+                "category": "自然风光",
+                "description": "雪山脚下开阔草甸，春季野花盛开，可远眺雪山全景。",
+                "cost": 0,
+                "stay": "1 小时",
+                "reasons": [
+                  "视野开阔，适合情侣散步",
+                  "免费景点，放松身心",
+                  "回程顺路，不额外耗时"
+                ]
+              },
+              {
+                "time": "19:00",
+                "name": "束河古镇",
+                "category": "历史文化",
+                "description": "茶马古道重镇，比丽江古城更宁静，保留原始纳西风情。",
+                "cost": 0,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "夜晚宁静，适合情侣悠闲漫步",
+                  "体验更地道的纳西生活气息",
+                  "晚餐可选当地特色餐厅"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "title": "第 3 天",
+            "focus": "自由活动",
+            "spots": [
+              {
+                "time": "09:00",
+                "name": "拉市海湿地公园",
+                "category": "自然风光",
+                "description": "高原湿地，冬季候鸟成群，可骑马划船，体验田园风光。",
+                "cost": 200,
+                "stay": "2–3 小时",
+                "reasons": [
+                  "自然风光优美，适合放松休闲",
+                  "情侣可体验骑马划船，增加互动",
+                  "冬季候鸟景观独特"
+                ]
+              },
+              {
+                "time": "12:30",
+                "name": "拉市海周边农家乐",
+                "category": "美食",
+                "description": "品尝当地土鸡火锅、新鲜蔬菜，感受乡村风味。",
+                "cost": 150,
+                "stay": "1–1.5 小时",
+                "reasons": [
+                  "地道农家菜，食材新鲜",
+                  "环境轻松，适合情侣边吃边聊",
+                  "价格实惠，符合预算"
+                ]
+              },
+              {
+                "time": "14:30",
+                "name": "黑龙潭公园",
+                "category": "自然风光",
+                "description": "潭水清澈倒映玉龙雪山，是拍摄雪山倒影的经典机位。",
+                "cost": 0,
+                "stay": "1–1.5 小时",
+                "reasons": [
+                  "免费公园，轻松散步好去处",
+                  "情侣拍照绝佳背景",
+                  "离古城近，方便返程"
+                ]
+              },
+              {
+                "time": "16:00",
+                "name": "丽江古城特产店",
+                "category": "购物",
+                "description": "选购鲜花饼、普洱茶、东巴纸等伴手礼，为旅程收尾。",
+                "cost": 100,
+                "stay": "1 小时",
+                "reasons": [
+                  "方便购买伴手礼带回家",
+                  "种类丰富，可挑选情侣纪念品",
+                  "位于古城内，顺路不绕行"
+                ]
+              }
+            ]
+          }
+        ],
+        "tips": [
+          "丽江昼夜温差大，无论四季都需备一件外套；冬季早晚需羽绒服。",
+          "玉龙雪山海拔高，建议提前购买氧气瓶，避免剧烈运动，情侣互相照应。",
+          "雨季（6-10月）午后多阵雨，随身携带雨具，行程安排留弹性。",
+          "丽江紫外线强，即使阴天也需涂抹防晒霜，佩戴墨镜和帽子。",
+          "古城内石板路多，建议穿舒适平底鞋，方便长时间步行。",
+          "预算5000元为2人总花费，建议提前预订住宿和雪山门票，可节省开支。"
+        ]
+      },
+      "created_at": "2026-10-27T06:26:55.538Z",
+      "updated_at": "2026-10-27T06:26:55.538Z"
+    }
+  ],
+  "shares": [
+    {
+      "id": 1,
+      "plan_id": 1,
+      "owner_user_id": 1,
+      "share_token": "815559df-4005-4a6b-be5b-fe090187adda",
+      "snapshot": {
+        "name": "????",
+        "preferences": {
+          "budget": 5000,
+          "days": 3,
+          "companion": "couple",
+          "destinationId": "chengdu",
+          "purpose": "relax",
+          "startDate": "2026-11-01",
+          "people": 2,
+          "placeTypes": [
+            "food",
+            "nature"
+          ]
+        },
+        "recommendation": {
+          "destinationName": "目的地",
+          "summary": "test",
+          "tags": [
+            "test"
+          ],
+          "budgetLevel": "comfort",
+          "budgetLevelLabel": "舒适型",
+          "estimatedTotal": 5000,
+          "overBudget": false,
+          "attractionCount": 1,
+          "days": [
+            {
+              "day": 1,
+              "title": "第 1 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "????",
+                  "category": "??",
+                  "description": "test",
+                  "cost": 0,
+                  "stay": "2??",
+                  "reasons": [
+                    "r1"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "title": "第 2 天",
+              "focus": "自由活动",
+              "spots": []
+            },
+            {
+              "day": 3,
+              "title": "第 3 天",
+              "focus": "自由活动",
+              "spots": []
+            }
+          ],
+          "tips": [
+            "tip1"
+          ]
+        },
+        "owner": "testuser"
+      },
+      "created_at": "2026-10-27T01:56:31.240Z"
+    },
+    {
+      "id": 2,
+      "plan_id": 4,
+      "owner_user_id": 2,
+      "share_token": "fa529672-efa4-40fe-b661-742d1c372e75",
+      "snapshot": {
+        "name": "成都 · 分享",
+        "preferences": {
+          "destinationId": "chengdu",
+          "customDestination": "",
+          "travelIdea": "",
+          "days": 3,
+          "people": 2,
+          "companion": "solo",
+          "placeTypes": [
+            "history",
+            "food"
+          ],
+          "purpose": "relax",
+          "budget": 5000,
+          "startDate": ""
+        },
+        "recommendation": {
+          "destinationName": "目的地",
+          "summary": "三天两夜两人成都行，探访历史文化，品尝地道美食，慢节奏放松身心。",
+          "tags": [
+            "历史文化",
+            "美食探店",
+            "休闲慢游",
+            "情侣出行"
+          ],
+          "budgetLevel": "comfort",
+          "budgetLevelLabel": "舒适型",
+          "estimatedTotal": 4800,
+          "overBudget": false,
+          "attractionCount": 10,
+          "days": [
+            {
+              "day": 1,
+              "title": "第 1 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "武侯祠",
+                  "category": "历史文化",
+                  "description": "三国圣地，红墙竹影间追忆蜀汉风云，文物与园林相映成趣。",
+                  "cost": 100,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "三国文化代表，契合历史文化偏好",
+                    "红墙竹林出片，适合两人同游",
+                    "动线顺畅，开启成都文化之旅"
+                  ]
+                },
+                {
+                  "time": "11:30",
+                  "name": "锦里古街",
+                  "category": "美食街区",
+                  "description": "紧邻武侯祠的仿古街，三国主题小吃与川味点心一网打尽。",
+                  "cost": 80,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "与武侯祠一墙之隔，步行即达不折返",
+                    "集中品尝川味小吃省时省力",
+                    "傍晚灯笼亮起氛围更佳"
+                  ]
+                },
+                {
+                  "time": "15:00",
+                  "name": "人民公园",
+                  "category": "城市园林",
+                  "description": "百年老公园，喝茶掏耳朵看坝坝舞，最地道的成都慢生活。",
+                  "cost": 60,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "鹤鸣茶社喝盖碗茶放松身心",
+                    "符合休闲放松的旅行目的",
+                    "感受老成都市井烟火气"
+                  ]
+                },
+                {
+                  "time": "18:30",
+                  "name": "宽窄巷子",
+                  "category": "历史街区",
+                  "description": "青砖灰瓦的清代街巷，老建筑里藏着创意店铺与川菜馆。",
+                  "cost": 150,
+                  "stay": "2–2.5 小时",
+                  "reasons": [
+                    "历史建筑与现代休闲融合",
+                    "晚餐可选地道川菜馆",
+                    "夜游氛围好，适合两人散步"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "title": "第 2 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "金沙遗址博物馆",
+                  "category": "博物馆",
+                  "description": "商周古蜀王都遗址，太阳神鸟金饰与象牙祭祀坑震撼人心。",
+                  "cost": 140,
+                  "stay": "2–2.5 小时",
+                  "reasons": [
+                    "古蜀文明精华，历史文化深度体验",
+                    "室内场馆四季皆宜游览",
+                    "游客相对少，观展更从容"
+                  ]
+                },
+                {
+                  "time": "14:00",
+                  "name": "杜甫草堂",
+                  "category": "历史文化",
+                  "description": "诗圣故居，竹林水榭间读杜甫诗篇，清幽雅致。",
+                  "cost": 100,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "与金沙遗址同城西线动线顺",
+                    "园林清幽适合慢逛放松",
+                    "诗文景观兼具文化与休闲"
+                  ]
+                },
+                {
+                  "time": "18:30",
+                  "name": "奎星楼街",
+                  "category": "美食街区",
+                  "description": "成都本地人爱吃的小吃街，冒菜、甜水面、蛋烘糕应有尽有。",
+                  "cost": 200,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "本地人常去，味道正宗价格实惠",
+                    "小吃多样适合两人分食尝鲜",
+                    "离宽窄巷子近，回程方便"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "title": "第 3 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "08:00",
+                  "name": "成都大熊猫繁育研究基地",
+                  "category": "自然生态",
+                  "description": "看圆滚滚的大熊猫憨态可掬，清晨最活跃，萌化人心。",
+                  "cost": 110,
+                  "stay": "2.5–3 小时",
+                  "reasons": [
+                    "成都标志性体验不容错过",
+                    "清晨熊猫活跃，观感最佳",
+                    "郊外园区大，早去避开人潮"
+                  ]
+                },
+                {
+                  "time": "13:30",
+                  "name": "文殊院",
+                  "category": "宗教古迹",
+                  "description": "川西著名禅院，古木参天香火缭绕，院内素斋与茶座清净。",
+                  "cost": 50,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "闹市中的清净地，放松身心",
+                    "院内香园素斋价廉味美",
+                    "回程动线顺路，节奏舒缓"
+                  ]
+                },
+                {
+                  "time": "16:00",
+                  "name": "春熙路·太古里",
+                  "category": "商业街区",
+                  "description": "成都最繁华商圈，古今建筑交错，逛街购物与美食一站满足。",
+                  "cost": 200,
+                  "stay": "2–2.5 小时",
+                  "reasons": [
+                    "逛街购物与美食一次满足",
+                    "适合为旅途画上热闹句号",
+                    "地铁直达，返程交通便利"
+                  ]
+                }
+              ]
+            }
+          ],
+          "tips": [
+            "成都地铁发达，建议办交通卡或用手机扫码乘车，减少打车等待。",
+            "春秋两季最舒适但早晚温差大，备一件薄外套；夏季多雨带伞，冬季湿冷注意保暖。",
+            "热门景点如熊猫基地需提前在官方公众号预约门票，避开节假日高峰。",
+            "川菜偏麻辣，点餐时可要求微辣或不辣，备好肠胃药以防不适。",
+            "宽窄巷子、锦里等地小吃价格偏高，想吃地道美食可去奎星楼街或本地人常去的小馆。",
+            "两人出行住宿建议选春熙路或人民公园附近，交通便利、夜生活与美食密集。"
+          ]
+        },
+        "owner": "demo_user_01"
+      },
+      "created_at": "2026-10-27T02:12:44.442Z"
+    },
+    {
+      "id": 3,
+      "plan_id": 2,
+      "owner_user_id": 1,
+      "share_token": "2889431b-211a-4113-8df1-8136e96177a8",
+      "snapshot": {
+        "name": "来自 testuser 的 ????",
+        "preferences": {
+          "budget": 5000,
+          "days": 3,
+          "companion": "couple",
+          "destinationId": "chengdu",
+          "purpose": "relax",
+          "startDate": "2026-11-01",
+          "people": 2,
+          "placeTypes": [
+            "food",
+            "nature"
+          ]
+        },
+        "recommendation": {
+          "destinationName": "目的地",
+          "summary": "test",
+          "tags": [
+            "test"
+          ],
+          "budgetLevel": "comfort",
+          "budgetLevelLabel": "舒适型",
+          "estimatedTotal": 5000,
+          "overBudget": false,
+          "attractionCount": 1,
+          "days": [
+            {
+              "day": 1,
+              "title": "第 1 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "????",
+                  "category": "??",
+                  "description": "test",
+                  "cost": 0,
+                  "stay": "2??",
+                  "reasons": [
+                    "r1"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "title": "第 2 天",
+              "focus": "自由活动",
+              "spots": []
+            },
+            {
+              "day": 3,
+              "title": "第 3 天",
+              "focus": "自由活动",
+              "spots": []
+            }
+          ],
+          "tips": [
+            "tip1"
+          ]
+        },
+        "owner": "testuser"
+      },
+      "created_at": "2026-10-27T02:13:39.515Z"
+    },
+    {
+      "id": 4,
+      "plan_id": 5,
+      "owner_user_id": 3,
+      "share_token": "644dedc7-7f97-4985-91fc-bb3daf6d03da",
+      "snapshot": {
+        "name": "成都 · 分享",
+        "preferences": {
+          "destinationId": "chengdu",
+          "customDestination": "",
+          "travelIdea": "",
+          "days": 3,
+          "people": 2,
+          "companion": "solo",
+          "placeTypes": [
+            "history",
+            "food"
+          ],
+          "purpose": "relax",
+          "budget": 5000,
+          "startDate": ""
+        },
+        "recommendation": {
+          "destinationName": "目的地",
+          "summary": "成都3天2人历史文化与美食休闲之旅，漫步古街巷、探访三国遗迹、品尝地道川味，节奏舒缓不赶路。",
+          "tags": [
+            "历史文化",
+            "美食探店",
+            "休闲漫步",
+            "两人同行"
+          ],
+          "budgetLevel": "comfort",
+          "budgetLevelLabel": "舒适型",
+          "estimatedTotal": 4800,
+          "overBudget": false,
+          "attractionCount": 11,
+          "days": [
+            {
+              "day": 1,
+              "title": "第 1 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "宽窄巷子",
+                  "category": "历史文化街区",
+                  "description": "青黛砖瓦的清代古街巷，集茶馆、小吃与手作于一体，最适合慢逛。",
+                  "cost": 0,
+                  "stay": "2–3 小时",
+                  "reasons": [
+                    "清晨人少，适合两人悠闲拍照",
+                    "小吃集中，可边逛边尝地道味道",
+                    "免费开放，休闲预算更宽裕"
+                  ]
+                },
+                {
+                  "time": "13:00",
+                  "name": "人民公园",
+                  "category": "城市公园",
+                  "description": "百年历史的市民公园，鹤鸣茶社里喝盖碗茶、掏耳朵，体验最地道的成都闲适。",
+                  "cost": 30,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "喝茶聊天最放松，契合休闲目的",
+                    "与宽窄巷子步行可达，动线顺畅",
+                    "体验老成都茶馆文化，历史感十足"
+                  ]
+                },
+                {
+                  "time": "16:30",
+                  "name": "武侯祠",
+                  "category": "历史遗迹",
+                  "description": "中国唯一君臣合祀祠庙，红墙竹影间追忆三国风云，文物与园林俱佳。",
+                  "cost": 50,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "三国文化爱好者必访，历史氛围浓",
+                    "红墙竹影是经典拍照点，两人同游合适",
+                    "下午光线柔和，游览体验更舒适"
+                  ]
+                },
+                {
+                  "time": "19:30",
+                  "name": "锦里古街",
+                  "category": "美食街区",
+                  "description": "紧邻武侯祠的仿古美食街，夜幕灯笼亮起，小吃与川剧变脸热闹非凡。",
+                  "cost": 80,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "与武侯祠一墙之隔，夜游动线顺",
+                    "小吃品种多，轻松解决晚餐",
+                    "夜景灯笼氛围佳，休闲感强"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "title": "第 2 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "杜甫草堂",
+                  "category": "历史遗迹",
+                  "description": "诗圣杜甫流寓成都的故居，竹林幽径与茅屋古朴，诗意盎然。",
+                  "cost": 50,
+                  "stay": "2–3 小时",
+                  "reasons": [
+                    "园林清幽，适合两人慢走细品",
+                    "历史文化底蕴深厚，贴合偏好",
+                    "上午人少，游览更从容"
+                  ]
+                },
+                {
+                  "time": "13:30",
+                  "name": "四川博物院",
+                  "category": "博物馆",
+                  "description": "馆藏巴蜀文物精品，张大千书画与汉代陶石艺术尤为精彩，免费参观。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "免费开放，舒适预算更轻松",
+                    "系统了解巴蜀历史，补充文化知识",
+                    "室内场馆，四季皆宜不受天气影响"
+                  ]
+                },
+                {
+                  "time": "16:30",
+                  "name": "青羊宫",
+                  "category": "道教宫观",
+                  "description": "川西第一道观，始建于唐代，香火缭绕中感受道教文化的静谧。",
+                  "cost": 10,
+                  "stay": "1–1.5 小时",
+                  "reasons": [
+                    "与博物院相距不远，顺路游览",
+                    "游客较少，安静放松不拥挤",
+                    "门票便宜，性价比高"
+                  ]
+                },
+                {
+                  "time": "19:00",
+                  "name": "玉林路小吃街",
+                  "category": "美食街区",
+                  "description": "成都老牌美食聚集地，串串、兔头、蛋烘糕应有尽有，烟火气十足。",
+                  "cost": 100,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "本地人常去，味道正宗不踩雷",
+                    "小吃种类丰富，两人可分食多尝",
+                    "休闲氛围浓，适合慢慢逛吃"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "title": "第 3 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "文殊院",
+                  "category": "佛教寺庙",
+                  "description": "闹市中的千年古刹，红墙银杏与香火禅音交织，周边小吃也颇有名气。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "免费开放，清晨禅意最浓",
+                    "寺院素斋与周边小吃可解决午餐",
+                    "历史文化与美食一举两得"
+                  ]
+                },
+                {
+                  "time": "13:00",
+                  "name": "春熙路",
+                  "category": "商业街区",
+                  "description": "成都最繁华的百年商圈，老字号与潮流店铺并存，感受都市活力。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "逛街购物轻松休闲，节奏舒缓",
+                    "老字号小吃多，可顺带下午茶",
+                    "交通便利，方便安排返程"
+                  ]
+                },
+                {
+                  "time": "16:00",
+                  "name": "望江楼公园",
+                  "category": "文化公园",
+                  "description": "为纪念唐代女诗人薛涛而建，竹影婆娑、江景开阔，宁静惬意。",
+                  "cost": 20,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "竹林江景清幽，放松身心首选",
+                    "游人不多，适合两人安静散步",
+                    "门票低廉，行程收尾轻松"
+                  ]
+                }
+              ]
+            }
+          ],
+          "tips": [
+            "春秋两季最舒适，但早晚温差大，建议带薄外套；夏季闷热多雨，备好雨具和防晒；冬季湿冷，需穿保暖衣物。",
+            "成都小吃偏麻辣，两人可点小份分食多尝几样，肠胃敏感者备好肠胃药。",
+            "武侯祠、杜甫草堂等热门景点建议提前在官方公众号预约购票，避免现场排队。",
+            "市区景点间地铁+步行即可高效串联，下载天府通APP扫码乘车更便捷。",
+            "宽窄巷子、锦里等景区内小吃价格偏高，可到玉林路、文殊院周边寻找本地人常去的老店。",
+            "两人同行预算5000元（不含大交通）较宽裕，住宿建议选春熙路或宽窄巷子附近，方便步行与地铁出行。"
+          ]
+        },
+        "owner": "final_test_user"
+      },
+      "created_at": "2026-10-27T02:22:54.358Z"
+    },
+    {
+      "id": 5,
+      "plan_id": 6,
+      "owner_user_id": 3,
+      "share_token": "eb0720e5-d851-48f1-bb21-9ef8d2749e08",
+      "snapshot": {
+        "name": "成都 · 分享",
+        "preferences": {
+          "destinationId": "chengdu",
+          "customDestination": "",
+          "travelIdea": "",
+          "days": 3,
+          "people": 2,
+          "companion": "solo",
+          "placeTypes": [
+            "history",
+            "food"
+          ],
+          "purpose": "relax",
+          "budget": 5000,
+          "startDate": ""
+        },
+        "recommendation": {
+          "destinationName": "目的地",
+          "summary": "成都3天2人历史文化与美食休闲之旅，漫步古街巷、探访三国遗迹、品尝地道川味，节奏舒缓不赶路。",
+          "tags": [
+            "历史文化",
+            "美食探店",
+            "休闲漫步",
+            "两人同行"
+          ],
+          "budgetLevel": "comfort",
+          "budgetLevelLabel": "舒适型",
+          "estimatedTotal": 4800,
+          "overBudget": false,
+          "attractionCount": 11,
+          "days": [
+            {
+              "day": 1,
+              "title": "第 1 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "宽窄巷子",
+                  "category": "历史文化街区",
+                  "description": "青黛砖瓦的清代古街巷，集茶馆、小吃与手作于一体，最适合慢逛。",
+                  "cost": 0,
+                  "stay": "2–3 小时",
+                  "reasons": [
+                    "清晨人少，适合两人悠闲拍照",
+                    "小吃集中，可边逛边尝地道味道",
+                    "免费开放，休闲预算更宽裕"
+                  ]
+                },
+                {
+                  "time": "13:00",
+                  "name": "人民公园",
+                  "category": "城市公园",
+                  "description": "百年历史的市民公园，鹤鸣茶社里喝盖碗茶、掏耳朵，体验最地道的成都闲适。",
+                  "cost": 30,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "喝茶聊天最放松，契合休闲目的",
+                    "与宽窄巷子步行可达，动线顺畅",
+                    "体验老成都茶馆文化，历史感十足"
+                  ]
+                },
+                {
+                  "time": "16:30",
+                  "name": "武侯祠",
+                  "category": "历史遗迹",
+                  "description": "中国唯一君臣合祀祠庙，红墙竹影间追忆三国风云，文物与园林俱佳。",
+                  "cost": 50,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "三国文化爱好者必访，历史氛围浓",
+                    "红墙竹影是经典拍照点，两人同游合适",
+                    "下午光线柔和，游览体验更舒适"
+                  ]
+                },
+                {
+                  "time": "19:30",
+                  "name": "锦里古街",
+                  "category": "美食街区",
+                  "description": "紧邻武侯祠的仿古美食街，夜幕灯笼亮起，小吃与川剧变脸热闹非凡。",
+                  "cost": 80,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "与武侯祠一墙之隔，夜游动线顺",
+                    "小吃品种多，轻松解决晚餐",
+                    "夜景灯笼氛围佳，休闲感强"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "title": "第 2 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "杜甫草堂",
+                  "category": "历史遗迹",
+                  "description": "诗圣杜甫流寓成都的故居，竹林幽径与茅屋古朴，诗意盎然。",
+                  "cost": 50,
+                  "stay": "2–3 小时",
+                  "reasons": [
+                    "园林清幽，适合两人慢走细品",
+                    "历史文化底蕴深厚，贴合偏好",
+                    "上午人少，游览更从容"
+                  ]
+                },
+                {
+                  "time": "13:30",
+                  "name": "四川博物院",
+                  "category": "博物馆",
+                  "description": "馆藏巴蜀文物精品，张大千书画与汉代陶石艺术尤为精彩，免费参观。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "免费开放，舒适预算更轻松",
+                    "系统了解巴蜀历史，补充文化知识",
+                    "室内场馆，四季皆宜不受天气影响"
+                  ]
+                },
+                {
+                  "time": "16:30",
+                  "name": "青羊宫",
+                  "category": "道教宫观",
+                  "description": "川西第一道观，始建于唐代，香火缭绕中感受道教文化的静谧。",
+                  "cost": 10,
+                  "stay": "1–1.5 小时",
+                  "reasons": [
+                    "与博物院相距不远，顺路游览",
+                    "游客较少，安静放松不拥挤",
+                    "门票便宜，性价比高"
+                  ]
+                },
+                {
+                  "time": "19:00",
+                  "name": "玉林路小吃街",
+                  "category": "美食街区",
+                  "description": "成都老牌美食聚集地，串串、兔头、蛋烘糕应有尽有，烟火气十足。",
+                  "cost": 100,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "本地人常去，味道正宗不踩雷",
+                    "小吃种类丰富，两人可分食多尝",
+                    "休闲氛围浓，适合慢慢逛吃"
+                  ]
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "title": "第 3 天",
+              "focus": "自由活动",
+              "spots": [
+                {
+                  "time": "09:00",
+                  "name": "文殊院",
+                  "category": "佛教寺庙",
+                  "description": "闹市中的千年古刹，红墙银杏与香火禅音交织，周边小吃也颇有名气。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "免费开放，清晨禅意最浓",
+                    "寺院素斋与周边小吃可解决午餐",
+                    "历史文化与美食一举两得"
+                  ]
+                },
+                {
+                  "time": "13:00",
+                  "name": "春熙路",
+                  "category": "商业街区",
+                  "description": "成都最繁华的百年商圈，老字号与潮流店铺并存，感受都市活力。",
+                  "cost": 0,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "逛街购物轻松休闲，节奏舒缓",
+                    "老字号小吃多，可顺带下午茶",
+                    "交通便利，方便安排返程"
+                  ]
+                },
+                {
+                  "time": "16:00",
+                  "name": "望江楼公园",
+                  "category": "文化公园",
+                  "description": "为纪念唐代女诗人薛涛而建，竹影婆娑、江景开阔，宁静惬意。",
+                  "cost": 20,
+                  "stay": "1.5–2 小时",
+                  "reasons": [
+                    "竹林江景清幽，放松身心首选",
+                    "游人不多，适合两人安静散步",
+                    "门票低廉，行程收尾轻松"
+                  ]
+                }
+              ]
+            }
+          ],
+          "tips": [
+            "春秋两季最舒适，但早晚温差大，建议带薄外套；夏季闷热多雨，备好雨具和防晒；冬季湿冷，需穿保暖衣物。",
+            "成都小吃偏麻辣，两人可点小份分食多尝几样，肠胃敏感者备好肠胃药。",
+            "武侯祠、杜甫草堂等热门景点建议提前在官方公众号预约购票，避免现场排队。",
+            "市区景点间地铁+步行即可高效串联，下载天府通APP扫码乘车更便捷。",
+            "宽窄巷子、锦里等景区内小吃价格偏高，可到玉林路、文殊院周边寻找本地人常去的老店。",
+            "两人同行预算5000元（不含大交通）较宽裕，住宿建议选春熙路或宽窄巷子附近，方便步行与地铁出行。"
+          ]
+        },
+        "owner": "final_test_user"
+      },
+      "created_at": "2026-10-27T02:26:46.307Z"
+    }
+  ],
+  "counters": {
+    "users": 9,
+    "plans": 13,
+    "shares": 8
+  }
+}

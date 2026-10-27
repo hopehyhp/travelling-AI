@@ -46,6 +46,7 @@ export const COMPANION_OPTIONS: CompanionOption[] = [
 export const PLACE_TYPE_OPTIONS: PlaceTypeOption[] = [
   { id: 'nature', label: '自然风光', icon: '🏞️' },
   { id: 'history', label: '历史文化', icon: '🏛️' },
+  { id: 'culture', label: '文化体验', icon: '🎭' },
   { id: 'food', label: '美食', icon: '🍜' },
   { id: 'shopping', label: '购物', icon: '🛍️' },
   { id: 'beach', label: '海滩海岛', icon: '🏖️' },
@@ -67,27 +68,14 @@ export const PURPOSE_OPTIONS: PurposeOption[] = [
   { id: 'romance', label: '浪漫蜜月', icon: '💖' }
 ];
 
-export const COMPANION_LABELS: Record<CompanionId, string> = {
-  solo: '独自一人',
-  couple: '情侣/伴侣',
-  family: '家庭带娃',
-  friends: '朋友结伴',
-  parents: '父母长辈'
-};
+// 从 OPTIONS 派生 LABELS，避免 label 重复定义
+export const COMPANION_LABELS = Object.fromEntries(
+  COMPANION_OPTIONS.map((o) => [o.id, o.label])
+) as Record<CompanionId, string>;
 
-export const PLACE_TYPE_LABELS: Record<PlaceTypeId, string> = {
-  nature: '自然风光',
-  history: '历史文化',
-  culture: '文化体验',
-  food: '美食',
-  shopping: '购物',
-  beach: '海滩海岛',
-  city: '都市休闲',
-  amusement: '亲子乐园',
-  adventure: '户外探险',
-  photo: '摄影打卡',
-  relax: '休闲度假'
-};
+export const PLACE_TYPE_LABELS = Object.fromEntries(
+  PLACE_TYPE_OPTIONS.map((o) => [o.id, o.label])
+) as Record<PlaceTypeId, string>;
 
 export const SEASON_LABELS: Record<SeasonId, string> = {
   spring: '春季',
@@ -169,10 +157,36 @@ export interface SpotPlan {
   category: string;
   description: string;
   cost: number;
+  /** 费用说明：官方票价/参考价/未确认 */
+  priceNote?: string;
+  /** 地点说明：用于详情弹层中的 OpenStreetMap 入口和定位提示 */
+  locationNote?: string;
+  /** 仅用于地图搜索/定位链接，不作为官方精确坐标 */
+  locationQuery?: string;
   /** 建议停留时长，如「1.5–2 小时」 */
   stay: string;
   /** AI 生成的推荐理由，用于详情弹框展示 */
   reasons: string[];
+}
+
+export interface SpotReplacementOption {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  cost: number;
+  stay: string;
+  reasons: string[];
+  priceNote?: string;
+  locationNote?: string;
+  similarity?: number;
+}
+
+export interface SpotReplacementResult {
+  currentSpotName: string;
+  destinationName: string;
+  message?: string;
+  candidates: SpotReplacementOption[];
 }
 
 export interface DayPlan {
@@ -194,6 +208,12 @@ export interface Recommendation {
   days: DayPlan[];
   tips: string[];
   season: SeasonContext;
+}
+
+export interface SavedTravelPlan {
+  preferences: TravelPreferences;
+  recommendation: Recommendation;
+  savedAt: string;
 }
 
 /** 由出发日期推导出的季节 / 天气 / 打包建议，全部基于常年气候参考值 */

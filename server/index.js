@@ -2,19 +2,62 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const rateLimit = require('express-rate-limit');
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { buildPrompt } = require('./prompt');
 const { normalize } = require('./normalize');
+const { buildSpotReplacementPrompt, normalizeReplacement } = require('./spot-replacement');
+const { authMiddleware } = require('./auth');
+const authRoutes = require('./auth-routes');
+const planRoutes = require('./plan-routes');
+const shareRoutes = require('./share-routes');
 
 const app = express();
-app.use(cors());
+
+// P1-2 改进：CORS 收敛，生产环境限制来源
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    origin: allowedOrigins.length ? allowedOrigins : true, // 无配置时允许所有（开发模式）
+    credentials: true,
+    maxAge: 86400
+  })
+);
+
 app.use(express.json({ limit: '1mb' }));
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 const API_URL = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+
+// ——— P0-2 改进：API 限流 ———
+// AI 生成（花钱）：每小时 60 次（免费用户）或 120 次（登录用户）
+const generateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: (req) => {
+    // 登录用户额度翻倍
+    const hasAuth = req.headers.authorization?.startsWith('Bearer ');
+    return hasAuth ? 120 : 60;
+  },
+  message: { error: 'RATE_LIMITED', message: 'AI 生成调用过于频繁，请稍后再试（每小时上限）' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path.startsWith('/api/auth') // auth 路由不受限
+});
+
+// 地理编码：每分钟 120 次（前端刷新频繁）
+const geocodeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { error: 'RATE_LIMITED', message: '定位请求过于频繁' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, model: MODEL, hasKey: Boolean(DEEPSEEK_API_KEY) });
@@ -50,7 +93,7 @@ app.get('/api/travel-intelligence', async (req, res) => {
   }
 });
 
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', generateLimiter, async (req, res) => {
   if (!DEEPSEEK_API_KEY) {
     return res.status(503).json({ error: 'NO_API_KEY', message: '服务端未配置 DeepSeek API Key' });
   }
@@ -72,6 +115,141 @@ app.post('/api/generate', async (req, res) => {
   } catch (err) {
     console.error('[generate] error:', err && err.message ? err.message : err);
     res.status(502).json({ error: 'GENERATE_FAILED', message: err && err.message ? err.message : '生成失败' });
+  }
+});
+
+app.post('/api/replace-spot', generateLimiter, async (req, res) => {
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(503).json({
+      currentSpotName: '',
+      destinationName: '',
+      message: '服务端未配置 API Key，暂时无法替换景点。',
+      candidates: []
+    });
+  }
+
+  const prefs = req.body || {};
+  try {
+    const content = await callDeepSeek(buildSpotReplacementPrompt(prefs));
+    let data;
+    try {
+      data = JSON.parse(content);
+    } catch (e) {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (!match) {
+        throw new Error('AI 返回内容无法解析为 JSON');
+      }
+      data = JSON.parse(match[0]);
+    }
+    res.json(normalizeReplacement(data, prefs));
+  } catch (err) {
+    console.error('[replace-spot] error:', err && err.message ? err.message : err);
+    res.status(200).json({
+      currentSpotName: prefs.currentSpot && prefs.currentSpot.name ? prefs.currentSpot.name : '',
+      destinationName: prefs.destinationName || prefs.customDestination || '目的地',
+      message: 'AI 替换失败，已保留原景点。',
+      candidates: []
+    });
+  }
+});
+
+// ——— 用户认证 & 方案 & 分享路由 ———
+app.use('/api/auth', authRoutes);
+app.use('/api/shared', shareRoutes);
+app.use('/api/plans', authMiddleware, planRoutes);
+
+// ——— 地点地理编码（限流保护）———
+const AMAP_KEY = process.env.AMAP_API_KEY || '';
+
+app.get('/api/geocode', geocodeLimiter, async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (!q) return res.status(400).json({ error: 'MISSING_QUERY' });
+  const city = String(req.query.city || '').trim();
+  const fallbackLat = Number(req.query.lat || 0);
+  const fallbackLng = Number(req.query.lng || 0);
+  const fallback = fallbackLat && fallbackLng ? { lat: fallbackLat, lng: fallbackLng } : null;
+
+  const isOversea = (() => {
+    if (fallbackLat && (fallbackLat < 18 || fallbackLat > 54)) return true;
+    if (fallbackLng && (fallbackLng < 73 || fallbackLng > 136)) return true;
+    const chinese = /[\u4e00-\u9fa5]/;
+    if (city && !chinese.test(city)) return true;
+    return false;
+  })();
+
+  try {
+    let results = [];
+
+    // --- 1. 高德 Web 服务 API ---
+    if (AMAP_KEY && !isOversea) {
+      try {
+        let url = `https://restapi.amap.com/v3/geocode/geo?key=${AMAP_KEY}&address=${encodeURIComponent(q)}&output=JSON`;
+        if (city) url += `&city=${encodeURIComponent(city)}`;
+        const amapResp = await fetch(url);
+        if (amapResp.ok) {
+          const amap = await amapResp.json();
+          if (amap.status === '1' && Array.isArray(amap.geocodes) && amap.geocodes.length) {
+            results = amap.geocodes.slice(0, 3).map((g) => {
+              const [lng, lat] = String(g.location).split(',').map(Number);
+              return {
+                name: g.address_component?.street || g.formatted_address?.split(/[省市]/)[1] || q,
+                display_name: g.formatted_address,
+                lat,
+                lng,
+                country: '',
+                admin1: g.address_component?.province || ''
+              };
+            }).filter((r) => r.lat && r.lng);
+          }
+        }
+      } catch { /* 降级 */ }
+    }
+
+    // --- 2. Open-Meteo ---
+    if (results.length === 0) {
+      try {
+        const searchName = (city && !isOversea && !q.includes(city)) ? `${q} ${city}` : q;
+        const omResp = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=5&language=zh&format=json`
+        );
+        if (omResp.ok) {
+          const om = await omResp.json();
+          if (Array.isArray(om.results)) {
+            results = om.results.map((r) => ({
+              name: r.name,
+              display_name: r.display_name || [r.admin1, r.country].filter(Boolean).join(', '),
+              lat: Number(r.latitude),
+              lng: Number(r.longitude),
+              country: r.country || '',
+              admin1: r.admin1 || ''
+            })).filter((r) => r.lat && r.lng);
+          }
+        }
+      } catch { /* 降级 */ }
+    }
+
+    // --- 3. 兜底：目的地中心 ---
+    if (results.length === 0 && fallback) {
+      results = [{
+        name: q,
+        display_name: '（未匹配到精确位置，使用城市中心）',
+        lat: fallback.lat,
+        lng: fallback.lng,
+        country: '',
+        admin1: ''
+      }];
+    }
+
+    res.json({ results });
+  } catch (error) {
+    console.error('[geocode] failed:', error?.message);
+    if (fallback) {
+      res.json({
+        results: [{ name: q, display_name: '', lat: fallback.lat, lng: fallback.lng, country: '', admin1: '' }]
+      });
+    } else {
+      res.status(500).json({ error: 'INTERNAL' });
+    }
   }
 });
 
@@ -189,7 +367,7 @@ function buildSmartAdvice({ weather, destination, startDate }) {
     advice.push(`出发日期为 ${startDate}，建议结合当地天气做调整，避免把雨天/高温时段安排给关键景点。`);
   }
 
-  advice.push(`针对 ${destination} 的行程，建议将重点景点按“早上景点 + 午餐休息 + 晚间夜景”的节奏来排。`);
+  advice.push(`针对 ${destination} 的行程，建议将重点景点按"早上景点 + 午餐休息 + 晚间夜景"的节奏来排。`);
   return advice.slice(0, 4);
 }
 
@@ -231,12 +409,9 @@ async function callDeepSeek(prefs) {
 const PORT = Number(process.env.PORT) || 3000;
 
 // ---- 生产环境：同一个服务同时托管 Angular 构建产物 ----
-// DeepSeek Key 只保存在 server/.env，并只在服务端被使用,
-// 因此浏览器端打包产物(dist/)里永远不会包含它。
 const clientDir = path.join(__dirname, '..', 'dist', 'travelling-ai');
 if (fs.existsSync(path.join(clientDir, 'index.html'))) {
   app.use(express.static(clientDir));
-  // SPA 回退：所有非 /api 的 GET 请求都返回 index.html，支持前端路由刷新
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) {
       return next();

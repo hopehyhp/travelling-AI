@@ -9,6 +9,8 @@ import {
   PURPOSE_LABELS,
   Recommendation,
   SeasonContext,
+  SpotPlan,
+  SpotReplacementResult,
   TravelContext,
   TravelPreferences
 } from '../models/travel.model';
@@ -46,6 +48,57 @@ export class AiService {
       }
     }).pipe(
       catchError(() => of(this.buildFallbackContext(destinationName)))
+    );
+  }
+
+  replaceSpot(
+    prefs: TravelPreferences,
+    spot: SpotPlan,
+    dayIndex: number,
+    recommendation: Recommendation | null
+  ): Observable<SpotReplacementResult> {
+    const destination = this.resolveDestination(prefs);
+    const season = this.seasonService.buildContext(destination, prefs);
+
+    const day = recommendation?.days?.[dayIndex];
+    const daySpotNames = day?.spots.map((s) => s.name) ?? [];
+    const plannedSpotNames = (recommendation?.days ?? [])
+      .flatMap((d) => d.spots.map((s) => s.name));
+
+    const body = {
+      destinationId: prefs.destinationId,
+      destinationName: this.resolveDestinationName(prefs),
+      customDestination: prefs.customDestination,
+      travelIdea: (prefs.travelIdea ?? '').trim(),
+      days: prefs.days,
+      people: prefs.people,
+      companionLabel: COMPANION_LABELS[prefs.companion],
+      placeTypeLabels: prefs.placeTypes.map((t) => PLACE_TYPE_LABELS[t]),
+      purposeLabel: PURPOSE_LABELS[prefs.purpose],
+      budget: prefs.budget,
+      dateLabel: season.dateLabel,
+      seasonLabel: season.seasonLabel,
+      tempLabel: season.tempLabel,
+      climateNote: destination?.climate?.note ?? '',
+      dayIndex,
+      dayTitle: day?.title ?? '',
+      dayFocus: day?.focus ?? '',
+      daySpotNames,
+      plannedSpotNames,
+      currentSpot: {
+        name: spot.name,
+        category: spot.category,
+        description: spot.description
+      }
+    };
+
+    return this.http.post<SpotReplacementResult>('/api/replace-spot', body).pipe(
+      catchError(() => of({
+        currentSpotName: spot.name,
+        destinationName: this.resolveDestinationName(prefs),
+        message: 'AI 暂时不可用，已保留原景点。',
+        candidates: []
+      }))
     );
   }
 

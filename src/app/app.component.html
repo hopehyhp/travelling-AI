@@ -1,97 +1,28 @@
 <div class="app-shell">
-  <!-- 首页 / 开始 -->
-  <section *ngIf="view === 'landing'" class="landing">
-    <div class="landing-hero">
-      <div class="landing-badge">✈️ AI 智能规划</div>
-      <h1 class="landing-title">你的专属<br />旅行攻略</h1>
-      <p class="landing-sub">把旅行偏好交给 AI<br />几秒钟，生成一份像私人顾问一样的行程</p>
-      <div class="landing-features">
-        <span class="feature-chip">📍 智能推荐</span>
-        <span class="feature-chip">🗓️ 行程规划</span>
-        <span class="feature-chip">💰 预算评估</span>
-      </div>
+  <!-- 顶部用户栏 -->
+  <header class="app-header" *ngIf="router.url !== '/auth' && !router.url.startsWith('/share/')">
+    <div class="header-left">
+      <span class="brand" (click)="router.navigate(['/'])">✈️ Travelling AI</span>
     </div>
-
-    <div class="landing-visual" aria-hidden="true">
-      <span class="big-emoji">🗺️</span>
-      <span class="floating f1">🏔️</span>
-      <span class="floating f2">🏖️</span>
-      <span class="floating f3">🍜</span>
-      <span class="floating f4">📸</span>
-    </div>
-
-    <button class="start-btn" type="button" (click)="onStart()">
-      开始定制
-      <span class="start-arrow">→</span>
-    </button>
-    <button class="start-btn secondary-btn" type="button" (click)="onIdeaStart()">
-      我有旅行想法
-    </button>
-    <p class="landing-foot">已为你准备 12 个旅行灵感地 · 适配不同风格偏好</p>
-  </section>
-
-  <section *ngIf="view === 'idea'" class="idea-screen">
-    <div class="idea-wrap">
-      <button class="back-link" type="button" (click)="onIdeaBack()">← 返回首页</button>
-      <div class="idea-card">
-        <p class="idea-kicker">我有旅行想法</p>
-        <h2 class="idea-title">告诉我们你想去哪里、想怎么玩</h2>
-        <p class="idea-hint">未填写的行程条件将按 3 天、2 人、情侣同行和 ¥5000 规划。</p>
-
-        <label class="idea-label" for="travel-idea-input">描述你的旅行想法</label>
-        <textarea
-          id="travel-idea-input"
-          [(ngModel)]="ideaDraft"
-          class="idea-input"
-          rows="6"
-          maxlength="500"
-          placeholder="例如：我想去三亚度假，想看亚龙湾和蜈支洲岛，想吃海鲜、放松海边散步。"
-        ></textarea>
-
-        <div class="idea-meta">
-          <span>{{ ideaDraft.length }}/500</span>
-          <span *ngIf="ideaError" class="idea-error">{{ ideaError }}</span>
-        </div>
-
-        <button class="start-btn" type="button" (click)="onIdeaSubmit()">
-          开始生成攻略
-          <span class="start-arrow">→</span>
+    <div class="header-right">
+      <ng-container *ngIf="auth.currentUser$ | async as user; else loginTpl">
+        <button class="header-btn link" (click)="goProfile()">我的方案</button>
+        <button class="user-chip" (click)="goProfile()" title="进入个人中心">
+          <span class="avatar-mini">{{ userInitial(user) }}</span>
+          <span class="user-name">{{ userLabel(user) }}</span>
         </button>
-      </div>
+        <button class="header-btn" (click)="doLogout()">退出</button>
+      </ng-container>
+      <ng-template #loginTpl>
+        <button class="header-btn primary" (click)="goAuth()">登录 / 注册</button>
+      </ng-template>
     </div>
-  </section>
+  </header>
 
-  <!-- 分步选择向导 -->
-  <app-questionnaire
-    *ngIf="view === 'wizard'"
-    [preferences]="preferences"
-    (generate)="onGenerate($event)"
-    (home)="onHome()"
-  ></app-questionnaire>
-
-  <!-- AI 生成中 -->
-  <section *ngIf="view === 'generating'" class="generating">
-    <div class="gen-visual">
-      <span class="gen-emoji">🧭</span>
-      <span class="gen-ring"></span>
-    </div>
-    <h2 class="gen-title">AI 正在为你规划…</h2>
-    <p class="gen-sub">根据你的偏好生成专属行程，通常只需几秒</p>
-    <div class="gen-dots">
-      <span></span><span></span><span></span>
-    </div>
-  </section>
-
-  <!-- 攻略结果 -->
-  <div *ngIf="view === 'result'">
-    <div class="gen-banner" *ngIf="generating">
-      <span class="gen-spinner"></span> AI 正在更新攻略…
-    </div>
-    <app-result
-      [preferences]="preferences"
-      [recommendation]="recommendation!"
-      (preferencesChange)="onPreferencesChange($event)"
-      (restart)="onRestart()"
-    ></app-result>
+  <!-- 顶部 generating overlay：在结果页重新生成时显示 -->
+  <div class="gen-banner" *ngIf="isGenerating && router.url === '/result'">
+    <span class="gen-spinner"></span> AI 正在更新攻略…
   </div>
+
+  <router-outlet></router-outlet>
 </div>
