@@ -1,5 +1,356 @@
 @import 'leaflet/dist/leaflet.css';
 
+/* PrimeNG 核心样式 + 主题 */
+@import 'primeng/resources/primeng.min.css';
+@import 'primeng/resources/themes/lara-light-purple/theme.css';
+@import 'primeicons/primeicons.css';
+
+/* ---------- PrimeNG 主题覆盖：匹配 呼呼去哪儿 的紫/薰衣草色调 ---------- */
+:root {
+  /* PrimeNG Lara 主题的 CSS 变量覆盖 */
+  --primary-color: #6d6ae9;
+  --primary-color-text: #ffffff;
+  --primary-color-hover: #5a57d4;
+  --primary-color-active: #4a47c0;
+  --primary-color-focus: rgba(109, 106, 233, 0.15);
+
+  --highlight-bg: rgba(109, 106, 233, 0.08);
+  --highlight-text-color: #6d6ae9;
+
+  /* 与项目 CSS 变量保持一致 */
+  /* 渐变整体加深：最亮端 #6663e0 与白字对比度 4.7:1，保证按钮文字可读 */
+  --p-button-primary-bg: linear-gradient(135deg, #4c48cc 0%, #5a56d8 55%, #6663e0 100%);
+}
+
+/* PrimeNG p-button 主按钮 → 渐变紫风格 */
+.p-button.p-button-primary {
+  background: var(--p-button-primary-bg) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 20px rgba(109, 106, 233, 0.18) !important;
+  font-weight: 600 !important;
+  transition: transform 0.1s ease, box-shadow 0.2s ease !important;
+}
+.p-button.p-button-primary:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 14px 24px rgba(109, 106, 233, 0.24) !important;
+}
+.p-button.p-button-primary:active:not(:disabled) {
+  transform: scale(0.98) !important;
+}
+.p-button.p-button-primary:disabled {
+  opacity: 0.55 !important;
+  box-shadow: none !important;
+}
+
+/* PrimeNG p-button 次级按钮（outlined） */
+.p-button.p-button-outlined,
+.p-button.p-button-secondary {
+  border-radius: 14px !important;
+  border-color: rgba(98, 109, 143, 0.18) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #1d2433 !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+}
+.p-button.p-button-outlined:hover:not(:disabled),
+.p-button.p-button-secondary:hover:not(:disabled) {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  background: #fff !important;
+}
+
+/* PrimeNG p-inputtext 输入框 → 圆角紫焦点 */
+.p-inputtext,
+.p-dropdown,
+.p-calendar .p-inputtext,
+.p-select,
+.p-multiselect {
+  border-radius: 12px !important;
+  border-color: rgba(98, 109, 143, 0.14) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  padding: 10px 14px !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  width: 100%;
+}
+.p-inputtext:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-calendar .p-inputtext:focus,
+.p-select:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(109, 106, 233, 0.1) !important;
+}
+
+/* PrimeNG p-card → 匹配项目卡片圆角和阴影 */
+.p-card {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  background: var(--card) !important;
+  backdrop-filter: blur(10px);
+}
+/* PrimeNG 全局 p-card 统一：body 置零，padding 集中到 content */
+.p-card .p-card-body {
+  padding: 0 !important;
+}
+.p-card .p-card-content {
+  padding: 20px !important;  /* 全局唯一默认内容内边距 */
+}
+.p-card .p-card-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+.p-card .p-card-subtitle {
+  font-size: 13px !important;
+  color: var(--text-soft) !important;
+}
+
+/* PrimeNG p-dialog → 更圆润的弹窗 */
+.p-dialog {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+.p-dialog .p-dialog-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 18px 22px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+.p-dialog .p-dialog-content {
+  padding: 22px !important;
+}
+.p-dialog .p-dialog-footer {
+  border-top: 1px solid var(--border) !important;
+  padding: 14px 22px !important;
+}
+.p-dialog .p-dialog-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+.p-dialog-mask {
+  background: rgba(30, 28, 60, 0.35) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* PrimeNG p-slider → 匹配紫调 */
+.p-slider .p-slider-range {
+  background: linear-gradient(90deg, #6d6ae9, #8a9bff) !important;
+  border-radius: 10px !important;
+  height: 6px !important;
+  top: 1px !important;
+}
+.p-slider .p-slider-handle {
+  border-color: var(--primary) !important;
+  background: #fff !important;
+  width: 18px !important;
+  height: 18px !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin-top: 0 !important;
+  box-shadow: 0 3px 10px rgba(109, 106, 233, 0.3) !important;
+  border-width: 2px !important;
+}
+.p-slider.p-horizontal {
+  height: 8px !important;
+  border-radius: 10px !important;
+}
+
+/* PrimeNG p-progressSpinner → 匹配紫色 */
+.p-progress-spinner-circle {
+  stroke: var(--primary) !important;
+}
+
+/* PrimeNG p-tabView / p-tabMenu → 扁平轻量标签 */
+.p-tabview .p-tabview-nav {
+  border: none !important;
+  background: transparent !important;
+}
+.p-tabview .p-tabview-nav li.p-tabview-selected .p-tabview-nav-link {
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+.p-tabview .p-tabview-nav-link {
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: var(--text-soft) !important;
+  font-weight: 500 !important;
+  padding: 10px 18px !important;
+  transition: all 0.15s ease !important;
+}
+.p-tabview .p-tabview-nav-link:hover {
+  color: var(--primary) !important;
+}
+.p-tabview .p-tabview-panels {
+  border: none !important;
+  padding: 16px 0 0 !important;
+}
+
+/* PrimeNG p-tabMenu */
+.p-tabmenu .p-tabmenu-nav {
+  border: none !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 14px !important;
+  padding: 4px !important;
+  gap: 4px !important;
+  display: flex !important;
+}
+.p-tabmenu .p-tabmenu-nav li {
+  margin: 0 !important;
+  border-radius: 10px !important;
+  flex: 1 !important;
+}
+.p-tabmenu .p-tabmenu-nav li.p-tabmenu-active .p-tabmenu-nav-link {
+  background: var(--grad) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+}
+.p-tabmenu .p-tabmenu-nav-link {
+  border: none !important;
+  color: var(--text-soft) !important;
+  font-weight: 500 !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  transition: all 0.15s ease !important;
+}
+.p-tabmenu .p-tabmenu-nav-link:hover:not(.p-tabmenu-active) {
+  background: rgba(109, 106, 233, 0.08) !important;
+  color: var(--primary) !important;
+}
+
+/* PrimeNG p-tag / p-badge → 胶囊标签 */
+.p-tag {
+  border-radius: 999px !important;
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+.p-tag.p-tag-info {
+  background: rgba(109, 106, 233, 0.1) !important;
+  color: var(--primary) !important;
+  border: none !important;
+}
+.p-badge {
+  background: var(--primary) !important;
+}
+
+/* PrimeNG p-progressBar → 紫色渐变进度 */
+.p-progressbar .p-progressbar-value {
+  background: var(--grad) !important;
+  border-radius: 10px !important;
+}
+.p-progressbar {
+  border-radius: 10px !important;
+  background: rgba(109, 106, 233, 0.1) !important;
+}
+
+/* PrimeNG p-toast / p-messages → 柔和的提示框 */
+.p-toast-message-info,
+.p-toast-message-success {
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px rgba(38, 55, 89, 0.12) !important;
+}
+.p-toast-message-info {
+  border-left: 4px solid var(--primary) !important;
+}
+
+/* PrimeNG p-divider → 柔和分隔 */
+.p-divider.p-divider-horizontal:before {
+  background: var(--border) !important;
+}
+
+/* PrimeNG p-dropdown 面板 */
+.p-dropdown-panel {
+  border-radius: 14px !important;
+  box-shadow: 0 14px 36px rgba(38, 55, 89, 0.12) !important;
+  border: 1px solid var(--border) !important;
+  padding: 6px !important;
+}
+.p-dropdown-items-wrapper {
+  padding: 0 !important;
+}
+.p-dropdown-item {
+  border-radius: 10px !important;
+  padding: 9px 12px !important;
+  color: var(--text) !important;
+}
+.p-dropdown-item:hover {
+  background: rgba(109, 106, 233, 0.08) !important;
+  color: var(--primary) !important;
+}
+.p-dropdown-item.p-highlight {
+  background: rgba(109, 106, 233, 0.12) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+/* PrimeNG p-calendar 日历面板 */
+.p-calendar .p-inputtext { width: 100%; }
+/* 关键：日历弹出面板必须盖过 sticky footer / wizard-topbar */
+.p-datepicker,
+.p-datepicker-panel,
+body > .p-datepicker {
+  z-index: 9999 !important;
+}
+.p-datepicker {
+  border-radius: 16px !important;
+  box-shadow: 0 16px 40px rgba(38, 55, 89, 0.14) !important;
+  border: 1px solid var(--border) !important;
+  overflow: hidden !important;
+}
+.p-datepicker .p-datepicker-header {
+  border: none !important;
+  padding: 14px !important;
+  background: transparent !important;
+}
+.p-datepicker .p-datepicker-title {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+.p-datepicker .p-datepicker-table-header th {
+  color: var(--text-soft) !important;
+  font-size: 12px !important;
+}
+.p-datepicker td span,
+.p-datepicker td a {
+  border-radius: 10px !important;
+  padding: 8px !important;
+  color: var(--text) !important;
+  transition: all 0.12s ease !important;
+}
+.p-datepicker td a:hover {
+  background: rgba(109, 106, 233, 0.1) !important;
+  color: var(--primary) !important;
+}
+.p-datepicker td.p-datepicker-today a {
+  background: rgba(109, 106, 233, 0.12) !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+.p-datepicker td.p-datepicker-selected a {
+  background: var(--grad) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(109, 106, 233, 0.24) !important;
+}
+
+/* PrimeNG p-confirmDialog */
+.p-confirm-dialog .p-dialog-content {
+  padding: 24px 22px !important;
+}
+
+/* PrimeNG p-avatar */
+.p-avatar {
+  background: var(--grad) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
 :root {
   --bg: #f5f6fb;
   --bg-strong: #ebeaf7;
@@ -10,17 +361,25 @@
   --primary: #6d6ae9;
   --primary-2: #8b88ef;
   --primary-3: #dfe4ff;
-  --accent: #b89dff;
-  --accent-soft: rgba(184, 157, 255, 0.14);
+  /* 原 #b89dff 在白底对比度仅 2.2:1，小字号价格文案看不清 */
+  --accent: #7b4ddb;
+  --accent-soft: rgba(123, 77, 219, 0.12);
   --border: rgba(98, 109, 143, 0.12);
   --shadow: 0 18px 42px rgba(38, 55, 89, 0.08);
   --radius: 22px;
-  --grad: linear-gradient(135deg, #6d6ae9 0%, #8a9bff 48%, #c9d3ff 100%);
+  --app-header-h: 52px;
+  --grad: linear-gradient(135deg, #4c48cc 0%, #5a56d8 55%, #6663e0 100%);
   --muted-grad: linear-gradient(135deg, rgba(109, 106, 233, 0.08), rgba(201, 211, 255, 0.12));
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* ---------- 键盘焦点可见性：全站此前没有任何焦点样式，Tab 操作等于盲走 ---------- */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 html,
@@ -43,7 +402,7 @@ body {
 
 app-root {
   display: block;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .leaflet-container {
@@ -155,6 +514,13 @@ button {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(109, 106, 233, 0.1);
   background: #fff;
+}
+
+/* .select / .input 的 outline:none 会盖掉全局焦点环，这里补回来 */
+.select:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .stepper-row {
@@ -337,4 +703,312 @@ button {
 /* ---------- 全局弹窗滚动锁 ---------- */
 body.modal-locked {
   overflow: hidden !important;
+}
+
+/* ============================================================
+   以下样式：子组件全局样式（避免 Angular ViewEncapsulation 隔离）
+   这些类名用于独立子组件的 template 中：
+   - SpotDetailModalComponent   (.spot-modal-*, .spot-detail-map, .spot-nav-btn)
+   - PlanSaveDialogComponent   (.auth-modal-*)
+   - PlanShareDialogComponent  (.auth-modal-*, .share-*)
+   - SpotReplacementPanelComponent (.replacement-*)
+   ============================================================ */
+
+/* ---------- Spot Detail Modal（景点详情弹窗 + 内嵌地图） ---------- */
+/* ---------- Spot Detail Modal (PrimeNG p-dialog) ---------- */
+
+/* p-dialog 外壳：圆角 + 阴影 + 自定义滚动条 */
+.spot-dialog-p.p-dialog {
+  border-radius: 22px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255,255,255,0.98) !important;
+  box-shadow: 0 24px 60px rgba(29, 27, 51, 0.2) !important;
+  overflow: hidden !important;
+  padding: 22px 26px !important;
+}
+.spot-dialog-p .p-dialog-header { display: none !important; }
+.spot-dialog-p .p-dialog-content {
+  padding: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109, 106, 233, 0.3) transparent;
+}
+.spot-dialog-p .p-dialog-content::-webkit-scrollbar { width: 6px; }
+.spot-dialog-p .p-dialog-content::-webkit-scrollbar-thumb {
+  background: rgba(109, 106, 233, 0.25); border-radius: 3px;
+}
+/* 遮罩层美化 */
+.p-dialog-mask {
+  background: rgba(16, 23, 36, 0.48) !important;
+  backdrop-filter: blur(4px) !important;
+  animation: spotModalBackdrop 0.18s ease-out !important;
+}
+@keyframes spotModalBackdrop { from { opacity: 0; } to { opacity: 1; } }
+
+/* 自定义 header（标题 + 时间胶囊 + category tag） */
+.spot-dlg-header {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px dashed var(--border);
+}
+.spot-dlg-title-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.spot-dlg-header h3 {
+  margin: 0 !important;
+  font-size: 1.4rem; font-weight: 800; color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.spot-modal-time {
+  display: inline-flex; align-items: center;
+  border-radius: 999px; padding: 4px 12px;
+  background: rgba(109, 106, 233, 0.1);
+  font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+  color: var(--primary); flex-shrink: 0;
+}
+
+.spot-modal-desc { margin: 0; color: var(--text-soft); line-height: 1.7; font-size: 13px; }
+
+.spot-modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.spot-modal-stat {
+  padding: 12px; border-radius: 12px;
+  background: rgba(247,249,252,0.9); border: 1px solid var(--border);
+}
+.spot-modal-stat .label { display: block; font-size: 11px; color: var(--text-soft); margin-bottom: 4px; font-weight: 600; }
+.spot-modal-stat strong { font-size: 1rem; color: var(--text); }
+
+.spot-modal-detail { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(247,249,252,0.8); border: 1px solid var(--border); }
+.spot-modal-detail p { margin: 0; font-size: 12px; color: var(--text-soft); line-height: 1.6; }
+
+/* 地图区块 —— 关键修复：给 Leaflet 容器明确高度 */
+.spot-map-section { margin: 14px 0; }
+.spot-detail-map {
+  position: relative;
+  width: 100% !important;
+  height: 180px !important;
+  min-height: 180px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: #f1f5f9 !important;
+  border: 1px solid var(--border) !important;
+  z-index: 1;
+}
+/* 覆盖 Leaflet 自身的 inline styles */
+.spot-detail-map.leaflet-container {
+  height: 180px !important;
+  min-height: 180px !important;
+  width: 100% !important;
+}
+.spot-detail-map .leaflet-pane { z-index: 2; }
+.spot-detail-map .leaflet-popup-content-wrapper { border-radius: 8px; }
+.spot-detail-map .leaflet-popup-content { font-size: 12px; margin: 0.4rem 0.7rem; }
+
+@media (min-width: 768px) {
+  .spot-detail-map { height: 220px !important; min-height: 220px !important; }
+  .spot-detail-map.leaflet-container { height: 220px !important; }
+}
+
+/* ---------- 地图区块内的 loading 覆盖层（替代难看的裸 spinner） ---------- */
+.spot-map-section {
+  position: relative;
+}
+.spot-map-section:has(.spot-map-status) {
+  /* 让 loading 成为覆盖在地图区上的优雅状态 */
+}
+
+.spot-map-status {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  font-size: 12px; color: var(--text-soft);
+  border-radius: 10px;
+  background: linear-gradient(90deg,
+    rgba(109,106,233,0.05),
+    rgba(201,211,255,0.08));
+  border: 1px solid rgba(109,106,233,0.12);
+  font-weight: 600;
+}
+.spot-map-status .p-progress-spinner {
+  width: 18px !important; height: 18px !important;
+}
+.spot-map-status .p-progress-spinner-circle {
+  stroke: var(--primary) !important;
+  stroke-width: 3 !important;
+}
+.spot-map-status.error {
+  color: #92400e;
+  background: linear-gradient(90deg, rgba(255,189,89,0.1), rgba(254,202,202,0.1));
+  border-color: rgba(255,189,89,0.25);
+}
+
+/* geo 候选 chips */
+.spot-geo-candidates { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spot-geo-candidates-label { font-size: 11px; color: var(--text-soft); margin-right: 2px; }
+.spot-geo-chip-p {
+  padding: 4px 10px !important;
+  border: 1px solid rgba(109,106,233,0.25) !important;
+  border-radius: 999px !important;
+  background: rgba(109,106,233,0.06) !important;
+  color: var(--primary) !important;
+  font-size: 12px !important; font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.12s ease !important;
+}
+.spot-geo-chip-p:hover:not(.active) { background: rgba(109,106,233,0.12) !important; }
+.spot-geo-chip-p.active {
+  background: linear-gradient(135deg, #6d6ae9, #8a9bff) !important;
+  color: #fff !important; border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(109,106,233,0.3) !important;
+}
+
+/* 导航按钮组 */
+.spot-nav-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.spot-nav-btn-p {
+  flex: 1; min-width: 80px; text-align: center;
+  padding: 10px 8px !important;
+  border-radius: 10px !important;
+  font-size: 12.5px !important; font-weight: 600 !important;
+  text-decoration: none;
+  box-shadow: none !important;
+  transition: opacity 0.15s, transform 0.05s !important;
+}
+.spot-nav-btn-p:hover:not(:disabled) { opacity: 0.88 !important; }
+.spot-nav-btn-p:active { transform: translateY(1px) !important; }
+.spot-nav-btn-p.amap { background: linear-gradient(135deg, #00b578, #00935f) !important; color: #fff !important; border: none !important; }
+.spot-nav-btn-p.baidu { background: linear-gradient(135deg, #2932e1, #1c26ad) !important; color: #fff !important; border: none !important; }
+.spot-nav-btn-p.google { background: #fff !important; color: #5f6368 !important; border: 1px solid #dadce0 !important; }
+.spot-nav-btn-p.google:hover:not(:disabled) { background: #f8f9fa !important; }
+
+/* insight 区 */
+.spot-modal-insight { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.spot-modal-insight .insight-title { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 8px; }
+.spot-modal-insight ul { margin: 0; padding-left: 18px; color: var(--text-soft); font-size: 13px; line-height: 1.8; }
+
+/* 弹窗底部按钮 */
+.spot-modal-btn-p {
+  width: 100% !important; margin-top: 18px !important;
+  padding: 12px !important; font-size: 14px !important; font-weight: 700 !important;
+  border-radius: 12px !important;
+}
+
+/* ---------- Auth / Plan Share / Plan Save Modal ---------- */
+.auth-modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(16, 23, 36, 0.42);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: spotModalBackdrop 0.2s ease-out;
+}
+.auth-modal-card.p-card {
+  width: min(100%, 440px);
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255,255,255,0.98) !important;
+  box-shadow: 0 20px 50px rgba(29, 27, 51, 0.16) !important;
+  animation: spotModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.auth-modal-card.p-card > .p-card-body { padding: 22px 24px !important; }
+.auth-modal-card.p-card > .p-card-body > .p-card-content { padding: 0 !important; }
+.auth-modal-sub { font-size: 13px; color: var(--text-soft); margin: 8px 0 14px; line-height: 1.6; }
+
+.auth-modal-error {
+  margin-top: 10px; padding: 8px 12px;
+  border-radius: 10px;
+  background: #fef2f2; border: 1px solid #fecaca;
+  color: #b91c1c; font-size: 12.5px; font-weight: 600;
+}
+.auth-modal-loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 0; color: var(--text-soft); font-size: 13px;
+}
+.auth-modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.share-link-row { display: flex; gap: 8px; margin: 8px 0 4px; }
+.share-link-row .share-link-input {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 12px; color: #334155; background: #f8fafc !important;
+}
+.share-link-hint { font-size: 11px; color: var(--text-soft); margin: 0; }
+
+.share-stats {
+  margin-top: 14px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(109,106,233,0.06), rgba(201,211,255,0.12));
+  border: 1px solid rgba(109,106,233,0.2);
+}
+.share-stat-item { font-size: 13px; color: var(--text-soft); }
+.share-stat-item strong { color: var(--primary); font-size: 1rem; margin: 0 2px; }
+.share-stat-hint { margin-left: auto; font-size: 11px; color: var(--text-soft); }
+
+/* ---------- Spot Replacement Panel ---------- */
+.replacement-panel {
+  margin-top: 6px;
+  padding: 14px; border-radius: 14px;
+  border: 1px solid rgba(109,106,233,0.25);
+  background: rgba(109,106,233,0.04);
+}
+.replacement-panel__header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.replacement-panel__header strong { font-size: 13px; font-weight: 700; color: var(--primary); }
+.replacement-copy { margin: 0 0 10px; font-size: 12px; color: var(--text-soft); }
+.replacement-list { display: flex; flex-direction: column; gap: 6px; }
+.replacement-item-p {
+  display: flex !important; flex-direction: column !important; gap: 2px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.92) !important;
+  color: var(--text) !important;
+  text-align: left !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all 0.12s ease !important;
+}
+.replacement-item-p:hover:not(:disabled) { border-color: rgba(109,106,233,0.4) !important; background: #fff !important; }
+.replacement-item-p .replacement-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.replacement-item-p .replacement-meta { font-size: 11px; color: var(--text-soft); font-weight: 600; }
+.replacement-item-p .replacement-desc { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+.replacement-empty { padding: 14px; text-align: center; font-size: 12px; color: var(--text-soft); }
+
+/* ============================================================
+   分享页 p-card：写在 result 组件里的同名规则受组件作用域限制不生效，
+   这里放全局，保证分享页卡片与站内其它页面同一套外观
+   ============================================================ */
+.shared-card-p.p-card,
+.shared-guest-p.p-card,
+.shared-loggedin-p.p-card {
+  border-radius: 22px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+.shared-card-p.p-card > .p-card-body,
+.shared-guest-p.p-card > .p-card-body,
+.shared-loggedin-p.p-card > .p-card-body {
+  padding: 0 !important;
+}
+.shared-card-p.p-card > .p-card-body > .p-card-content,
+.shared-guest-p.p-card > .p-card-body > .p-card-content,
+.shared-loggedin-p.p-card > .p-card-body > .p-card-content {
+  padding: 22px 26px !important;
+}
+@media (max-width: 560px) {
+  .shared-card-p.p-card > .p-card-body > .p-card-content,
+  .shared-guest-p.p-card > .p-card-body > .p-card-content,
+  .shared-loggedin-p.p-card > .p-card-body > .p-card-content {
+    padding: 18px 16px !important;
+  }
 }

@@ -14,6 +14,8 @@ import { AuthService, AuthUser } from './services/auth.service';
 })
 export class AppComponent implements OnInit, OnDestroy {
   isGenerating = false;
+  /** 结果页是否已有可展示内容：用于区分“首次生成”和“已有内容时刷新” */
+  hasRecommendation = false;
 
   private regenerate$ = new Subject<void>();
   private destroy$ = new Subject<void>();
@@ -52,19 +54,22 @@ export class AppComponent implements OnInit, OnDestroy {
           }
         }
       });
+
+    // 结果页已有内容时才显示顶部“更新中”提示，首次生成只保留页面内的加载态
+    this.state.recommendationChanges()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((rec) => {
+        this.hasRecommendation = !!rec;
+      });
   }
 
   ngOnInit(): void {
     // 页面启动时校验登录态（读取 localStorage + /api/auth/me 验证）
     this.auth.init();
 
-    const restored = this.state.restore();
-    if (restored && this.state.recommendation) {
-      const currentUrl = this.router.url;
-      if (currentUrl === '/' || currentUrl === '') {
-        this.router.navigate(['/result']);
-      }
-    }
+    // 仅恢复上次生成的攻略，供 /result 直接刷新时渲染；
+    // 访问首页时不再自动跳到结果页，用户回到首页即停留在首页。
+    this.state.restore();
   }
 
   ngOnDestroy(): void {

@@ -1,47 +1,50 @@
 <section class="shared-screen">
   <div *ngIf="isLoading" class="shared-loading">
-    <div class="shared-spinner"></div>
+    <p-progressSpinner strokeWidth="3"></p-progressSpinner>
     <p>正在加载朋友分享的旅行方案…</p>
   </div>
 
   <div *ngIf="error" class="shared-error">
     <h2>😢 {{ error.title }}</h2>
     <p>{{ error.message }}</p>
-    <button class="primary-btn" (click)="router.navigate(['/'])">回到首页</button>
+    <button pButton type="button" class="p-button-primary" (click)="router.navigate(['/'])">
+      <span class="pi pi-home" style="margin-right: 6px;"></span>回到首页
+    </button>
   </div>
 
   <div *ngIf="plan && !isLoading" class="shared-wrap">
-    <div class="shared-card">
-      <div class="shared-kicker">朋友分享的旅行方案</div>
+    <p-card class="shared-card-p">
+      <p-tag severity="info" [rounded]="true">朋友分享的旅行方案</p-tag>
       <h1 class="shared-title">{{ plan.plan_name }}</h1>
       <p class="shared-meta">来自 <strong>{{ plan.owner }}</strong> · {{ plan.recommendation.destinationName || '' }}</p>
       <div class="shared-stats" *ngIf="plan.view_count !== undefined">
-        <span>👀 {{ plan.view_count }} 次浏览</span>
-        <span *ngIf="plan.import_count !== undefined">· 📥 {{ plan.import_count }} 次导入</span>
+        <p-tag severity="info" [rounded]="true">👀 {{ plan.view_count }} 次浏览</p-tag>
+        <p-tag severity="success" [rounded]="true" *ngIf="plan.import_count !== undefined">📥 {{ plan.import_count }} 次导入</p-tag>
       </div>
-    </div>
+    </p-card>
 
-    <div *ngIf="!auth.currentUser" class="shared-guest-card">
-      <h3>💡 想保存这份方案？</h3>
+    <p-card *ngIf="!auth.currentUser" class="shared-guest-p">
+      <h3 style="margin-top: 0;">💡 想保存这份方案？</h3>
       <p>登录后可以把它保存到你的账户里，随时查看和修改。</p>
       <div class="shared-guest-actions">
-        <button class="primary-btn" (click)="goAuth()">登录 / 注册</button>
-        <button class="ghost-btn" (click)="previewInResult()">先预览一下</button>
+        <button pButton type="button" class="p-button-primary" (click)="goAuth()">登录 / 注册</button>
+        <button pButton type="button" class="p-button-outlined" (click)="previewInResult()">先预览一下</button>
       </div>
-    </div>
+    </p-card>
 
-    <div *ngIf="auth.currentUser" class="shared-loggedin-card">
+    <p-card *ngIf="auth.currentUser" class="shared-loggedin-p">
       <p>你已登录为 <strong>{{ auth.currentUser.username }}</strong></p>
       <div class="shared-loggedin-actions">
-        <button class="primary-btn" (click)="importToAccount()" [disabled]="importing">
+        <button pButton type="button" class="p-button-primary" (click)="importToAccount()" [disabled]="importing">
+          <span [class]="{ 'pi pi-spinner pi-spin': importing }" style="margin-right: 6px;"></span>
           {{ importing ? '正在保存…' : '保存到我的账户' }}
         </button>
-        <button class="ghost-btn" (click)="previewInResult()">在新标签预览攻略</button>
+        <button pButton type="button" class="p-button-outlined" (click)="previewInResult()">在新标签预览攻略</button>
       </div>
-    </div>
+    </p-card>
 
     <div class="shared-actions-bottom">
-      <button class="text-btn" (click)="router.navigate(['/'])">回到 Travelling AI 首页</button>
+      <button pButton type="button" class="p-button-text" (click)="router.navigate(['/'])">回到 呼呼去哪儿 首页</button>
     </div>
   </div>
 </section>

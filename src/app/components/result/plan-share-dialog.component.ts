@@ -2,28 +2,27 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ShareResult } from '../../services/plan.service';
 
 /**
- * 分享方案 Modal。负责展示分享链接、复制、统计浏览/导入。
- * 实际的 share 生成 / 统计刷新逻辑仍在父组件（需要 PlanService），
- * 子组件只展示 @Input 并 emit copy/close。
+ * 分享方案 Modal — 使用 PrimeNG p-card + p-button。
  */
 @Component({
   selector: 'app-plan-share-dialog',
   template: `
     <div class="auth-modal-backdrop" *ngIf="open" (click)="close.emit()">
-      <div class="auth-modal" (click)="$event.stopPropagation()">
-        <h3 class="auth-modal-title">🔗 分享方案</h3>
+      <p-card class="auth-modal-card" (click)="$event.stopPropagation()">
+        <p-header><h3 style="margin: 0;">🔗 分享方案</h3></p-header>
 
         <div *ngIf="loading" class="auth-modal-loading">
-          <div class="shared-spinner"></div>
+          <p-progressSpinner strokeWidth="2"></p-progressSpinner>
           <span>正在生成分享链接…</span>
         </div>
 
         <ng-container *ngIf="result && !loading">
           <p class="auth-modal-sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
           <div class="share-link-row">
-            <input class="auth-field-input share-link-input" readonly [value]="result.share_url" />
-            <button class="primary-btn" type="button" (click)="copyLink()">
-              {{ copied ? '✅ 已复制' : '复制链接' }}
+            <input pInputText readonly [value]="result.share_url" class="share-link-input" />
+            <button pButton type="button" class="p-button-primary" (click)="copyLink()">
+              <span [class]="copied ? 'pi pi-check' : 'pi pi-copy'" style="margin-right: 6px;"></span>
+              {{ copied ? '已复制' : '复制链接' }}
             </button>
           </div>
           <div class="share-stats" *ngIf="result.view_count !== undefined">
@@ -37,9 +36,9 @@ import { ShareResult } from '../../services/plan.service';
         <div *ngIf="error" class="auth-modal-error">{{ error }}</div>
 
         <div class="auth-modal-actions" *ngIf="!loading">
-          <button class="ghost-btn" type="button" (click)="close.emit()">关闭</button>
+          <button pButton type="button" class="p-button-text" (click)="close.emit()">关闭</button>
         </div>
-      </div>
+      </p-card>
     </div>
   `
 })

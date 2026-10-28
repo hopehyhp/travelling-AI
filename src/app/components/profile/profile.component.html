@@ -1,7 +1,7 @@
 <section class="p-page" *ngIf="user; else loadingTpl">
   <!-- —— Hero：头像 + 身份信息 + 账号操作 —— -->
   <header class="p-hero">
-    <div class="p-hero__icon">{{ avatarText }}</div>
+    <p-avatar [label]="avatarText" size="xlarge" styleClass="p-hero__avatar"></p-avatar>
     <div class="p-hero__main">
       <h1 class="p-hero__name">{{ displayName }}</h1>
       <p class="p-hero__meta">
@@ -22,31 +22,35 @@
       </div>
     </div>
     <div class="p-hero__actions">
-      <button type="button" class="p-btn p-btn--primary" (click)="goCreate()">＋ 新建方案</button>
-      <button type="button" class="p-btn p-btn--ghost" (click)="openImport()">导入分享</button>
+      <button pButton type="button" class="p-button-primary" (click)="goCreate()">
+        <span class="pi pi-plus" style="margin-right: 6px;"></span>新建方案
+      </button>
+      <button pButton type="button" class="p-button-outlined" (click)="openImport()">
+        <span class="pi pi-download" style="margin-right: 6px;"></span>导入分享
+      </button>
     </div>
   </header>
 
-  <!-- —— 账号操作条（单行按钮） —— -->
+  <!-- —— 账号操作条 —— -->
   <div class="p-account-row">
-    <button type="button" class="p-account-chip" (click)="openProfileModal()">
+    <button pButton type="button" class="p-account-chip-p" (click)="openProfileModal()">
       <span class="p-account-chip__k">资料</span>
       <span class="p-account-chip__v">{{ displayName }}{{ user.email ? ' · ' + user.email : '' }}</span>
-      <span class="p-account-chip__arrow">›</span>
+      <span class="pi pi-angle-right p-account-chip__arrow"></span>
     </button>
-    <button type="button" class="p-account-chip" (click)="openPasswordModal()">
+    <button pButton type="button" class="p-account-chip-p" (click)="openPasswordModal()">
       <span class="p-account-chip__k">安全</span>
       <span class="p-account-chip__v">修改登录密码</span>
-      <span class="p-account-chip__arrow">›</span>
+      <span class="pi pi-angle-right p-account-chip__arrow"></span>
     </button>
-    <button type="button" class="p-account-chip p-account-chip--danger" (click)="doLogout()">
+    <button pButton type="button" class="p-account-chip-p p-account-chip--danger" (click)="doLogout()">
       <span class="p-account-chip__k">退出</span>
       <span class="p-account-chip__v">结束当前登录</span>
-      <span class="p-account-chip__arrow">›</span>
+      <span class="pi pi-angle-right p-account-chip__arrow"></span>
     </button>
   </div>
 
-  <!-- —— 方案历史（主内容） —— -->
+  <!-- —— 方案历史 —— -->
   <section class="p-section">
     <div class="p-section__head">
       <div>
@@ -57,55 +61,51 @@
 
     <div class="p-toolbar">
       <input
-        class="p-input"
+        pInputText
         type="search"
         [(ngModel)]="search"
         placeholder="搜索方案名称或目的地"
         aria-label="搜索方案"
+        styleClass="p-toolbar-search"
       />
-      <select class="p-select" [(ngModel)]="sort" aria-label="方案排序">
-        <option value="updated">最近更新</option>
-        <option value="created">最近创建</option>
-        <option value="name">按名称</option>
-      </select>
+      <p-dropdown
+        [options]="[
+          { label: '最近更新', value: 'updated' },
+          { label: '最近创建', value: 'created' },
+          { label: '按名称', value: 'name' }
+        ]"
+        [(ngModel)]="sort"
+        placeholder="排序方式"
+        styleClass="p-toolbar-sort"
+      ></p-dropdown>
     </div>
 
-    <p class="p-flash p-flash--ok" *ngIf="pageNotice">{{ pageNotice }}</p>
-    <p class="p-flash p-flash--err" *ngIf="listError">{{ listError }}</p>
+    <div class="p-flash p-flash--ok" *ngIf="pageNotice">{{ pageNotice }}</div>
+    <div class="p-flash p-flash--err" *ngIf="listError">{{ listError }}</div>
 
-    <p class="p-loading" *ngIf="loadingPlans">正在加载方案…</p>
+    <div class="p-loading" *ngIf="loadingPlans">
+      <p-progressSpinner strokeWidth="2"></p-progressSpinner>
+      <span>正在加载方案…</span>
+    </div>
 
     <ng-container *ngIf="!loadingPlans">
       <div class="p-empty" *ngIf="!visiblePlans.length">
         <p class="p-empty__kicker">{{ plans.length ? '没有匹配的方案' : '还没有保存过方案' }}</p>
         <h3>{{ plans.length ? '换个关键词试试' : '完成一次旅行规划，就能在这里管理' }}</h3>
         <p class="p-empty__desc">{{ plans.length ? '或清空搜索条件重新浏览。' : '保存方案之后，随时可以回来继续编辑、分享或复制副本。' }}</p>
-        <button type="button" class="p-btn p-btn--primary" (click)="goCreate()">开始规划</button>
+        <button pButton type="button" class="p-button-primary" (click)="goCreate()">开始规划</button>
       </div>
 
       <ul class="p-list">
         <li class="p-item" *ngFor="let plan of visiblePlans">
-          <button
-            type="button"
-            class="p-item__icon"
-            (click)="openPlan(plan)"
-            [disabled]="busyPlanId !== null"
-            [attr.aria-label]="'打开方案 ' + plan.name"
-          >
-            {{ (plan.destination || plan.name).trim().slice(0, 1) }}
-          </button>
+          <p-avatar [label]="(plan.destination || plan.name).trim().slice(0, 1)" size="normal" styleClass="p-item__avatar"></p-avatar>
 
           <div class="p-item__main">
             <div class="p-item__title-row">
-              <button
-                type="button"
-                class="p-item__title"
-                (click)="openPlan(plan)"
-                [disabled]="busyPlanId !== null"
-              >
+              <button pButton type="button" class="p-button-text p-item__title" (click)="openPlan(plan)" [disabled]="busyPlanId !== null">
                 {{ plan.name }}
               </button>
-              <span class="p-pill" *ngIf="plan.shared">已分享</span>
+              <p-tag *ngIf="plan.shared" severity="success" [rounded]="true">已分享</p-tag>
             </div>
             <p class="p-item__meta">
               <span>{{ plan.destination || '未填目的地' }}</span>
@@ -118,11 +118,11 @@
           <div class="p-item__time" title="最后更新">更新于 {{ formatDate(plan.updated_at) }}</div>
 
           <div class="p-item__actions">
-            <button type="button" class="p-link" (click)="openPlan(plan)" [disabled]="busyPlanId !== null">打开</button>
-            <button type="button" class="p-link" (click)="openRename(plan)">重命名</button>
-            <button type="button" class="p-link" (click)="openShare(plan)">{{ plan.shared ? '分享链接' : '分享' }}</button>
-            <button type="button" class="p-link" (click)="duplicatePlan(plan)" [disabled]="busyPlanId !== null">复制</button>
-            <button type="button" class="p-link p-link--danger" (click)="askDelete(plan)">删除</button>
+            <button pButton type="button" class="p-button-text" (click)="openPlan(plan)" [disabled]="busyPlanId !== null">打开</button>
+            <button pButton type="button" class="p-button-text" (click)="openRename(plan)">重命名</button>
+            <button pButton type="button" class="p-button-text" (click)="openShare(plan)">{{ plan.shared ? '分享链接' : '分享' }}</button>
+            <button pButton type="button" class="p-button-text" (click)="duplicatePlan(plan)" [disabled]="busyPlanId !== null">复制</button>
+            <button pButton type="button" class="p-button-text p-danger-text" (click)="askDelete(plan)">删除</button>
           </div>
         </li>
       </ul>
@@ -132,197 +132,199 @@
 
 <ng-template #loadingTpl>
   <div class="p-loading-screen">
+    <p-progressSpinner strokeWidth="2"></p-progressSpinner>
     <p>{{ authReady ? '正在跳转登录…' : '正在加载账户信息…' }}</p>
   </div>
 </ng-template>
 
 <!-- —— 编辑资料弹窗 —— -->
 <div class="p-modal-mask" *ngIf="profileModalOpen" (click)="closeProfileModal()">
-  <form class="p-modal" (ngSubmit)="saveProfile()" (click)="$event.stopPropagation()">
-    <h3>个人资料</h3>
-    <p class="p-modal__sub">修改昵称、邮箱或个人简介，保存后立即生效。</p>
+  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
+    <p-header>
+      <h3 style="margin: 0;">个人资料</h3>
+      <p class="p-modal__sub">修改昵称、邮箱或个人简介，保存后立即生效。</p>
+    </p-header>
 
-    <label class="p-field">
+    <div class="p-field">
       <span>昵称</span>
-      <input
-        class="p-input"
-        type="text"
-        name="nickname"
-        [(ngModel)]="profileForm.nickname"
-        maxlength="20"
-        placeholder="最多 20 个字符"
-        [disabled]="savingProfile"
-      />
-    </label>
-    <label class="p-field">
+      <input pInputText type="text" name="nickname" [(ngModel)]="profileForm.nickname" maxlength="20" placeholder="最多 20 个字符" [disabled]="savingProfile" />
+    </div>
+    <div class="p-field">
       <span>邮箱</span>
-      <input
-        class="p-input"
-        type="email"
-        name="email"
-        [(ngModel)]="profileForm.email"
-        placeholder="选填，便于后续找回账号"
-        [disabled]="savingProfile"
-      />
-    </label>
-    <label class="p-field">
+      <input pInputText type="email" name="email" [(ngModel)]="profileForm.email" placeholder="选填，便于后续找回账号" [disabled]="savingProfile" />
+    </div>
+    <div class="p-field">
       <span>个人简介</span>
-      <textarea
-        class="p-input"
-        name="bio"
-        rows="3"
-        [(ngModel)]="profileForm.bio"
-        maxlength="120"
-        placeholder="介绍一下你的旅行偏好"
-        [disabled]="savingProfile"
-      ></textarea>
-    </label>
+      <textarea pInputTextarea name="bio" rows="3" [(ngModel)]="profileForm.bio" maxlength="120" placeholder="介绍一下你的旅行偏好" [disabled]="savingProfile"></textarea>
+    </div>
 
-    <p class="p-flash p-flash--err" *ngIf="profileError">{{ profileError }}</p>
-    <p class="p-flash p-flash--ok" *ngIf="profileNotice">{{ profileNotice }}</p>
+    <div class="p-flash p-flash--err" *ngIf="profileError">{{ profileError }}</div>
+    <div class="p-flash p-flash--ok" *ngIf="profileNotice">{{ profileNotice }}</div>
 
     <div class="p-modal__actions">
-      <button type="button" class="p-link" (click)="closeProfileModal()" [disabled]="savingProfile">取消</button>
-      <button type="submit" class="p-btn p-btn--primary" [disabled]="savingProfile">
+      <button pButton type="button" class="p-button-text" (click)="closeProfileModal()" [disabled]="savingProfile">取消</button>
+      <button pButton type="button" class="p-button-primary" [disabled]="savingProfile">
+        <span [class]="{ 'pi pi-spinner pi-spin': savingProfile }" style="margin-right: 6px;"></span>
         {{ savingProfile ? '保存中…' : '保存资料' }}
       </button>
     </div>
-  </form>
+  </p-card>
 </div>
 
 <!-- —— 修改密码弹窗 —— -->
 <div class="p-modal-mask" *ngIf="passwordModalOpen" (click)="closePasswordModal()">
-  <form class="p-modal" (ngSubmit)="changePassword()" (click)="$event.stopPropagation()">
-    <h3>修改密码</h3>
-    <p class="p-modal__sub">输入当前密码，再设置一个新密码。</p>
+  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
+    <p-header>
+      <h3 style="margin: 0;">修改密码</h3>
+      <p class="p-modal__sub">输入当前密码，再设置一个新密码。</p>
+    </p-header>
 
-    <label class="p-field">
+    <div class="p-field">
       <span>当前密码</span>
-      <input
-        class="p-input"
-        type="password"
-        name="currentPassword"
-        [(ngModel)]="passwordForm.current"
-        autocomplete="current-password"
-        placeholder="输入当前密码"
-        [disabled]="savingPassword"
-      />
-    </label>
-    <label class="p-field">
+      <input pInputText type="password" name="currentPassword" [(ngModel)]="passwordForm.current" autocomplete="current-password" placeholder="输入当前密码" [disabled]="savingPassword" />
+    </div>
+    <div class="p-field">
       <span>新密码</span>
-      <input
-        class="p-input"
-        type="password"
-        name="newPassword"
-        [(ngModel)]="passwordForm.next"
-        autocomplete="new-password"
-        placeholder="4-64 位"
-        [disabled]="savingPassword"
-      />
-    </label>
-    <label class="p-field">
+      <input pInputText type="password" name="newPassword" [(ngModel)]="passwordForm.next" autocomplete="new-password" placeholder="4-64 位" [disabled]="savingPassword" />
+    </div>
+    <div class="p-field">
       <span>确认新密码</span>
-      <input
-        class="p-input"
-        type="password"
-        name="confirmPassword"
-        [(ngModel)]="passwordForm.confirm"
-        autocomplete="new-password"
-        placeholder="再次输入新密码"
-        [disabled]="savingPassword"
-      />
-    </label>
+      <input pInputText type="password" name="confirmPassword" [(ngModel)]="passwordForm.confirm" autocomplete="new-password" placeholder="再次输入新密码" [disabled]="savingPassword" />
+    </div>
 
-    <p class="p-flash p-flash--err" *ngIf="passwordError">{{ passwordError }}</p>
-    <p class="p-flash p-flash--ok" *ngIf="passwordNotice">{{ passwordNotice }}</p>
+    <div class="p-flash p-flash--err" *ngIf="passwordError">{{ passwordError }}</div>
+    <div class="p-flash p-flash--ok" *ngIf="passwordNotice">{{ passwordNotice }}</div>
 
     <div class="p-modal__actions">
-      <button type="button" class="p-link" (click)="closePasswordModal()" [disabled]="savingPassword">取消</button>
-      <button type="submit" class="p-btn p-btn--primary" [disabled]="savingPassword">
+      <button pButton type="button" class="p-button-text" (click)="closePasswordModal()" [disabled]="savingPassword">取消</button>
+      <button pButton type="button" class="p-button-primary" [disabled]="savingPassword">
+        <span [class]="{ 'pi pi-spinner pi-spin': savingPassword }" style="margin-right: 6px;"></span>
         {{ savingPassword ? '更新中…' : '更新密码' }}
       </button>
     </div>
-  </form>
+  </p-card>
 </div>
 
 <!-- —— 重命名弹窗 —— -->
 <div class="p-modal-mask" *ngIf="renameTarget" (click)="closeRename()">
-  <div class="p-modal" (click)="$event.stopPropagation()">
-    <h3>重命名方案</h3>
-    <input class="p-input" type="text" [(ngModel)]="renameName" maxlength="60" placeholder="输入新的方案名称" />
-    <p class="p-flash p-flash--err" *ngIf="renameError">{{ renameError }}</p>
+  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
+    <p-header><h3 style="margin: 0;">重命名方案</h3></p-header>
+    <input pInputText type="text" [(ngModel)]="renameName" maxlength="60" placeholder="输入新的方案名称" />
+    <div class="p-flash p-flash--err" *ngIf="renameError">{{ renameError }}</div>
     <div class="p-modal__actions">
-      <button type="button" class="p-link" (click)="closeRename()" [disabled]="renameLoading">取消</button>
-      <button type="button" class="p-btn p-btn--primary" (click)="confirmRename()" [disabled]="renameLoading || !renameName.trim()">
+      <button pButton type="button" class="p-button-text" (click)="closeRename()" [disabled]="renameLoading">取消</button>
+      <button pButton type="button" class="p-button-primary" (click)="confirmRename()" [disabled]="renameLoading || !renameName.trim()">
+        <span [class]="{ 'pi pi-spinner pi-spin': renameLoading }" style="margin-right: 6px;"></span>
         {{ renameLoading ? '保存中…' : '保存' }}
       </button>
     </div>
-  </div>
+  </p-card>
 </div>
 
 <!-- —— 分享弹窗 —— -->
 <div class="p-modal-mask" *ngIf="shareDialog.open" (click)="closeShare()">
-  <div class="p-modal" (click)="$event.stopPropagation()">
-    <h3>分享方案</h3>
-    <p class="p-modal__sub">{{ shareDialog.plan?.name }}</p>
-    <p class="p-flash p-flash--err" *ngIf="shareDialog.error">{{ shareDialog.error }}</p>
-    <p class="p-loading" *ngIf="shareDialog.loading">正在生成分享链接…</p>
+  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
+    <p-header>
+      <h3 style="margin: 0;">分享方案</h3>
+      <p class="p-modal__sub">{{ shareDialog.plan?.name }}</p>
+    </p-header>
+
+    <div class="p-flash p-flash--err" *ngIf="shareDialog.error">{{ shareDialog.error }}</div>
+
+    <div class="p-share-loading" *ngIf="shareDialog.loading">
+      <p-progressSpinner strokeWidth="2"></p-progressSpinner>
+      <span>正在生成分享链接…</span>
+    </div>
+
     <ng-container *ngIf="!shareDialog.loading && shareDialog.url">
-      <input class="p-input p-input--mono" type="text" [value]="shareDialog.url" readonly />
+      <p class="p-modal__sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
+      <input pInputText type="text" class="p-input-mono" [value]="shareDialog.url" readonly />
       <div class="p-modal__actions p-modal__actions--split">
-        <button
-          type="button"
-          class="p-link p-link--danger"
-          *ngIf="shareDialog.plan as sharePlan"
-          (click)="cancelShare(sharePlan)"
-        >
-          取消分享
-        </button>
-        <button type="button" class="p-btn p-btn--primary" (click)="copyShareLink()">
-          {{ shareDialog.copied ? '已复制 ✓' : '复制链接' }}
+        <button pButton *ngIf="shareDialog.plan" type="button" class="p-button-text p-danger-text" (click)="cancelShare(shareDialog.plan)">取消分享</button>
+        <button pButton type="button" class="p-button-primary" (click)="copyShareLink()">
+          <span class="pi pi-check" *ngIf="shareDialog.copied" style="margin-right: 6px;"></span>
+          {{ shareDialog.copied ? '已复制' : '复制链接' }}
         </button>
       </div>
     </ng-container>
-  </div>
+  </p-card>
 </div>
 
 <!-- —— 删除弹窗 —— -->
 <div class="p-modal-mask" *ngIf="deleteTarget" (click)="closeDelete()">
-  <div class="p-modal" (click)="$event.stopPropagation()">
-    <h3>删除方案</h3>
+  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
+    <p-header><h3 style="margin: 0;">删除方案</h3></p-header>
     <p class="p-modal__sub">确定要删除「{{ deleteTarget.name }}」吗？该操作不可恢复。</p>
-    <p class="p-flash p-flash--err" *ngIf="deleteError">{{ deleteError }}</p>
+    <div class="p-flash p-flash--err" *ngIf="deleteError">{{ deleteError }}</div>
     <div class="p-modal__actions">
-      <button type="button" class="p-link" (click)="closeDelete()" [disabled]="deleteLoading">取消</button>
-      <button type="button" class="p-btn p-btn--danger" (click)="confirmDelete()" [disabled]="deleteLoading">
+      <button pButton type="button" class="p-button-text" (click)="closeDelete()" [disabled]="deleteLoading">取消</button>
+      <button pButton type="button" class="p-button-danger" (click)="confirmDelete()" [disabled]="deleteLoading">
+        <span [class]="{ 'pi pi-spinner pi-spin': deleteLoading }" style="margin-right: 6px;"></span>
         {{ deleteLoading ? '删除中…' : '确认删除' }}
       </button>
     </div>
-  </div>
+  </p-card>
 </div>
 
 <!-- —— 导入弹窗 —— -->
 <div class="p-modal-mask" *ngIf="importDialog.open" (click)="closeImport()">
-  <div class="p-modal" (click)="$event.stopPropagation()">
-    <h3>导入分享方案</h3>
-    <p class="p-modal__sub">粘贴好友分享的链接或分享码，方案会复制到你的账户。</p>
-    <input
-      class="p-input"
-      type="text"
-      [(ngModel)]="importDialog.token"
-      placeholder="https://.../share/xxxx 或分享码"
-    />
-    <p class="p-flash p-flash--err" *ngIf="importDialog.error">{{ importDialog.error }}</p>
-    <div class="p-modal__actions">
-      <button type="button" class="p-link" (click)="closeImport()" [disabled]="importDialog.loading">取消</button>
-      <button
-        type="button"
-        class="p-btn p-btn--primary"
-        (click)="confirmImport()"
-        [disabled]="importDialog.loading || !importDialog.token.trim()"
-      >
-        {{ importDialog.loading ? '导入中…' : '导入' }}
+  <section
+    class="p-import"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="importDialogTitle"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="p-import__head">
+      <span class="p-import__icon pi pi-cloud-download" aria-hidden="true"></span>
+      <div class="p-import__heading">
+        <h3 id="importDialogTitle">导入分享方案</h3>
+        <p>粘贴好友分享的链接或分享码，方案会复制到你的账户。</p>
+      </div>
+      <button type="button" class="p-import__close" aria-label="关闭" (click)="closeImport()">
+        <span class="pi pi-times" aria-hidden="true"></span>
       </button>
-    </div>
-  </div>
+    </header>
+
+    <form class="p-import__body" (ngSubmit)="confirmImport()">
+      <label class="p-import__label" for="importToken">分享链接 / 分享码</label>
+      <div class="p-import__field" [class.p-import__field--filled]="importDialog.token.trim()">
+        <span class="p-import__field-icon pi pi-link" aria-hidden="true"></span>
+        <input
+          id="importToken"
+          name="importToken"
+          pInputText
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+          [(ngModel)]="importDialog.token"
+          [disabled]="importDialog.loading"
+          placeholder="https://…/share/xxxx"
+        />
+        <button
+          type="button"
+          class="p-import__clear pi pi-times"
+          aria-label="清空输入"
+          *ngIf="importDialog.token"
+          (click)="importDialog.token = ''"
+        ></button>
+      </div>
+      <p class="p-import__hint">支持完整链接，也可以只粘贴 /share/ 后面的分享码。</p>
+
+      <div class="p-import__error" *ngIf="importDialog.error">
+        <span class="pi pi-exclamation-circle" aria-hidden="true"></span>
+        <span>{{ importDialog.error }}</span>
+      </div>
+
+      <footer class="p-import__actions">
+        <button pButton type="button" class="p-button-text" (click)="closeImport()" [disabled]="importDialog.loading">取消</button>
+        <button pButton type="submit" class="p-button-primary p-import__submit" [disabled]="importDialog.loading || !importDialog.token.trim()">
+          <span *ngIf="importDialog.loading" class="pi pi-spinner pi-spin" style="margin-right: 6px;"></span>
+          <span *ngIf="!importDialog.loading" class="pi pi-download" style="margin-right: 6px;"></span>
+          {{ importDialog.loading ? '导入中…' : '导入方案' }}
+        </button>
+      </footer>
+    </form>
+  </section>
 </div>

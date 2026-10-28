@@ -95,7 +95,7 @@ pm2 startup
 
 ```ini
 [Unit]
-Description=Travelling AI
+Description=呼呼去哪儿
 After=network.target
 
 [Service]

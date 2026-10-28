@@ -1,4 +1,4 @@
-# Travelling AI
+# 呼呼去哪儿
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Angular-16-DD0031?style=for-the-badge&logo=angular" alt="Angular 16" /></a>
@@ -17,7 +17,7 @@
 
 ## ✨ 产品概览
 
-Travelling AI 是一个结合 Angular 前端与 Node 后端的旅行规划应用，用户可以在一套多步骤引导流程中填写需求，系统随后生成一份结构化旅行方案，包括：
+呼呼去哪儿 是一个结合 Angular 前端与 Node 后端的旅行规划应用，用户可以在一套多步骤引导流程中填写需求，系统随后生成一份结构化旅行方案，包括：
 
 - 目的地与旅行主题选择
 - 伴侣、兴趣点、出行目的偏好
@@ -197,7 +197,7 @@ npm test
 
 ## 结语
 
-Travelling AI 结合了 AI 生成能力和真实旅行决策场景，旨在让用户从“填写偏好”变成“获得一份更靠谱的旅行方案”。
+呼呼去哪儿 结合了 AI 生成能力和真实旅行决策场景，旨在让用户从“填写偏好”变成“获得一份更靠谱的旅行方案”。
 
 如果你希望，我还可以继续为这个项目补充：
 

@@ -1,7 +1,7 @@
 /* ---------- Idea 想法输入 ---------- */
 .idea-screen {
   box-sizing: border-box;
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--app-header-h));
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -13,26 +13,20 @@
   width: min(100%, 35rem);
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-bottom: 16px;
+/* 返回按钮 */
+.back-link-btn {
+  color: var(--text-soft) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  margin-bottom: 16px !important;
 }
 
-.idea-card {
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid var(--border);
-  border-radius: 1.5rem;
-  padding: clamp(1.25rem, 5vw, 2rem);
-  box-shadow: var(--shadow);
+/* p-card 作为想法卡片 */
+.idea-card-p.p-card {
+  border-radius: 24px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
 }
 
 .idea-kicker {
@@ -64,23 +58,14 @@
   font-weight: 700;
 }
 
-.idea-input {
+/* p-inputtextarea 覆盖 */
+.idea-input-p.p-inputtextarea {
   width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.96);
-  resize: vertical;
   min-height: 11.25rem;
   padding: 1rem 1.125rem;
-  font: inherit;
-  color: var(--text);
+  font-size: 15px;
   line-height: 1.7;
-}
-
-.idea-input:focus {
-  outline: 2px solid rgba(107, 94, 242, 0.26);
-  border-color: rgba(107, 94, 242, 0.54);
+  resize: vertical;
 }
 
 .idea-meta {
@@ -94,30 +79,30 @@
   font-size: 0.875rem;
 }
 
-.idea-error {
-  flex: 1 1 100%;
-  color: #cc3b4d;
-  font-weight: 700;
-}
-
-/* 复用 landing 页面的 start-btn 样式 */
-.idea-card .start-btn {
-  display: flex;
+/* 提交按钮 */
+.idea-submit-p {
   width: 100%;
   max-width: 22.5rem;
-  min-height: 3.25rem;
-  box-sizing: border-box;
   margin-inline: auto;
-  animation: none;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 16px !important;
+  font-size: 17px !important;
+}
+
+/* p-messages 错误提示 */
+.idea-error-p {
+  flex: 1 1 100%;
+  border-radius: 12px !important;
+  margin-top: 0 !important;
 }
 
 @media (min-width: 768px) {
   .idea-screen {
     align-items: center;
   }
-
-  .idea-error {
+  .idea-error-p {
     flex-basis: auto;
-    text-align: right;
   }
 }

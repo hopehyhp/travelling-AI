@@ -42,6 +42,7 @@ export class IdeaComponent implements OnInit {
     this.ideaError = '';
     this.state.prepareIdea(idea);
     this.state.clearCurrentPlan();
+    this.state.setRecommendation(null);
     this.state.regenerate$.next(this.state.preferences);
     this.router.navigate(['/result']);
   }

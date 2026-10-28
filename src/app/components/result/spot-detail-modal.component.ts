@@ -19,89 +19,106 @@ interface GeoCandidate {
 @Component({
   selector: 'app-spot-detail-modal',
   template: `
-    <div class="spot-modal-backdrop" (click)="close.emit()">
-      <div class="spot-modal" (click)="$event.stopPropagation()">
-        <div class="spot-modal-header">
+    <p-dialog
+      [(visible)]="dialogVisible"
+      header=""
+      [modal]="true"
+      [closable]="true"
+      [dismissableMask]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [appendTo]="'body'"
+      [style]="{ width: 'min(100%, 460px)' }"
+      [contentStyle]="{ overflow: 'auto', maxHeight: 'calc(100dvh - 140px)', padding: '0' }"
+      [showHeader]="false"
+      (onHide)="close.emit()"
+      class="spot-dialog-p"
+    >
+      <!-- 自定义 header -->
+      <div class="spot-dlg-header">
+        <div class="spot-dlg-title-row">
+          <h3>{{ spot.name }}</h3>
           <span class="spot-modal-time">{{ spot.time }}</span>
-          <span class="spot-modal-tag">{{ spot.category }}</span>
         </div>
-        <h3>{{ spot.name }}</h3>
-        <p class="spot-modal-desc">{{ spot.description }}</p>
-
-        <div class="spot-modal-grid">
-          <div class="spot-modal-stat">
-            <span class="label">参考预算</span>
-            <strong>{{ priceLabel }}</strong>
-          </div>
-          <div class="spot-modal-stat">
-            <span class="label">推荐停留</span>
-            <strong>{{ spot.stay || '1.5–2 小时' }}</strong>
-          </div>
-        </div>
-
-        <div class="spot-modal-detail" *ngIf="spot.locationNote || spot.priceNote">
-          <p *ngIf="spot.priceNote">{{ spot.priceNote }}</p>
-          <p *ngIf="spot.locationNote">{{ spot.locationNote }}</p>
-        </div>
-
-        <!-- 景点小地图 -->
-        <div class="spot-map-section">
-          <div id="spot-detail-map" class="spot-detail-map"></div>
-
-          <div class="spot-map-status" *ngIf="geoLoading">
-            <span class="spot-geo-spinner"></span> 正在定位景点坐标…
-          </div>
-          <div class="spot-map-status error" *ngIf="geoError">
-            ⚠️ 未找到精确坐标，可直接使用下方导航按钮
-          </div>
-
-          <!-- 候选坐标：地理编码返回多个结果时让用户选 -->
-          <div class="spot-geo-candidates" *ngIf="geoCandidates.length > 1">
-            <span class="spot-geo-candidates-label">多个匹配结果：</span>
-            <button
-              *ngFor="let c of geoCandidates; let i = index"
-              type="button"
-              class="spot-geo-chip"
-              [class.active]="selectedCoords && c.lat === selectedCoords.lat && c.lng === selectedCoords.lng"
-              (click)="selectGeoCandidate(i)"
-            >
-              {{ c.name }}<span *ngIf="c.admin1"> · {{ c.admin1 }}</span>
-            </button>
-          </div>
-
-          <!-- 导航按钮组 -->
-          <div class="spot-nav-row">
-            <a class="spot-nav-btn amap" [href]="amapNavUrl" target="_blank" rel="noreferrer">🧭 高德导航</a>
-            <a class="spot-nav-btn baidu" [href]="baiduNavUrl" target="_blank" rel="noreferrer">🚕 百度导航</a>
-            <a class="spot-nav-btn google" [href]="googleNavUrl" target="_blank" rel="noreferrer">🗺️ Google 地图</a>
-          </div>
-        </div>
-
-        <div class="spot-modal-insight">
-          <div class="insight-title">为什么推荐它</div>
-          <ul *ngIf="spot.reasons?.length; else noReasonsTpl">
-            <li *ngFor="let reason of spot.reasons">{{ reason }}</li>
-          </ul>
-          <ng-template #noReasonsTpl>
-            <p class="spot-modal-desc">这个地点与你的行程偏好匹配，值得安排到路线中。</p>
-          </ng-template>
-        </div>
-
-        <button type="button" class="spot-modal-btn" (click)="close.emit()">了解了</button>
+        <p-tag severity="info" [rounded]="true">{{ spot.category }}</p-tag>
       </div>
-    </div>
-  `
+
+      <p class="spot-modal-desc">{{ spot.description }}</p>
+
+      <div class="spot-modal-grid">
+        <div class="spot-modal-stat">
+          <span class="label">参考预算</span>
+          <strong>{{ priceLabel }}</strong>
+        </div>
+        <div class="spot-modal-stat">
+          <span class="label">推荐停留</span>
+          <strong>{{ spot.stay || '1.5–2 小时' }}</strong>
+        </div>
+      </div>
+
+      <div class="spot-modal-detail" *ngIf="spot.locationNote || spot.priceNote">
+        <p *ngIf="spot.priceNote">{{ spot.priceNote }}</p>
+        <p *ngIf="spot.locationNote">{{ spot.locationNote }}</p>
+      </div>
+
+      <!-- 景点小地图 -->
+      <div class="spot-map-section">
+        <div id="spot-detail-map" class="spot-detail-map"></div>
+
+        <div class="spot-map-status" *ngIf="geoLoading">
+          <p-progressSpinner strokeWidth="2"></p-progressSpinner>
+          <span>正在定位景点坐标…</span>
+        </div>
+        <div class="spot-map-status error" *ngIf="geoError">
+          ⚠️ 未找到精确坐标，可直接使用下方导航按钮
+        </div>
+
+        <!-- 候选坐标 -->
+        <div class="spot-geo-candidates" *ngIf="geoCandidates.length > 1">
+          <span class="spot-geo-candidates-label">多个匹配结果：</span>
+          <button
+            pButton
+            *ngFor="let c of geoCandidates; let i = index"
+            type="button"
+            class="spot-geo-chip-p"
+            [class.active]="selectedCoords && c.lat === selectedCoords.lat && c.lng === selectedCoords.lng"
+            (click)="selectGeoCandidate(i)"
+          >
+            {{ c.name }}<span *ngIf="c.admin1"> · {{ c.admin1 }}</span>
+          </button>
+        </div>
+
+        <!-- 导航按钮组 -->
+        <div class="spot-nav-row">
+          <a pButton type="button" class="spot-nav-btn-p amap" [href]="amapNavUrl" target="_blank" rel="noreferrer">🧭 高德导航</a>
+          <a pButton type="button" class="spot-nav-btn-p baidu" [href]="baiduNavUrl" target="_blank" rel="noreferrer">🚕 百度导航</a>
+          <a pButton type="button" class="spot-nav-btn-p google" [href]="googleNavUrl" target="_blank" rel="noreferrer">🗺️ Google 地图</a>
+        </div>
+      </div>
+
+      <div class="spot-modal-insight">
+        <div class="insight-title">为什么推荐它</div>
+        <ul *ngIf="spot.reasons?.length; else noReasonsTpl">
+          <li *ngFor="let reason of spot.reasons">{{ reason }}</li>
+        </ul>
+        <ng-template #noReasonsTpl>
+          <p class="spot-modal-desc">这个地点与你的行程偏好匹配，值得安排到路线中。</p>
+        </ng-template>
+      </div>
+
+      <button pButton type="button" class="p-button-primary spot-modal-btn-p" (click)="close.emit()">了解了</button>
+    </p-dialog>
+  `,
+  styleUrls: []
 })
 export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
+  dialogVisible = true;  // p-dialog 绑定：组件一创建就打开
   @Input() spot!: SpotPlan;
   @Input() destinationName = '';
-  /** 目的地中心坐标（用于小地图初始定位 + geocode fallback） */
   @Input() geoFallback!: { lat: number; lng: number };
-
   @Output() close = new EventEmitter<void>();
 
   private map: L.Map | null = null;
-
   geoLoading = true;
   geoError = false;
   geoCandidates: GeoCandidate[] = [];
@@ -110,8 +127,8 @@ export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
   constructor(private http: HttpClient) {}
 
   get priceLabel(): string {
-    if (!this.spot) return '参考估算';
-    return this.spot.cost > 0 ? `¥ ${this.spot.cost}` : '参考估算';
+    if (!this.spot) return '—';
+    return this.spot.cost > 0 ? `¥ ${this.spot.cost}` : '免费';
   }
 
   get amapNavUrl(): string {
@@ -140,7 +157,6 @@ export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    // AfterViewInit 保证模板 DOM 已渲染，可以直接初始化地图
     await this.initMapAndGeocode();
   }
 
@@ -166,7 +182,6 @@ export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // 1. 先初始化空地图（目的地中心）
     const fallback = this.geoFallback ?? { lat: 30.5728, lng: 104.0668 };
     this.map = L.map(container, { zoomControl: true, scrollWheelZoom: false })
       .setView([fallback.lat, fallback.lng], 13);
@@ -177,7 +192,6 @@ export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
     }).addTo(this.map);
     container.classList.add('spot-map-ready');
 
-    // 2. 异步 geocode
     const query = this.buildGeocodeQuery();
     if (!query) {
       this.geoLoading = false;
@@ -206,7 +220,6 @@ export class SpotDetailModalComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** 安全构造 geocode 查询字符串，剥离可能重复的城市名后缀 */
   private buildGeocodeQuery(): string {
     const raw = (this.spot.locationQuery || this.spot.name || '').trim();
     let q = raw;

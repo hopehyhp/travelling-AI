@@ -59,6 +59,11 @@ const geocodeLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// 目的地实时信息短缓存：同一目的地+日期 10 分钟内复用，避免每次改偏好都打满外网
+const travelIntelCache = new Map();
+const TRAVEL_INTEL_CACHE_TTL = 10 * 60 * 1000;
+const TRAVEL_INTEL_CACHE_LIMIT = 100;
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, model: MODEL, hasKey: Boolean(DEEPSEEK_API_KEY) });
 });
@@ -66,21 +71,33 @@ app.get('/api/health', (req, res) => {
 app.get('/api/travel-intelligence', async (req, res) => {
   const destination = String(req.query.destination || '').trim() || '目的地';
   const startDate = String(req.query.startDate || '').trim();
+  const cacheKey = `${destination}::${startDate}`;
+  const cached = travelIntelCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < TRAVEL_INTEL_CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
   const fallbackGeo = { lat: 30.5728, lng: 104.0668, displayName: destination };
 
   try {
-    const geo = await fetchGeo(destination, fallbackGeo);
-    const weather = await fetchWeather(destination, startDate, geo);
-    const highlights = await fetchHighlights(destination, geo);
-    const smartAdvice = buildSmartAdvice({ weather, destination, startDate });
-
-    res.json({
+    // 一次地理编码同时得到城市中心与周边地点，省掉原来第三次串行外网请求
+    const places = await fetchPlaces(destination, fallbackGeo);
+    // 天气依赖城市坐标，必须在其后；两者之间已无多余串行等待
+    const weather = await fetchWeather(destination, startDate, places.geo);
+    const data = {
       destination,
-      geo,
+      geo: places.geo,
       weather,
-      highlights,
-      smartAdvice
-    });
+      highlights: places.highlights,
+      smartAdvice: buildSmartAdvice({ weather, destination, startDate })
+    };
+
+    if (travelIntelCache.size >= TRAVEL_INTEL_CACHE_LIMIT) {
+      travelIntelCache.delete(travelIntelCache.keys().next().value);
+    }
+    travelIntelCache.set(cacheKey, { at: Date.now(), data });
+
+    res.json(data);
   } catch (error) {
     console.error('[travel-intelligence] error:', error && error.message ? error.message : error);
     res.status(200).json({
@@ -253,30 +270,40 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
   }
 });
 
-async function fetchGeo(destination, fallbackGeo) {
+/** 一次地理编码同时产出城市中心与周边地点，替代原先两次重复请求 */
+async function fetchPlaces(destination, fallbackGeo) {
   const query = encodeURIComponent(destination);
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=1&language=zh&format=json`;
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=zh&format=json`;
 
   try {
     const resp = await fetch(url);
     if (!resp.ok) {
-      return fallbackGeo;
+      return { geo: fallbackGeo, highlights: [] };
     }
 
     const data = await resp.json();
-    const match = Array.isArray(data.results) && data.results[0] ? data.results[0] : null;
+    const items = Array.isArray(data.results) ? data.results.slice(0, 5) : [];
+    const match = items[0] ?? null;
     if (!match) {
-      return fallbackGeo;
+      return { geo: fallbackGeo, highlights: [] };
     }
 
-    return {
+    const geo = {
       lat: Number(match.latitude) || fallbackGeo.lat,
       lng: Number(match.longitude) || fallbackGeo.lng,
       displayName: match.name || match.display_name || destination
     };
+    const highlights = items.map((item, index) => ({
+      name: item.name || `${destination}${index + 1}`,
+      lat: Number(item.latitude) || geo.lat,
+      lng: Number(item.longitude) || geo.lng,
+      note: item.country || item.admin1 || '热门地点'
+    }));
+
+    return { geo, highlights };
   } catch (error) {
-    console.error('[fetchGeo] geocoding failed:', error && error.message ? error.message : error);
-    return fallbackGeo;
+    console.error('[fetchPlaces] geocoding failed:', error && error.message ? error.message : error);
+    return { geo: fallbackGeo, highlights: [] };
   }
 }
 
@@ -309,30 +336,6 @@ async function fetchWeather(destination, startDate, geo) {
 
   const today = forecast[0] || null;
   return { today, forecast };
-}
-
-async function fetchHighlights(destination, geo) {
-  const query = encodeURIComponent(destination);
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=zh&format=json`;
-
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      return [];
-    }
-
-    const data = await resp.json();
-    const items = Array.isArray(data.results) ? data.results.slice(0, 5) : [];
-    return items.map((item, index) => ({
-      name: item.name || `${destination}${index + 1}`,
-      lat: Number(item.latitude) || geo.lat,
-      lng: Number(item.longitude) || geo.lng,
-      note: item.country || item.admin1 || '热门地点'
-    }));
-  } catch (error) {
-    console.error('[fetchHighlights] geocoding failed:', error && error.message ? error.message : error);
-    return [];
-  }
 }
 
 function inferSummary(maxTemp, rainChance) {

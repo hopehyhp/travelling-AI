@@ -2,8 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SpotReplacementOption } from '../../models/travel.model';
 
 /**
- * 行程中 inline 的"替换候选"面板。
- * 显示当前要替换的景点、AI 给出的候选列表、以及选择后的回调。
+ * 行程中 inline 的"替换候选"面板 — 使用 PrimeNG p-button。
  */
 @Component({
   selector: 'app-spot-replacement-panel',
@@ -11,13 +10,19 @@ import { SpotReplacementOption } from '../../models/travel.model';
     <div class="replacement-panel">
       <div class="replacement-panel__header">
         <strong>替换候选</strong>
-        <button type="button" class="text-btn" (click)="cancel.emit()">取消</button>
+        <button pButton type="button" class="p-button-text" (click)="cancel.emit()">取消</button>
       </div>
 
       <p class="replacement-copy" *ngIf="notice">{{ notice }}</p>
 
       <div class="replacement-list" *ngIf="options.length; else noReplacementTpl">
-        <button type="button" class="replacement-item" *ngFor="let option of options" (click)="apply.emit(option)">
+        <button
+          pButton
+          type="button"
+          class="replacement-item-p"
+          *ngFor="let option of options"
+          (click)="apply.emit(option)"
+        >
           <span class="replacement-name">{{ option.name }}</span>
           <span class="replacement-meta">{{ option.category }} · ¥ {{ option.cost || '参考' }}</span>
           <span class="replacement-desc">{{ option.description }}</span>

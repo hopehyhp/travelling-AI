@@ -1,9 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
+import { SharedModule } from './shared/primeng.module';
 import { AppComponent } from './app.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { QuestionnaireComponent } from './components/questionnaire/questionnaire.component';
@@ -36,8 +37,9 @@ import { SpotDetailModalComponent } from './components/result/spot-detail-modal.
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
-    FormsModule,
+    SharedModule,
     HttpClientModule
   ],
   providers: [

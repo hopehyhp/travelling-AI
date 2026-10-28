@@ -1,15 +1,16 @@
 <section class="landing">
   <div class="landing-hero">
-    <div class="landing-badge">✈️ AI 智能规划</div>
+    <p-tag severity="info" [rounded]="true">✈️ AI 智能规划</p-tag>
     <h1 class="landing-title">你的专属<br />旅行攻略</h1>
     <p class="landing-sub">把旅行偏好交给 AI<br />几秒钟，生成一份像私人顾问一样的行程</p>
     <div class="landing-features">
-      <span class="feature-chip">📍 智能推荐</span>
-      <span class="feature-chip">🗓️ 行程规划</span>
-      <span class="feature-chip">💰 预算评估</span>
+      <p-tag severity="info" [rounded]="true">📍 智能推荐</p-tag>
+      <p-tag severity="info" [rounded]="true">🗓️ 行程规划</p-tag>
+      <p-tag severity="info" [rounded]="true">💰 预算评估</p-tag>
     </div>
   </div>
 
+  <!-- 视觉元素 PrimeNG 无对应，保留自定义 div -->
   <div class="landing-visual" aria-hidden="true">
     <span class="big-emoji">🗺️</span>
     <span class="floating f1">🏔️</span>
@@ -18,11 +19,11 @@
     <span class="floating f4">📸</span>
   </div>
 
-  <button class="start-btn" type="button" (click)="onStart()">
+  <button pButton type="button" class="p-button-primary landing-start-btn" (click)="onStart()">
     开始定制
-    <span class="start-arrow">→</span>
+    <span class="pi pi-arrow-right" style="margin-left: 8px;"></span>
   </button>
-  <button class="start-btn secondary-btn" type="button" (click)="onIdeaStart()">
+  <button pButton type="button" class="p-button-outlined landing-secondary-btn" (click)="onIdeaStart()">
     我有旅行想法
   </button>
   <p class="landing-foot">已为你准备 12 个旅行灵感地 · 适配不同风格偏好</p>

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MenuItem, Message } from 'primeng/api';
 import { AuthService } from '../../services/auth.service';
 
 type AuthMode = 'login' | 'register';
@@ -16,6 +16,14 @@ export class AuthComponent {
   password = '';
   loading = false;
   error: string | null = null;
+  // p-messages 绑定的消息数组
+  messages: Message[] = [];
+
+  // p-tabMenu 菜单项
+  tabItems: MenuItem[] = [
+    { label: '登录', command: () => { this.mode = 'login'; this.clearError(); } },
+    { label: '注册', command: () => { this.mode = 'register'; this.clearError(); } }
+  ];
 
   constructor(private auth: AuthService, private router: Router) {}
 
@@ -23,10 +31,15 @@ export class AuthComponent {
     this.router.navigate(['/']);
   }
 
+  clearError(): void {
+    this.error = null;
+    this.messages = [];
+  }
+
   onSubmit(): void {
     if (!this.username.trim() || !this.password) return;
     this.loading = true;
-    this.error = null;
+    this.clearError();
 
     const obs = this.mode === 'login'
       ? this.auth.login(this.username.trim(), this.password)
@@ -43,6 +56,7 @@ export class AuthComponent {
         this.loading = false;
         const msg = err?.error?.message || '操作失败，请稍后重试';
         this.error = msg;
+        this.messages = [{ severity: 'error', detail: msg }];
       }
     });
   }

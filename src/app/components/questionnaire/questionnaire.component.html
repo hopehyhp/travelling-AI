@@ -1,16 +1,15 @@
 <div class="wizard">
   <header class="wizard-topbar">
-    <button type="button" class="topbar-back" (click)="back()" aria-label="返回">
-      <span class="back-arrow">‹</span>
-      <span class="back-text">{{ step === 1 ? '首页' : '上一步' }}</span>
+    <button pButton type="button" class="p-button-text topbar-back" (click)="back()" aria-label="返回">
+      <span class="pi pi-arrow-left"></span>
+      <span>{{ step === 1 ? '首页' : '上一步' }}</span>
     </button>
     <div class="topbar-step">第 {{ step }} / {{ totalSteps }} 步</div>
     <div class="topbar-spacer"></div>
   </header>
 
-  <div class="progress-track">
-    <div class="progress-fill" [style.width.%]="progress"></div>
-  </div>
+  <!-- p-progressBar 替代自定义进度条 -->
+  <p-progressBar [value]="progress" class="wizard-progress-bar"></p-progressBar>
 
   <main class="wizard-body">
     <div [ngSwitch]="currentStep.key">
@@ -24,9 +23,10 @@
         </div>
         <div class="dest-grid">
           <button
+            pButton
             *ngFor="let d of destinations"
             type="button"
-            class="dest-card"
+            class="dest-card-p"
             [class.active]="form.destinationId === d.id"
             (click)="selectDestination(d.id)"
           >
@@ -36,8 +36,9 @@
             <span class="dest-check" *ngIf="form.destinationId === d.id">✓</span>
           </button>
           <button
+            pButton
             type="button"
-            class="dest-card custom"
+            class="dest-card-p custom"
             [class.active]="isCustomDestination"
             (click)="selectDestination('custom')"
           >
@@ -49,7 +50,7 @@
         </div>
         <label *ngIf="isCustomDestination" class="custom-field">
           <input
-            class="input"
+            pInputText
             type="text"
             [(ngModel)]="form.customDestination"
             name="customDestination"
@@ -67,9 +68,10 @@
         </div>
         <div class="option-list">
           <button
+            pButton
             *ngFor="let c of companionOptions"
             type="button"
-            class="option-card"
+            class="option-card-p"
             [class.active]="form.companion === c.id"
             (click)="selectCompanion(c.id)"
           >
@@ -89,9 +91,10 @@
         </div>
         <div class="type-grid">
           <button
+            pButton
             *ngFor="let p of placeTypeOptions"
             type="button"
-            class="type-card"
+            class="type-card-p"
             [class.active]="form.placeTypes.includes(p.id)"
             (click)="togglePlaceType(p.id)"
           >
@@ -112,9 +115,10 @@
         </div>
         <div class="option-list">
           <button
+            pButton
             *ngFor="let p of purposeOptions"
             type="button"
-            class="option-card"
+            class="option-card-p"
             [class.active]="form.purpose === p.id"
             (click)="selectPurpose(p.id)"
           >
@@ -132,7 +136,7 @@
           <h1 class="step-title">{{ currentStep.title }}</h1>
           <p class="step-subtitle">{{ currentStep.subtitle }}</p>
         </div>
-        <div class="stepper-card">
+        <div class="stepper-card-p">
           <div class="stepper-row">
             <span class="stepper-emoji">🗓️</span>
             <div class="stepper-info">
@@ -140,9 +144,13 @@
               <span class="stepper-hint">玩 {{ form.days }} 天，行程更从容</span>
             </div>
             <div class="stepper">
-              <button type="button" class="stepper-btn" (click)="decrease('days')" aria-label="减少天数">−</button>
+              <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('days')" aria-label="减少天数">
+                <span class="pi pi-minus"></span>
+              </button>
               <span class="stepper-value">{{ form.days }}</span>
-              <button type="button" class="stepper-btn" (click)="increase('days')" aria-label="增加天数">+</button>
+              <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('days')" aria-label="增加天数">
+                <span class="pi pi-plus"></span>
+              </button>
             </div>
           </div>
           <div class="stepper-row">
@@ -152,9 +160,13 @@
               <span class="stepper-hint">{{ form.people }} 人同行，花费更划算</span>
             </div>
             <div class="stepper">
-              <button type="button" class="stepper-btn" (click)="decrease('people')" aria-label="减少人数">−</button>
+              <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('people')" aria-label="减少人数">
+                <span class="pi pi-minus"></span>
+              </button>
               <span class="stepper-value">{{ form.people }}</span>
-              <button type="button" class="stepper-btn" (click)="increase('people')" aria-label="增加人数">+</button>
+              <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('people')" aria-label="增加人数">
+                <span class="pi pi-plus"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -168,25 +180,23 @@
           <p class="step-subtitle">{{ currentStep.subtitle }}</p>
         </div>
 
-        <label class="date-field">
-          <span class="date-label">出发日期</span>
-          <input
-            class="input date-input"
-            type="date"
-            #dateInput
-            (click)="openDatePicker(dateInput)"
-            [min]="minDate"
-            [ngModel]="startDateValue"
-            (ngModelChange)="setStartDate($event)"
-            name="startDate"
-          />
-        </label>
+        <!-- p-calendar 替代原生 date input（appendTo body 避免被 sticky footer 遮挡） -->
+        <p-calendar
+          class="date-calendar"
+          [(ngModel)]="form.startDate"
+          [minDate]="minCalendarDate"
+          [showIcon]="true"
+          [placeholder]="'选择出发日期'"
+          dateFormat="yy-mm-dd"
+          appendTo="body"
+        ></p-calendar>
 
         <div class="quick-dates">
           <button
+            pButton
             *ngFor="let q of quickDateOptions"
             type="button"
-            class="quick-chip"
+            class="quick-chip-p"
             [class.active]="startDateValue === q.value"
             (click)="setStartDate(q.value)"
           >
@@ -202,15 +212,15 @@
               <span class="season-sub" *ngIf="seasonPreview.tempLabel">预计气温 {{ seasonPreview.tempLabel }}</span>
               <span class="season-sub" *ngIf="!seasonPreview.tempLabel">暂无气候数据，将给出通用季节建议</span>
             </div>
-            <span class="season-badge best" *ngIf="seasonPreview.isBestSeason">最佳季节</span>
-            <span class="season-badge" *ngIf="!seasonPreview.isBestSeason && seasonPreview.tempLabel">非最佳季节</span>
+            <p-tag severity="success" *ngIf="seasonPreview.isBestSeason">最佳季节</p-tag>
+            <p-tag severity="warning" *ngIf="!seasonPreview.isBestSeason && seasonPreview.tempLabel">非最佳季节</p-tag>
           </div>
           <ul class="season-tips">
             <li *ngFor="let tip of seasonPreview.weatherTips">{{ tip }}</li>
           </ul>
           <div class="packing" *ngIf="seasonPreview.packingList.length">
             <span class="packing-title">🎒 建议携带</span>
-            <span class="packing-chip" *ngFor="let item of seasonPreview.packingList">{{ item }}</span>
+            <p-tag *ngFor="let item of seasonPreview.packingList" class="packing-chip-p" severity="info" [rounded]="true">{{ item }}</p-tag>
           </div>
         </div>
         <p class="step-hint" *ngIf="!startDateValue">💡 暂不指定也可以，我们会给出四季皆宜的行程安排</p>
@@ -224,24 +234,23 @@
           <p class="step-subtitle">{{ currentStep.subtitle }}</p>
         </div>
         <div class="budget-display">¥ {{ form.budget.toLocaleString('zh-CN') }}</div>
-        <input
-          class="slider"
-          type="range"
+        <!-- p-slider 替代原生 range slider -->
+        <p-slider
+          [(ngModel)]="form.budget"
           [min]="budgetMin"
           [max]="budgetMax"
           [step]="budgetStep"
-          [(ngModel)]="form.budget"
-          name="budget"
-        />
+          [style]="{ width: '100%' }"
+        ></p-slider>
         <div class="budget-scale">
           <span>¥{{ budgetMin.toLocaleString('zh-CN') }}</span>
           <span>¥{{ budgetMax.toLocaleString('zh-CN') }}</span>
         </div>
         <div class="budget-quick">
-          <button type="button" class="quick-chip" [class.active]="form.budget === 2000" (click)="form.budget = 2000">¥2,000</button>
-          <button type="button" class="quick-chip" [class.active]="form.budget === 5000" (click)="form.budget = 5000">¥5,000</button>
-          <button type="button" class="quick-chip" [class.active]="form.budget === 10000" (click)="form.budget = 10000">¥10,000</button>
-          <button type="button" class="quick-chip" [class.active]="form.budget === 20000" (click)="form.budget = 20000">¥20,000</button>
+          <button pButton type="button" class="quick-chip-p" [class.active]="form.budget === 2000" (click)="form.budget = 2000">¥2,000</button>
+          <button pButton type="button" class="quick-chip-p" [class.active]="form.budget === 5000" (click)="form.budget = 5000">¥5,000</button>
+          <button pButton type="button" class="quick-chip-p" [class.active]="form.budget === 10000" (click)="form.budget = 10000">¥10,000</button>
+          <button pButton type="button" class="quick-chip-p" [class.active]="form.budget === 20000" (click)="form.budget = 20000">¥20,000</button>
         </div>
       </section>
 
@@ -254,9 +263,10 @@
         </div>
         <div class="summary-list">
           <button
+            pButton
             *ngFor="let item of summaryItems"
             type="button"
-            class="summary-item"
+            class="summary-item-p"
             (click)="goToStep(item.step)"
           >
             <span class="summary-icon">{{ item.icon }}</span>
@@ -275,20 +285,22 @@
 
   <footer class="wizard-footer">
     <button
+      pButton
       *ngIf="step < totalSteps"
       type="button"
-      class="primary-btn"
-      [class.disabled]="!canNext"
+      class="p-button-primary wizard-next-btn"
+      [disabled]="!canNext"
       (click)="next()"
     >
       下一步
-      <span class="btn-arrow">→</span>
+      <span class="pi pi-arrow-right" style="margin-left: 6px;"></span>
     </button>
     <button
+      pButton
       *ngIf="step === totalSteps"
       type="button"
-      class="primary-btn generate"
-      [class.disabled]="!canNext"
+      class="p-button-primary wizard-generate-btn"
+      [disabled]="!canNext"
       (click)="submit()"
     >
       ✨ 生成我的旅游攻略

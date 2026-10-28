@@ -1,7 +1,7 @@
 /* ---------- 首页 / Landing ---------- */
 .landing {
   position: relative;
-  min-height: calc(100dvh - 52px);
+  min-height: calc(100dvh - var(--app-header-h));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,47 +25,24 @@
 }
 
 .landing::before {
-  width: 280px;
-  height: 280px;
-  top: 8%;
-  left: -60px;
+  width: 280px; height: 280px;
+  top: 8%; left: -60px;
   background: rgba(107, 94, 242, 0.12);
 }
-
 .landing::after {
-  width: 260px;
-  height: 260px;
-  right: -40px;
-  bottom: 12%;
+  width: 260px; height: 260px;
+  right: -40px; bottom: 12%;
   background: rgba(255, 157, 104, 0.14);
 }
 
 .landing-hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
   animation: landingFadeUp 0.5s ease both;
 }
 
-.landing-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--border);
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 22px;
-  box-shadow: 0 10px 24px rgba(90, 105, 160, 0.08);
-}
-
 .landing-title {
-  margin: 0;
+  margin: 14px 0 0;
   font-size: clamp(2.6rem, 7vw, 4.6rem);
   font-weight: 900;
   line-height: 1.03;
@@ -83,51 +60,30 @@
 }
 
 .landing-features {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.feature-chip {
-  padding: 9px 15px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--border);
-  box-shadow: 0 10px 22px rgba(31, 45, 80, 0.05);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-soft);
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 10px; margin-top: 24px;
 }
 
 .landing-visual {
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
   margin: 34px 0 30px;
-  width: min(100%, 440px);
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: min(100%, 440px); height: 180px;
+  display: flex; align-items: center; justify-content: center;
   animation: landingFadeUp 0.6s ease 0.08s both;
 }
 
 .big-emoji {
   position: relative;
-  font-size: 110px;
-  line-height: 1;
+  font-size: 110px; line-height: 1;
   filter: drop-shadow(0 18px 30px rgba(107, 94, 242, 0.18));
   display: block;
 }
 
 .floating {
-  position: absolute;
-  font-size: 30px;
+  position: absolute; font-size: 30px;
   animation: landingFloat 3.5s ease-in-out infinite;
   filter: drop-shadow(0 8px 16px rgba(31, 45, 80, 0.18));
 }
-
 .f1 { top: 8px; left: 18%; animation-delay: 0s; }
 .f2 { top: 6px; right: 18%; animation-delay: 0.5s; }
 .f3 { bottom: 10px; left: 22%; animation-delay: 1s; }
@@ -137,59 +93,43 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
-
 @keyframes landingFadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.start-btn {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: min(100%, 360px);
-  padding: 18px 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--grad);
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 20px 32px rgba(107, 94, 242, 0.22);
-  transition: transform 0.12s ease, box-shadow 0.2s ease;
+/* PrimeNG 按钮覆盖为胶囊造型（强制文字居中） */
+.landing-start-btn, .landing-secondary-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+.landing-start-btn {
+  width: min(100%, 360px) !important;
+  padding: 18px 20px !important;
+  border-radius: 999px !important;
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
   animation: landingFadeUp 0.6s ease 0.16s both;
 }
-
-.start-btn:hover {
-  box-shadow: 0 24px 36px rgba(107, 94, 242, 0.28);
-}
-
-.start-btn:active {
-  transform: scale(0.97);
-}
-
-.start-arrow {
-  font-size: 22px;
-  line-height: 1;
+.landing-secondary-btn {
+  width: min(100%, 360px) !important;
+  margin-top: 14px;
+  padding: 16px 20px !important;
+  border-radius: 999px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  animation: landingFadeUp 0.6s ease 0.2s both;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .landing-foot {
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
   margin: 18px 0 0;
   font-size: 13px;
   color: var(--text-soft);
   animation: landingFadeUp 0.6s ease 0.24s both;
-}
-
-.secondary-btn {
-  margin-top: 14px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--border);
-  color: var(--text);
-  box-shadow: 0 12px 22px rgba(28, 42, 77, 0.08);
 }

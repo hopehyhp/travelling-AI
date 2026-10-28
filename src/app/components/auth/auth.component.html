@@ -1,20 +1,25 @@
 <section class="auth-screen">
   <div class="auth-wrap">
-    <button class="back-link" type="button" (click)="onBack()">← 返回</button>
+    <button pButton type="button" class="p-button-text back-link-btn" (click)="onBack()">
+      <span class="pi pi-arrow-left"></span> 返回
+    </button>
 
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab" [class.active]="mode === 'login'" (click)="mode = 'login'">登录</button>
-      <button type="button" class="auth-tab" [class.active]="mode === 'register'" (click)="mode = 'register'">注册</button>
-    </div>
+    <!-- p-card 替代 auth-card -->
+    <p-card class="auth-card-p" [style]="{ padding: '2rem', borderRadius: '20px' }">
+      <p-header>
+        <!-- p-tabMenu 替代自定义 auth-tabs -->
+        <p-tabMenu [model]="tabItems" [activeItem]="tabItems[mode === 'login' ? 0 : 1]" class="auth-tab-menu"></p-tabMenu>
+      </p-header>
 
-    <div class="auth-card">
-      <h2 class="auth-title">{{ mode === 'login' ? '欢迎回来' : '创建账号' }}</h2>
+      <h2 class="auth-title" style="margin-top: 1.25rem;">{{ mode === 'login' ? '欢迎回来' : '创建账号' }}</h2>
       <p class="auth-sub">登录后可以保存旅行方案、分享给朋友。</p>
 
       <form class="auth-form" (ngSubmit)="onSubmit()" #form="ngForm">
-        <label class="auth-field">
-          <span>用户名</span>
+        <div class="auth-field">
+          <label for="auth-username">用户名</label>
           <input
+            pInputText
+            id="auth-username"
             type="text"
             name="username"
             [(ngModel)]="username"
@@ -25,11 +30,13 @@
             autocomplete="username"
             placeholder="3-20 个字符，支持中英文和数字"
           />
-        </label>
+        </div>
 
-        <label class="auth-field">
-          <span>密码</span>
+        <div class="auth-field">
+          <label for="auth-password">密码</label>
           <input
+            pInputText
+            id="auth-password"
             type="password"
             name="password"
             [(ngModel)]="password"
@@ -40,19 +47,25 @@
             [autocomplete]="mode === 'login' ? 'current-password' : 'new-password'"
             placeholder="至少 4 位"
           />
-        </label>
+        </div>
 
-        <div *ngIf="error" class="auth-error">{{ error }}</div>
+        <!-- p-messages 替代 auth-error div -->
+        <p-messages
+          [value]="messages"
+          [(ngModel)]="messages"
+          styleClass="auth-error-p"
+        ></p-messages>
 
         <button
+          pButton
           type="submit"
-          class="auth-submit"
+          class="p-button-primary auth-submit-p"
           [disabled]="loading || !form.form.valid"
+          [loading]="loading"
         >
-          <span *ngIf="loading">处理中…</span>
-          <span *ngIf="!loading">{{ mode === 'login' ? '登录' : '创建账号' }} →</span>
+          {{ loading ? '处理中…' : (mode === 'login' ? '登录' : '创建账号') + ' →' }}
         </button>
       </form>
-    </div>
+    </p-card>
   </div>
 </section>

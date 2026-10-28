@@ -1,7 +1,8 @@
 .shared-screen {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 2rem 1rem;
-  background: linear-gradient(135deg, #ecfeff 0%, #fef3c7 100%);
+  /* 与全站紫/薰衣草色系对齐（原为青绿+米黄，与品牌断档） */
+  background: linear-gradient(160deg, #f7f6ff 0%, #f2f3fc 55%, #fdf8f0 100%);
   display: flex;
   justify-content: center;
 }
@@ -15,16 +16,16 @@
 }
 
 .shared-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--card-strong);
+  border-radius: var(--radius);
   padding: 2rem;
-  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.08);
+  box-shadow: var(--shadow);
 }
 
 .shared-kicker {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #0d9488;
+  color: var(--primary);
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
@@ -34,12 +35,12 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 0.5rem;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .shared-meta {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-soft);
   margin: 0;
 }
 
@@ -49,21 +50,21 @@
   align-items: center;
   gap: 8px;
   font-size: 0.82rem;
-  color: #64748b;
-  background: #f8fafc;
+  color: var(--text-soft);
+  background: rgba(109, 106, 233, 0.05);
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
 }
 
 .shared-guest-card,
 .shared-loggedin-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--card-strong);
+  border-radius: var(--radius);
   padding: 1.5rem 2rem;
-  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.06);
+  box-shadow: 0 8px 30px rgba(109, 106, 233, 0.08);
 
-  h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
-  p { margin: 0 0 1rem; font-size: 0.9rem; color: #475569; }
+  h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--text); }
+  p { margin: 0 0 1rem; font-size: 0.9rem; color: var(--text-soft); }
 }
 
 .shared-guest-actions,
@@ -75,7 +76,7 @@
 
 .primary-btn {
   padding: 0.75rem 1.2rem;
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  background: var(--grad);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -91,25 +92,25 @@
 .ghost-btn {
   padding: 0.75rem 1.2rem;
   background: transparent;
-  color: #0f766e;
-  border: 1px solid #0f766e;
+  color: var(--primary);
+  border: 1px solid rgba(109, 106, 233, 0.4);
   border-radius: 10px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover { background: #f0fdfa; }
+  &:hover { background: rgba(109, 106, 233, 0.06); }
 }
 
 .text-btn {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-soft);
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
 
-  &:hover { color: #0f766e; text-decoration: underline; }
+  &:hover { color: var(--primary); text-decoration: underline; }
 }
 
 .shared-actions-bottom {
@@ -122,14 +123,14 @@
 .shared-error {
   text-align: center;
   padding: 4rem 2rem;
-  color: #475569;
+  color: var(--text-soft);
 }
 
 .shared-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #ccfbf1;
-  border-top-color: #0f766e;
+  border: 3px solid rgba(109, 106, 233, 0.18);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;

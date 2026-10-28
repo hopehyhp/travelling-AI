@@ -135,6 +135,11 @@ export class QuestionnaireComponent implements OnInit {
     return this.seasonService.todayIso();
   }
 
+  /** p-calendar 需要 Date 对象，转换 minDate */
+  get minCalendarDate(): Date {
+    return new Date(this.minDate + 'T00:00:00');
+  }
+
   get quickDateOptions(): { label: string; value: string }[] {
     return this.seasonService.quickDateOptions();
   }
@@ -254,6 +259,8 @@ export class QuestionnaireComponent implements OnInit {
     }
     const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
     this.state.clearCurrentPlan();
+    // 清空旧推荐，让结果页进入“首次生成”的单加载态，而不是显示上一份行程
+    this.state.setRecommendation(null);
     this.state.updateAndRegenerate(prefs);
     this.router.navigate(['/result']);
   }

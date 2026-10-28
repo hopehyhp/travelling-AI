@@ -77,7 +77,7 @@ export class ResultComponent implements OnInit, OnDestroy {
   travelContext: TravelContext | null = null;
   map: L.Map | null = null;
   mapReady = false;
-  weatherLoading = true;
+  weatherLoading = false;
   selectedSpot: SpotPlan | null = null;
   selectedMapPointName: string | null = null;
   replacementContext: { dayIndex: number; spotIndex: number; spot: SpotPlan } | null = null;
@@ -94,6 +94,8 @@ export class ResultComponent implements OnInit, OnDestroy {
   shareDialog: ShareDialogState = { open: false, loading: false, result: null, error: null };
   savedPlanId: number | null = null;
   private mapMarkers: L.Marker[] = [];
+  /** 仅行程景点的标注，便于增量追加与单独清除 */
+  private itineraryMarkers: L.Marker[] = [];
 
   /** 行程景点标注：按天着色 + 当天序号 */
   itineraryPoints: ItineraryMapPoint[] = [];
@@ -102,6 +104,11 @@ export class ResultComponent implements OnInit, OnDestroy {
   /** 景点坐标缓存（按 目的地::景点名），避免移动/换景点后重复地理编码 */
   private geoCache = new Map<string, { lat: number; lng: number } | null>();
   private itineraryGeoRunId = 0;
+  /** 已请求过的目的地+日期组合，避免重复拉取 travel-intelligence */
+  private travelContextKey: string | null = null;
+  private travelContextRunId = 0;
+  /** 当前 travelContext 对应的目的地，切换目的地时避免用旧坐标做地理编码兜底 */
+  private travelContextDestination: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -137,35 +144,23 @@ export class ResultComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((u) => { this.user = u; });
 
-    // 订阅 recommendation 变化：AI 生成完成后会自动更新
+    // 订阅 recommendation 变化：BehaviorSubject 订阅时会立即回放当前值，
+    // 因此初始化也统一走这条链路，不再额外调用一次，避免首屏重复请求。
     this.state.recommendationChanges()
       .pipe(takeUntil(this.destroy$))
       .subscribe((rec) => {
         this.recommendation = rec;
-        this.isLoading = false;
-        if (rec) {
-          this.form = {
-            ...this.state.preferences,
-            placeTypes: [...this.state.preferences.placeTypes]
-          };
-          this.loadTravelContext();
-          this.loadItineraryPoints();
+        this.isLoading = !rec;
+        if (!rec) {
+          return;
         }
+        this.form = {
+          ...this.state.preferences,
+          placeTypes: [...this.state.preferences.placeTypes]
+        };
+        this.loadTravelContext();
+        this.loadItineraryPoints();
       });
-
-    // 如果 state 已经有 recommendation（从 localStorage 恢复），直接渲染
-    if (this.state.recommendation) {
-      this.recommendation = this.state.recommendation;
-      this.loadTravelContext();
-      this.loadItineraryPoints();
-    } else {
-      // 还没有 recommendation，等调用方触发 regenerate$ 后自动响应
-      this.isLoading = true;
-    }
-  }
-
-  ngAfterViewInit(): void {
-    this.initMap();
   }
 
   ngOnDestroy(): void {
@@ -247,6 +242,11 @@ export class ResultComponent implements OnInit, OnDestroy {
     return this.seasonService.todayIso();
   }
 
+  /** p-calendar 需要 Date 对象 */
+  get minCalendarDate(): Date {
+    return new Date(this.minDate + 'T00:00:00');
+  }
+
   get quickDateOptions(): { label: string; value: string }[] {
     return this.seasonService.quickDateOptions();
   }
@@ -266,6 +266,11 @@ export class ResultComponent implements OnInit, OnDestroy {
 
   get weatherToday(): WeatherDay | null {
     return this.travelContext?.weather?.today ?? null;
+  }
+
+  /** 实时天气是否已就绪：用于洞察卡/天气卡的骨架屏占位 */
+  get weatherReady(): boolean {
+    return !!this.weatherToday && !this.weatherLoading;
   }
 
   get weatherForecast(): WeatherDay[] {
@@ -302,7 +307,7 @@ export class ResultComponent implements OnInit, OnDestroy {
       tag: '出行效率'
     });
 
-    const weather = this.travelContext?.weather?.today;
+    const weather = this.weatherLoading ? null : this.travelContext?.weather?.today;
     if (weather) {
       if (weather.rainChance !== null && weather.rainChance >= 60) {
         items.push({
@@ -424,6 +429,18 @@ export class ResultComponent implements OnInit, OnDestroy {
       this.lockPageScroll();
     }
     this.syncMapHighlight();
+  }
+
+  // 手机端“更多操作”展开状态：一次只展开一个景点
+  toolsOpenKey: string | null = null;
+
+  isToolsOpen(dayIndex: number, spotIndex: number): boolean {
+    return this.toolsOpenKey === `${dayIndex}-${spotIndex}`;
+  }
+
+  toggleTools(dayIndex: number, spotIndex: number): void {
+    const key = `${dayIndex}-${spotIndex}`;
+    this.toolsOpenKey = this.toolsOpenKey === key ? null : key;
   }
 
   moveSpot(dayIndex: number, spotIndex: number, direction: -1 | 1): void {
@@ -801,26 +818,41 @@ export class ResultComponent implements OnInit, OnDestroy {
       ...this.form,
       placeTypes: [...this.form.placeTypes]
     };
+    // 只触发重新生成；travel-intelligence 由新推荐到达后统一拉取，避免一次编辑发两遍
     this.state.updateAndRegenerate(prefs);
-    this.loadTravelContext();
   }
 
   private loadTravelContext(): void {
+    const destination = this.destinationName;
+    const key = `${destination}::${this.form.startDate}`;
+    if (key === this.travelContextKey) {
+      return;
+    }
+    this.travelContextKey = key;
+
+    const runId = ++this.travelContextRunId;
     this.weatherLoading = true;
-    this.aiService.getTravelContext(this.form).subscribe((context) => {
-      this.travelContext = context;
-      this.weatherLoading = false;
-      setTimeout(() => {
-        this.initMap();
-        this.refreshMapMarkers();
-      }, 0);
-    });
+    this.aiService.getTravelContext(this.form)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((context) => {
+        if (runId !== this.travelContextRunId) {
+          return; // 目的地/日期已变化，丢弃过期上下文
+        }
+        this.travelContext = context;
+        this.travelContextDestination = destination;
+        this.weatherLoading = false;
+        setTimeout(() => {
+          this.initMap();
+          this.refreshMapMarkers();
+        }, 0);
+      });
   }
 
   /** 把日程计划内的所有景点标注到地图概览（按天着色、数字表示当天游览顺序） */
   private loadItineraryPoints(): void {
     const rec = this.recommendation;
     if (!rec?.days?.length) {
+      this.clearItineraryMarkers();
       this.itineraryPoints = [];
       this.geoFailedSpots = [];
       this.itineraryGeoLoading = false;
@@ -841,10 +873,12 @@ export class ResultComponent implements OnInit, OnDestroy {
     });
 
     const runId = ++this.itineraryGeoRunId;
-    this.itineraryGeoLoading = true;
+    this.clearItineraryMarkers();
+    this.itineraryPoints = [];
     this.geoFailedSpots = [];
+    this.itineraryGeoLoading = true;
 
-    // 小并发批量地理编码，完成后统一刷新地图标注
+    // 小并发批量地理编码；每成功一个就先落一个标注，不阻塞在最快/最慢的景点上
     const results: (ItineraryMapPoint | null)[] = new Array(list.length).fill(null);
     let cursor = 0;
     const workers = Array.from({ length: Math.min(4, list.length) }, async () => {
@@ -852,8 +886,14 @@ export class ResultComponent implements OnInit, OnDestroy {
         const index = cursor++;
         const item = list[index];
         const coords = await this.geocodeSpot(item.name);
+        if (runId !== this.itineraryGeoRunId) {
+          return;
+        }
         if (coords) {
-          results[index] = { ...item, ...coords };
+          const point = { ...item, ...coords };
+          results[index] = point;
+          this.itineraryPoints = [...this.itineraryPoints, point];
+          this.addItineraryMarker(point);
         }
       }
     });
@@ -865,24 +905,27 @@ export class ResultComponent implements OnInit, OnDestroy {
       this.itineraryGeoLoading = false;
       this.itineraryPoints = results.filter((p): p is ItineraryMapPoint => !!p);
       this.geoFailedSpots = list.filter((_, i) => !results[i]).map((item) => item.name);
-      this.refreshMapMarkers();
+      this.fitMapToItinerary();
     });
   }
 
-  /** 景点名 → 坐标（走 /api/geocode 高德链路，按 目的地::景点名 缓存，含失败结果） */
+  /** 景点名 → 坐标（走 /api/geocode 高德链路，按 目的地::景点名 缓存；失败不缓存，便于下次重试） */
   private async geocodeSpot(name: string): Promise<{ lat: number; lng: number } | null> {
     const key = `${this.destinationName}::${name}`;
     if (this.geoCache.has(key)) {
       return this.geoCache.get(key) ?? null;
     }
 
-    const fallback = this.travelContext?.geo ?? { lat: 0, lng: 0 };
     const params = new URLSearchParams({
       q: name,
-      lat: String(fallback.lat),
-      lng: String(fallback.lng),
       city: this.destinationName
     });
+    // 仅在当前上下文就是本目的地时才用城市坐标做兜底，避免切换目的地时串用旧坐标
+    const fallback = this.travelContextDestination === this.destinationName ? this.travelContext?.geo : null;
+    if (fallback?.lat && fallback?.lng) {
+      params.set('lat', String(fallback.lat));
+      params.set('lng', String(fallback.lng));
+    }
 
     let coords: { lat: number; lng: number } | null = null;
     try {
@@ -892,10 +935,10 @@ export class ResultComponent implements OnInit, OnDestroy {
       const top = res?.results?.[0];
       if (top?.lat && top?.lng) {
         coords = { lat: top.lat, lng: top.lng };
+        this.geoCache.set(key, coords);
       }
     } catch { /* 定位失败按未标注处理 */ }
 
-    this.geoCache.set(key, coords);
     return coords;
   }
 
@@ -919,7 +962,6 @@ export class ResultComponent implements OnInit, OnDestroy {
     }).addTo(this.map);
 
     this.mapReady = true;
-    this.refreshMapMarkers();
   }
 
   private refreshMapMarkers(): void {
@@ -933,6 +975,7 @@ export class ResultComponent implements OnInit, OnDestroy {
       }
     });
     this.mapMarkers = [];
+    this.itineraryMarkers = [];
 
     const center = this.travelContext?.geo ?? { lat: 30.5728, lng: 104.0668 };
     const centerMarker = L.marker([center.lat, center.lng], { icon: this.createMarkerIcon(false) }).addTo(this.map!);
@@ -947,31 +990,63 @@ export class ResultComponent implements OnInit, OnDestroy {
     });
 
     // 行程景点标注：按天着色的序号圆点，点击复用景点详情弹窗
-    this.itineraryPoints.forEach((point) => {
-      const marker = L.marker([point.lat, point.lng], {
-        icon: this.createItineraryMarkerIcon(point),
-        zIndexOffset: 500
-      }).addTo(this.map!);
-      (marker as any).travelPointName = point.name;
-      (marker as any).itineraryPoint = point;
-      marker.bindPopup(`<div style="font-size:12px;line-height:1.5;max-width:170px;">
-        <strong>${point.name}</strong><br>
-        第${point.day}天 · ${point.time} · 当天第${point.order}站
-      </div>`);
-      marker.on('click', () => this.openMapPoint(point.name));
-      this.mapMarkers.push(marker);
-    });
+    this.itineraryPoints.forEach((point) => this.addItineraryMarker(point));
+
+    this.fitMapToItinerary();
+    this.syncMapHighlight();
+  }
+
+  /** 追加单个行程景点标注（增量渲染，无需等待所有景点定位完成） */
+  private addItineraryMarker(point: ItineraryMapPoint): void {
+    if (!this.map) {
+      return;
+    }
+    const marker = L.marker([point.lat, point.lng], {
+      icon: this.createItineraryMarkerIcon(point),
+      zIndexOffset: 500
+    }).addTo(this.map);
+    (marker as any).travelPointName = point.name;
+    (marker as any).itineraryPoint = point;
+    marker.bindPopup(`<div style="font-size:12px;line-height:1.5;max-width:170px;">
+      <strong>${point.name}</strong><br>
+      第${point.day}天 · ${point.time} · 当天第${point.order}站
+    </div>`);
+    marker.on('click', () => this.openMapPoint(point.name));
+    this.mapMarkers.push(marker);
+    this.itineraryMarkers.push(marker);
+    if (this.selectedMapPointName) {
+      this.syncMapHighlight();
+    }
+  }
+
+  private clearItineraryMarkers(): void {
+    if (this.map) {
+      this.itineraryMarkers.forEach((marker) => this.map?.removeLayer(marker));
+    }
+    const removed = new Set<L.Marker>(this.itineraryMarkers);
+    this.mapMarkers = this.mapMarkers.filter((marker) => !removed.has(marker));
+    this.itineraryMarkers = [];
+  }
+
+  /** 统一调整视野：定位尚未完成时保持城市中心，完成后只做一次 fitBounds，避免地图反复跳动 */
+  private fitMapToItinerary(): void {
+    if (!this.map) {
+      return;
+    }
+    const center = this.travelContext?.geo ?? { lat: 30.5728, lng: 104.0668 };
+    if (this.itineraryGeoLoading) {
+      this.map.setView([center.lat, center.lng], 11);
+      return;
+    }
 
     const boundsPoints: [number, number][] = [
       ...(this.travelContext?.highlights ?? []).map((p) => [p.lat, p.lng] as [number, number]),
       ...this.itineraryPoints.map((p) => [p.lat, p.lng] as [number, number])
     ];
     if (boundsPoints.length > 0) {
-      this.map!.fitBounds(L.latLngBounds(boundsPoints).pad(0.35));
+      this.map.fitBounds(L.latLngBounds(boundsPoints).pad(0.35));
     } else {
-      this.map!.setView([center.lat, center.lng], 11);
+      this.map.setView([center.lat, center.lng], 11);
     }
-
-    this.syncMapHighlight();
   }
 }

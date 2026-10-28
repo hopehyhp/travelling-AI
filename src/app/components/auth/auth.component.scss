@@ -1,10 +1,12 @@
 .auth-screen {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #fef3c7 100%);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.96), transparent 40%),
+    linear-gradient(180deg, var(--bg-strong) 0%, var(--bg) 100%);
 }
 
 .auth-wrap {
@@ -12,117 +14,75 @@
   max-width: 420px;
 }
 
-.back-link {
-  background: none;
-  border: none;
-  font-size: 0.95rem;
-  color: #0f766e;
-  cursor: pointer;
-  padding: 0.5rem 0;
-  margin-bottom: 0.5rem;
+/* 返回按钮 */
+.back-link-btn {
+  color: var(--primary) !important;
+  font-size: 0.95rem !important;
+  padding: 0.25rem 0 !important;
+  margin-bottom: 0.5rem !important;
 }
-.back-link:hover { text-decoration: underline; }
+.back-link-btn:hover { text-decoration: underline; }
 
-.auth-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+/* p-card 包裹的认证卡片 */
+.auth-card-p.p-card {
+  border-radius: 20px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  background: var(--card-strong) !important;
 }
-
-.auth-tab {
-  flex: 1;
-  padding: 0.8rem 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: color .2s, border-color .2s;
+.auth-card-p .p-card-header {
+  padding: 0 !important;
+  border: none !important;
 }
 
-.auth-tab.active {
-  color: #0f766e;
-  border-bottom-color: #0f766e;
+/* p-tabMenu 内嵌样式微调 */
+.auth-tab-menu {
+  margin-bottom: 0 !important;
 }
 
-.auth-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.08);
-}
-
+/* 卡片内标题 */
 .auth-title {
   font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 0.25rem;
-  color: #0f172a;
+  margin: 0.5rem 0 0.25rem;
+  color: var(--text);
 }
 
 .auth-sub {
   font-size: 0.9rem;
-  color: #64748b;
-  margin: 0 0 1.5rem;
+  color: var(--text-soft);
+  margin: 0 0 1.25rem;
 }
 
+/* 表单容器 */
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
+/* 表单字段 */
 .auth-field {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-
-  span {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
-  }
-
-  input {
-    padding: 0.75rem 0.9rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color .15s, box-shadow .15s;
-
-    &:focus {
-      border-color: #0f766e;
-      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
-    }
-  }
 }
 
-.auth-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  border-radius: 8px;
-  padding: 0.6rem 0.9rem;
+.auth-field > label {
   font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
-.auth-submit {
-  margin-top: 0.5rem;
-  padding: 0.85rem;
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity .15s, transform .05s;
+/* 错误消息 */
+.auth-error-p {
+  border-radius: 12px !important;
+}
 
-  &:hover:not(:disabled) { opacity: 0.92; }
-  &:active:not(:disabled) { transform: translateY(1px); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+/* 提交按钮微调 */
+.auth-submit-p {
+  width: 100%;
+  padding: 0.85rem !important;
+  font-size: 1rem !important;
+  margin-top: 0.25rem;
 }

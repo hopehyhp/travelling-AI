@@ -1,27 +1,35 @@
 <div class="app-shell">
   <!-- 顶部用户栏 -->
-  <header class="app-header" *ngIf="router.url !== '/auth' && !router.url.startsWith('/share/')">
+  <!-- /wizard 与 /auth、/share 使用各自的顶部栏，避免出现两条 sticky 顶栏 -->
+  <header
+    class="app-header"
+    *ngIf="router.url !== '/auth' && !router.url.startsWith('/share/') && !router.url.startsWith('/wizard')"
+  >
     <div class="header-left">
-      <span class="brand" (click)="router.navigate(['/'])">✈️ Travelling AI</span>
+      <span class="brand" (click)="router.navigate(['/'])">✈️ 呼呼去哪儿</span>
     </div>
     <div class="header-right">
       <ng-container *ngIf="auth.currentUser$ | async as user; else loginTpl">
-        <button class="header-btn link" (click)="goProfile()">我的方案</button>
-        <button class="user-chip" (click)="goProfile()" title="进入个人中心">
-          <span class="avatar-mini">{{ userInitial(user) }}</span>
-          <span class="user-name">{{ userLabel(user) }}</span>
+        <button pButton type="button" class="p-button-text header-btn-text" (click)="goProfile()">我的方案</button>
+        <!-- 用户 chip：p-avatar + 文本 -->
+        <button pButton type="button" class="p-button-text user-chip-p" (click)="goProfile()" title="进入个人中心">
+          <p-avatar [label]="userInitial(user)" styleClass="avatar-mini-p"></p-avatar>
+          <span class="user-name-p">{{ userLabel(user) }}</span>
         </button>
-        <button class="header-btn" (click)="doLogout()">退出</button>
+        <button pButton type="button" class="p-button-text header-btn-text" (click)="doLogout()">
+          <span class="pi pi-sign-out"></span>
+        </button>
       </ng-container>
       <ng-template #loginTpl>
-        <button class="header-btn primary" (click)="goAuth()">登录 / 注册</button>
+        <button pButton type="button" class="p-button-primary header-login-btn" (click)="goAuth()">登录 / 注册</button>
       </ng-template>
     </div>
   </header>
 
-  <!-- 顶部 generating overlay：在结果页重新生成时显示 -->
-  <div class="gen-banner" *ngIf="isGenerating && router.url === '/result'">
-    <span class="gen-spinner"></span> AI 正在更新攻略…
+  <!-- 顶部更新提示：仅在结果页已有内容、正在重新生成时出现，避免与页面内加载并存 -->
+  <div class="gen-banner" *ngIf="isGenerating && hasRecommendation && router.url === '/result'">
+    <p-progressSpinner styleClass="gen-spinner-p"></p-progressSpinner>
+    <span>AI 正在更新攻略…</span>
   </div>
 
   <router-outlet></router-outlet>
