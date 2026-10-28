@@ -242,6 +242,26 @@ export interface WeatherDay {
   summary: string;
 }
 
+/** 天气数据来源：7 日预报 / 常年同期参考 / 无数据 */
+export type TripWeatherSource = 'forecast' | 'climate' | 'none';
+
+/** 与行程逐天对齐后的天气，保证「第 N 天」显示的是那一天，而不是今天的天气 */
+export interface TripDayWeather {
+  /** 第几天，从 1 起 */
+  day: number;
+  /** 出发日期以后逐天推算的 YYYY-MM-DD，未指定日期时为空 */
+  date: string;
+  /** 形如「10月20日」，用于每日行程卡 */
+  dateLabel: string;
+  max: number | null;
+  min: number | null;
+  rainChance: number | null;
+  summary: string;
+  source: TripWeatherSource;
+  /** 来源标签：7日预报 / 常年同期参考 / 暂无数据 */
+  label: string;
+}
+
 export interface TravelMapPoint {
   name: string;
   lat: number;

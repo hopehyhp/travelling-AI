@@ -23,7 +23,6 @@ async function init() {
     db = new SQL.Database(new Uint8Array(buf));
   } else {
     db = new SQL.Database();
-    createTables(db);
 
     // 自动迁移旧 data.json
     if (fs.existsSync(LEGACY_JSON)) {
@@ -35,9 +34,11 @@ async function init() {
         console.warn('[db] failed to migrate data.json:', e.message);
       }
     }
-
-    save();
   }
+
+  // 建表语句带 IF NOT EXISTS，新旧库都执行一次，保证新增表（如 events）能补齐
+  createTables(db);
+  save();
 
   return db;
 }
@@ -78,9 +79,19 @@ function createTables(db) {
       FOREIGN KEY (owner_user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      props TEXT DEFAULT '{}',
+      session_id TEXT DEFAULT '',
+      user_id INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_plans_user ON plans(user_id);
     CREATE INDEX IF NOT EXISTS idx_shares_plan ON shares(plan_id);
     CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(share_token);
+    CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
   `);
 }
 
@@ -406,6 +417,37 @@ async function listSharesByUser(userId) {
   return queryAll('SELECT * FROM shares WHERE owner_user_id = ?', [userId]);
 }
 
+// ——— 埋点事件 ———
+
+/** 批量写入埋点事件：单次事务 + 一次落盘，避免每条事件都写文件 */
+async function insertEvents(events, userId = null) {
+  await init();
+  if (!Array.isArray(events) || events.length === 0) return 0;
+
+  const now = new Date().toISOString();
+  db.run('BEGIN TRANSACTION');
+  try {
+    for (const item of events) {
+      db.run(
+        'INSERT INTO events (name, props, session_id, user_id, created_at) VALUES (?,?,?,?,?)',
+        [
+          item.name,
+          JSON.stringify(item.props || {}),
+          String(item.sessionId || '').slice(0, 64),
+          userId || null,
+          now
+        ]
+      );
+    }
+    db.run('COMMIT');
+  } catch (e) {
+    db.run('ROLLBACK');
+    throw e;
+  }
+  save();
+  return events.length;
+}
+
 // 启动时预初始化（避免第一次请求才建表）
 init().then(() => {
   console.log('[db] SQLite ready →', DB_FILE);
@@ -455,5 +497,7 @@ module.exports = {
   removeShare,
   listSharesByUser,
   incrementShareStat,
-  getShareStatsByPlanId
+  getShareStatsByPlanId,
+  // Events
+  insertEvents
 };

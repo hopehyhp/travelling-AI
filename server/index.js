@@ -9,7 +9,8 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { buildPrompt } = require('./prompt');
 const { normalize } = require('./normalize');
 const { buildSpotReplacementPrompt, normalizeReplacement } = require('./spot-replacement');
-const { authMiddleware } = require('./auth');
+const { authMiddleware, optionalAuthMiddleware } = require('./auth');
+const db = require('./db');
 const authRoutes = require('./auth-routes');
 const planRoutes = require('./plan-routes');
 const shareRoutes = require('./share-routes');
@@ -64,8 +65,51 @@ const travelIntelCache = new Map();
 const TRAVEL_INTEL_CACHE_TTL = 10 * 60 * 1000;
 const TRAVEL_INTEL_CACHE_LIMIT = 100;
 
+// 埋点上报：前端批量发送，匿名也能用
+const eventsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { error: 'RATE_LIMITED', message: '事件上报过于频繁' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, model: MODEL, hasKey: Boolean(DEEPSEEK_API_KEY) });
+});
+
+// POST /api/events —— 批量记录产品埋点（最多 50 条/次）
+app.post('/api/events', eventsLimiter, optionalAuthMiddleware, async (req, res) => {
+  const rawEvents = Array.isArray(req.body && req.body.events) ? req.body.events : [];
+  const sessionId = String((req.body && req.body.sessionId) || '').slice(0, 64);
+  const list = [];
+
+  for (const item of rawEvents.slice(0, 50)) {
+    if (!item || typeof item !== 'object') continue;
+    const name = String(item.name || '').trim();
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(name)) continue;
+    const props = item.props && typeof item.props === 'object' && !Array.isArray(item.props) ? item.props : {};
+    let propsJson;
+    try {
+      propsJson = JSON.stringify(props);
+    } catch (e) {
+      continue;
+    }
+    if (propsJson.length > 1500) continue; // 限制单条属性大小，防止恶意上报撑爆存储
+    list.push({ name, props: JSON.parse(propsJson), sessionId });
+  }
+
+  if (!list.length) {
+    return res.status(400).json({ error: 'NO_VALID_EVENTS', message: '没有可用的事件' });
+  }
+
+  try {
+    const accepted = await db.insertEvents(list, req.userId || null);
+    res.json({ ok: true, accepted });
+  } catch (err) {
+    console.error('[events] error:', err && err.message ? err.message : err);
+    res.status(500).json({ error: 'EVENTS_FAILED', message: '事件写入失败' });
+  }
 });
 
 app.get('/api/travel-intelligence', async (req, res) => {
@@ -178,6 +222,26 @@ app.use('/api/plans', authMiddleware, planRoutes);
 // ——— 地点地理编码（限流保护）———
 const AMAP_KEY = process.env.AMAP_API_KEY || '';
 
+/** Haversine 公式：两点间距离（km），用于过滤偏远结果 */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/** 从候选列表中选出距离 fallback 城市中心 ≤ maxKm 的结果 */
+function filterByDistance(candidates, fallback, maxKm = 300) {
+  if (!fallback) return candidates;
+  return candidates.filter((c) => {
+    const d = haversineKm(c.lat, c.lng, fallback.lat, fallback.lng);
+    return d <= maxKm;
+  });
+}
+
 app.get('/api/geocode', geocodeLimiter, async (req, res) => {
   const q = String(req.query.q || '').trim();
   if (!q) return res.status(400).json({ error: 'MISSING_QUERY' });
@@ -197,8 +261,39 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
   try {
     let results = [];
 
-    // --- 1. 高德 Web 服务 API ---
+    // --- 1. 高德 POI 搜索 API（主链路，最精准） ---
     if (AMAP_KEY && !isOversea) {
+      try {
+        let url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(q)}&output=JSON&offset=10`;
+        if (city) {
+          // citylimit=true 强制只在指定城市内搜索，避免搜到其他省市同名 POI
+          url += `&city=${encodeURIComponent(city)}&citylimit=true`;
+        }
+        const amapResp = await fetch(url);
+        if (amapResp.ok) {
+          const amap = await amapResp.json();
+          if (amap.status === '1' && Array.isArray(amap.pois) && amap.pois.length) {
+            results = amap.pois.slice(0, 5).map((p) => {
+              const [lng, lat] = String(p.location || '').split(',').map(Number);
+              return {
+                name: p.name || q,
+                display_name: [p.pname, p.cityname, p.adname, p.address].filter(Boolean).join(' '),
+                lat,
+                lng,
+                country: '',
+                admin1: p.pname || '',
+                _type: 'poi',
+                _typecode: p.typecode || '',
+                _bizType: p.biz_type || ''
+              };
+            }).filter((r) => r.lat && r.lng);
+          }
+        }
+      } catch { /* 降级 */ }
+    }
+
+    // --- 1b. 高德 geocode/geo（POI 搜不到时的兜底） ---
+    if (results.length === 0 && AMAP_KEY && !isOversea) {
       try {
         let url = `https://restapi.amap.com/v3/geocode/geo?key=${AMAP_KEY}&address=${encodeURIComponent(q)}&output=JSON`;
         if (city) url += `&city=${encodeURIComponent(city)}`;
@@ -209,7 +304,7 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
             results = amap.geocodes.slice(0, 3).map((g) => {
               const [lng, lat] = String(g.location).split(',').map(Number);
               return {
-                name: g.address_component?.street || g.formatted_address?.split(/[省市]/)[1] || q,
+                name: g.address_component?.street || q,
                 display_name: g.formatted_address,
                 lat,
                 lng,
@@ -222,7 +317,15 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
       } catch { /* 降级 */ }
     }
 
-    // --- 2. Open-Meteo ---
+    // --- 距离过滤：丢弃距离城市中心过远的结果（>300km 几乎肯定是错的） ---
+    // 对国内 POI，城市中心 300km 半径足以覆盖整个城市及近郊
+    const beforeFilter = results.length;
+    results = filterByDistance(results, fallback, 300);
+    if (beforeFilter > 0 && results.length === 0) {
+      console.warn(`[geocode] all ${beforeFilter} candidates filtered out by distance for "${q}" near "${city}"`);
+    }
+
+    // --- 2. Open-Meteo（海外或高德完全不可用时的降级） ---
     if (results.length === 0) {
       try {
         const searchName = (city && !isOversea && !q.includes(city)) ? `${q} ${city}` : q;
@@ -240,6 +343,8 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
               country: r.country || '',
               admin1: r.admin1 || ''
             })).filter((r) => r.lat && r.lng);
+            // Open-Meteo 返回的结果也必须过距离校验
+            results = filterByDistance(results, fallback, 500);
           }
         }
       } catch { /* 降级 */ }
@@ -351,23 +456,38 @@ function inferSummary(maxTemp, rainChance) {
   return '天气较适宜，适合外出游玩';
 }
 
+/** 计算出发日距今天的天数（按本地日历日），非法日期返回 null */
+function daysUntilDate(startDate) {
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(startDate || '').trim());
+  if (!matched) return null;
+  const target = new Date(Number(matched[1]), Number(matched[2]) - 1, Number(matched[3]));
+  if (Number.isNaN(target.getTime())) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+
 function buildSmartAdvice({ weather, destination, startDate }) {
   const advice = [];
-  if (weather && weather.forecast && weather.forecast.length > 0) {
-    const first = weather.forecast[0];
-    if (first && first.rainChance !== null && first.rainChance >= 60) {
-      advice.push('当前天气有明显降雨风险，建议把户外景点安排在白天晴朗时段，午后多安排室内活动。');
-    }
-    if (first && first.max !== null && first.max >= 30) {
-      advice.push('预计高温天气，建议早起和傍晚出行，避免中午时段长时间暴晒。');
-    }
-    if (first && first.max !== null && first.max <= 10) {
-      advice.push('天气偏凉，建议携带外套和保暖层，室内博物馆和慢游路线更适合。');
-    }
-  }
+  const forecast = weather && Array.isArray(weather.forecast) ? weather.forecast : [];
+  const daysUntil = daysUntilDate(startDate);
+  // 预报窗口只有 7 天：仅当出发日落在窗口内时，才用对应那天的天气下结论
+  const travelDay = daysUntil !== null && daysUntil >= 0 && daysUntil < forecast.length
+    ? forecast[daysUntil]
+    : null;
 
-  if (startDate) {
-    advice.push(`出发日期为 ${startDate}，建议结合当地天气做调整，避免把雨天/高温时段安排给关键景点。`);
+  if (travelDay) {
+    if (travelDay.rainChance !== null && travelDay.rainChance >= 60) {
+      advice.push('出发日降雨概率较高，建议把户外景点安排在白天晴朗时段，午后多安排室内活动。');
+    }
+    if (travelDay.max !== null && travelDay.max >= 30) {
+      advice.push('出发日预计高温，建议早起和傍晚出行，避免中午时段长时间暴晒。');
+    }
+    if (travelDay.max !== null && travelDay.max <= 10) {
+      advice.push('出发日天气偏凉，建议携带外套和保暖层，室内博物馆和慢游路线更适合。');
+    }
+  } else if (startDate) {
+    advice.push(`出发日（${startDate}）暂无逐日预报，以上为常年气候参考，出发前 3 天请再确认实时天气。`);
   }
 
   advice.push(`针对 ${destination} 的行程，建议将重点景点按"早上景点 + 午餐休息 + 晚间夜景"的节奏来排。`);

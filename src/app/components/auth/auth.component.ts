@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem, Message } from 'primeng/api';
 import { AuthService } from '../../services/auth.service';
+import { TrackingService } from '../../services/tracking.service';
 
 type AuthMode = 'login' | 'register';
 
@@ -25,7 +26,11 @@ export class AuthComponent {
     { label: '注册', command: () => { this.mode = 'register'; this.clearError(); } }
   ];
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private tracking: TrackingService
+  ) {}
 
   onBack(): void {
     this.router.navigate(['/']);
@@ -48,6 +53,7 @@ export class AuthComponent {
     obs.subscribe({
       next: () => {
         this.loading = false;
+        this.tracking.track('login_success', { mode: this.mode });
         // 回到上次页面或首页
         const redirect = history.state?.redirectUrl || '/';
         this.router.navigateByUrl(redirect);

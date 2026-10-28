@@ -17,6 +17,7 @@ import {
 import { DESTINATIONS } from '../../data/travel-data';
 import { SeasonService } from '../../services/season.service';
 import { TravelStateService } from '../../services/travel-state.service';
+import { TrackingService } from '../../services/tracking.service';
 
 interface WizardStep {
   key: string;
@@ -48,7 +49,8 @@ export class QuestionnaireComponent implements OnInit {
   constructor(
     private seasonService: SeasonService,
     private state: TravelStateService,
-    private router: Router
+    private router: Router,
+    private tracking: TrackingService
   ) {}
 
   destinations = DESTINATIONS;
@@ -258,6 +260,14 @@ export class QuestionnaireComponent implements OnInit {
       return;
     }
     const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
+    this.tracking.track('wizard_complete', {
+      days: prefs.days,
+      people: prefs.people,
+      companion: prefs.companion,
+      purpose: prefs.purpose,
+      budget: prefs.budget,
+      hasStartDate: Boolean(prefs.startDate)
+    });
     this.state.clearCurrentPlan();
     // 清空旧推荐，让结果页进入“首次生成”的单加载态，而不是显示上一份行程
     this.state.setRecommendation(null);

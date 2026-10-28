@@ -6,6 +6,7 @@ import { AiService } from './services/ai.service';
 import { RecommendationService } from './services/recommendation.service';
 import { TravelStateService } from './services/travel-state.service';
 import { AuthService, AuthUser } from './services/auth.service';
+import { TrackingService } from './services/tracking.service';
 
 @Component({
   selector: 'app-root',
@@ -19,13 +20,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private regenerate$ = new Subject<void>();
   private destroy$ = new Subject<void>();
+  /** 本次生成的起始时间，用于统计生成耗时 */
+  private generateStartedAt = 0;
 
   constructor(
     public router: Router,
     public auth: AuthService,
     private aiService: AiService,
     private recommendationService: RecommendationService,
-    private state: TravelStateService
+    private state: TravelStateService,
+    private tracking: TrackingService
   ) {
     // 从 state 订阅 regenerate$ 的 preferences
     this.state.regenerate$
@@ -34,6 +38,12 @@ export class AppComponent implements OnInit, OnDestroy {
         debounceTime(500),
         switchMap((prefs) => {
           this.isGenerating = true;
+          this.generateStartedAt = performance.now();
+          this.tracking.track('generate_start', {
+            days: prefs.days,
+            hasStartDate: Boolean(prefs.startDate),
+            destination: prefs.destinationId === 'custom' ? 'custom' : 'preset'
+          });
           return this.aiService.generate(prefs);
         })
       )
@@ -41,6 +51,7 @@ export class AppComponent implements OnInit, OnDestroy {
         next: (rec) => {
           this.state.setRecommendation(rec);
           this.isGenerating = false;
+          this.tracking.track('generate_success', { duration: this.generateDuration(), source: 'ai' });
           if (this.router.url !== '/result') {
             this.router.navigate(['/result']);
           }
@@ -49,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
           const fallback = this.recommendationService.generate(this.state.preferences);
           this.state.setRecommendation(fallback);
           this.isGenerating = false;
+          this.tracking.track('generate_fallback', { duration: this.generateDuration(), source: 'local' });
           if (this.router.url !== '/result') {
             this.router.navigate(['/result']);
           }
@@ -75,6 +87,12 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /** 生成耗时（毫秒），未记录时返回 0 */
+  private generateDuration(): number {
+    if (!this.generateStartedAt) return 0;
+    return Math.round(performance.now() - this.generateStartedAt);
   }
 
   goAuth(): void {

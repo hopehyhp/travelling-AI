@@ -47,4 +47,19 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { sign, authMiddleware };
+/** 可选登录：有合法 token 就带上 userId，没有/无效也放行（用于匿名可用的埋点接口） */
+function optionalAuthMiddleware(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, SECRET);
+      req.userId = Number(payload.sub);
+    } catch (err) {
+      // token 失效不影响匿名上报
+    }
+  }
+  next();
+}
+
+module.exports = { sign, authMiddleware, optionalAuthMiddleware };

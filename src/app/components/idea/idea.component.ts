@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TravelStateService } from '../../services/travel-state.service';
+import { TrackingService } from '../../services/tracking.service';
 
 @Component({
   selector: 'app-idea',
@@ -13,7 +14,8 @@ export class IdeaComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private state: TravelStateService
+    private state: TravelStateService,
+    private tracking: TrackingService
   ) {}
 
   ngOnInit(): void {
@@ -40,6 +42,7 @@ export class IdeaComponent implements OnInit {
     }
 
     this.ideaError = '';
+    this.tracking.track('idea_submit', { length: idea.length });
     this.state.prepareIdea(idea);
     this.state.clearCurrentPlan();
     this.state.setRecommendation(null);

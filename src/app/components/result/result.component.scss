@@ -418,6 +418,40 @@
   font-weight: 500;
 }
 
+/* 每日行程标题行的「日期 + 天气」徽标：预报/常年参考靠颜色与后缀区分 */
+.day-weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: rgba(247, 249, 252, 0.9);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.day-weather .dw-temp {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.day-weather .dw-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.day-weather.is-climate .dw-label {
+  color: #b45309;
+}
+
+.day-weather.is-none {
+  opacity: 0.75;
+}
+
 .day-advice {
   margin-top: 10px;
   padding: 10px 12px;
@@ -892,6 +926,94 @@
   color: var(--text-soft);
 }
 
+/* ---------- 行程天气：来源徽标 + 逐天列表 ---------- */
+.weather-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(109, 106, 233, 0.1);
+  border: 1px solid rgba(109, 106, 233, 0.2);
+  white-space: nowrap;
+}
+
+.weather-source-badge.is-climate {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.weather-source-badge.is-none {
+  color: var(--text-soft);
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.trip-weather-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* flex-wrap 保证窄屏也不会横向溢出 */
+.trip-weather-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(247, 249, 252, 0.9);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.trip-weather-row .tw-day,
+.trip-weather-row .tw-temp {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.trip-weather-row .tw-date {
+  min-width: 0;
+}
+
+.trip-weather-row .tw-source {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.trip-weather-row .tw-source.is-climate {
+  color: #b45309;
+}
+
+.trip-weather-row .tw-source.is-none {
+  color: var(--text-soft);
+}
+
+/* 当地今日天气降级为小字参考 */
+.today-weather {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(247, 249, 252, 0.6);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
 .smart-advice {
   margin-top: 12px;
 }
@@ -968,6 +1090,8 @@
   background-size: 200% 100%;
   animation: skShimmer 1.4s ease-in-out infinite;
 }
+.sk-w25 { width: 25%; }
+.sk-w30 { width: 30%; }
 .sk-w35 { width: 35%; }
 .sk-w45 { width: 45%; }
 .sk-w50 { width: 50%; }

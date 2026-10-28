@@ -7,7 +7,9 @@ import {
   SeasonId,
   SEASON_ICONS,
   SEASON_LABELS,
-  TravelPreferences
+  TravelPreferences,
+  TripDayWeather,
+  WeatherDay
 } from '../models/travel.model';
 
 const SEASON_GENERIC_TIPS: Record<SeasonId, string> = {
@@ -136,6 +138,93 @@ export class SeasonService {
       weatherTips: this.buildWeatherTips(destination, climate, seasonId, months, temp, rainy, isBestSeason),
       packingList: this.buildPackingList(destination, prefs, climate, seasonId, temp, rainy)
     };
+  }
+
+  /**
+   * 把「未来 7 天预报」和行程逐天对齐：
+   * - 出发日落在预报窗口内 → 按日期精确匹配 forecast
+   * - 超出窗口 → 用目的地常年气候生成同日期的参考值，并标注来源
+   * - 无日期/无气候数据 → 返回空数组或 source='none'，绝不拿今天的天气冒充行程天气
+   */
+  buildTripWeather(destination: Destination | null, prefs: TravelPreferences, forecast: WeatherDay[]): TripDayWeather[] {
+    const start = this.parseIso(prefs.startDate);
+    if (!start) {
+      return [];
+    }
+
+    const days = Math.max(1, Math.min(15, Number(prefs.days) || 1));
+    const byDate = new Map((forecast ?? []).map(item => [item.date, item]));
+    const climate = destination?.climate;
+    const list: TripDayWeather[] = [];
+
+    for (let index = 0; index < days; index++) {
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
+      const iso = this.toIso(date);
+      const month = date.getMonth() + 1;
+      const dateLabel = `${month}月${date.getDate()}日`;
+      const day = index + 1;
+      const matched = byDate.get(iso);
+
+      if (matched) {
+        list.push({
+          day,
+          date: iso,
+          dateLabel,
+          max: matched.max,
+          min: matched.min,
+          rainChance: matched.rainChance,
+          summary: matched.summary,
+          source: 'forecast',
+          label: '7日预报'
+        });
+        continue;
+      }
+
+      if (climate) {
+        list.push({
+          day,
+          date: iso,
+          dateLabel,
+          max: climate.avgHigh[month - 1] ?? null,
+          min: climate.avgLow[month - 1] ?? null,
+          rainChance: null,
+          summary: this.climateSummary(climate, month),
+          source: 'climate',
+          label: '常年同期参考'
+        });
+        continue;
+      }
+
+      list.push({
+        day,
+        date: iso,
+        dateLabel,
+        max: null,
+        min: null,
+        rainChance: null,
+        summary: '暂无天气数据，出发前请再确认当地天气',
+        source: 'none',
+        label: '暂无数据'
+      });
+    }
+
+    return list;
+  }
+
+  /** 常年同期的一句式天气概括，避免和真实预报混淆 */
+  private climateSummary(climate: ClimateProfile, month: number): string {
+    const high = climate.avgHigh[month - 1] ?? 20;
+    const rainy = climate.rainyMonths.includes(month);
+    if (high >= 32) {
+      return rainy ? '常年同期：多雨炎热，备伞防暑' : '常年同期：白天炎热，避开正午';
+    }
+    if (high >= 28) {
+      return rainy ? '常年同期：多雨偏热，随身带伞' : '常年同期：偏热，注意防晒';
+    }
+    if (high <= 8) {
+      return '常年同期：寒冷，注意保暖';
+    }
+    return rainy ? '常年同期：多雨期，随身带伞' : '常年同期：体感舒适';
   }
 
   private emptyContext(): SeasonContext {

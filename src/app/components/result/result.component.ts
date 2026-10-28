@@ -21,6 +21,7 @@ import {
   SpotPlan,
   TravelContext,
   TravelPreferences,
+  TripDayWeather,
   WeatherDay
 } from '../../models/travel.model';
 import { DESTINATIONS } from '../../data/travel-data';
@@ -30,6 +31,7 @@ import { TravelStateService } from '../../services/travel-state.service';
 import { AuthService, AuthUser } from '../../services/auth.service';
 import { PlanService, ShareResult } from '../../services/plan.service';
 import { ModalLockService } from '../../services/modal-lock.service';
+import { TrackingService } from '../../services/tracking.service';
 import * as L from 'leaflet';
 
 type FieldKey = 'destination' | 'companion' | 'placeTypes' | 'purpose' | 'days' | 'people' | 'startDate' | 'budget';
@@ -129,7 +131,8 @@ export class ResultComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private planService: PlanService,
     private modalLock: ModalLockService,
-    private router: Router
+    private router: Router,
+    private tracking: TrackingService
   ) {}
 
   ngOnInit(): void {
@@ -268,13 +271,27 @@ export class ResultComponent implements OnInit, OnDestroy {
     return this.travelContext?.weather?.today ?? null;
   }
 
-  /** 实时天气是否已就绪：用于洞察卡/天气卡的骨架屏占位 */
+  /** 行程天气是否已就绪：用于洞察卡/天气卡的骨架屏占位 */
   get weatherReady(): boolean {
-    return !!this.weatherToday && !this.weatherLoading;
+    return !this.weatherLoading && !!this.travelContext;
   }
 
-  get weatherForecast(): WeatherDay[] {
-    return this.travelContext?.weather?.forecast?.slice(0, 5) ?? [];
+  /** 与行程逐天对齐的天气：按出发日期匹配 7 日预报，超出窗口用常年气候兜底 */
+  get tripWeather(): TripDayWeather[] {
+    const forecast = this.travelContext?.weather?.forecast ?? [];
+    return this.seasonService.buildTripWeather(this.selectedDestination, this.form, forecast);
+  }
+
+  /** 当地实时天气仅在出发日临近（7 天内）或未定日期时作为参考展示 */
+  get showTodayWeather(): boolean {
+    if (!this.weatherToday) {
+      return false;
+    }
+    const daysUntil = this.formSeason.daysUntil;
+    if (daysUntil === null) {
+      return true;
+    }
+    return daysUntil <= 6;
   }
 
   get mapPoints() {
@@ -307,24 +324,26 @@ export class ResultComponent implements OnInit, OnDestroy {
       tag: '出行效率'
     });
 
-    const weather = this.weatherLoading ? null : this.travelContext?.weather?.today;
+    // 只有出发日真正落在 7 日预报窗口内，才用天气下结论；否则宁可不展示天气卡
+    const firstTripDay = this.weatherLoading ? null : this.tripWeather[0];
+    const weather = firstTripDay && firstTripDay.source === 'forecast' ? firstTripDay : null;
     if (weather) {
       if (weather.rainChance !== null && weather.rainChance >= 60) {
         items.push({
           title: '雨天适配',
-          text: '当前降雨概率较高，优先放置博物馆、茶馆、室内美食和购物类安排，户外景点切换到白天晴朗时段或改成短时逛景。',
+          text: '出发日降雨概率较高，优先放置博物馆、茶馆、室内美食和购物类安排，户外景点切换到白天晴朗时段或改成短时逛景。',
           tag: '天气调整'
         });
       } else if (weather.max !== null && weather.max >= 30) {
         items.push({
           title: '高温适配',
-          text: '当前高温明显，建议将户外项目调整为早晨和傍晚，午间改为休息、室内展览或美食体验，降低体力消耗。',
+          text: '出发日高温明显，建议将户外项目调整为早晨和傍晚，午间改为休息、室内展览或美食体验，降低体力消耗。',
           tag: '高温避暑'
         });
       } else {
         items.push({
           title: '适宜出行',
-          text: '当前天气较适合外出，适合安排远足、城市观光和摄影打卡类活动，白天和傍晚都可充分利用。',
+          text: '出发日天气较适合外出，适合安排远足、城市观光和摄影打卡类活动，白天和傍晚都可充分利用。',
           tag: '最佳时段'
         });
       }
@@ -335,13 +354,15 @@ export class ResultComponent implements OnInit, OnDestroy {
 
   get dailyAdjustments(): { day: number; title: string; slots: { label: string; text: string }[]; note: string }[] {
     const baseDays = this.recommendation?.days ?? [];
-    const forecast = this.travelContext?.weather?.forecast ?? [];
+    const trip = this.tripWeather;
 
     return baseDays.map((day, index) => {
-      const weather = forecast[index] ?? forecast[0] ?? null;
-      const rainy = weather && weather.rainChance !== null && weather.rainChance >= 60;
-      const hot = weather && weather.max !== null && weather.max >= 30;
-      const cool = weather && weather.max !== null && weather.max <= 15;
+      // 用对齐后的行程天气，而不是 forecast[0]（今天）兜底
+      const weather = trip[index] ?? null;
+      const hasWeather = !!weather && weather.source !== 'none';
+      const rainy = hasWeather && weather!.rainChance !== null && weather!.rainChance >= 60;
+      const hot = hasWeather && weather!.max !== null && weather!.max >= 30;
+      const cool = hasWeather && weather!.max !== null && weather!.max <= 15;
 
       const morningText = rainy
         ? `上午优先安排街区漫游、博物馆或咖啡馆，避免雨中长时间户外活动。`
@@ -375,13 +396,19 @@ export class ResultComponent implements OnInit, OnDestroy {
           { label: '下午', text: afternoonText },
           { label: '晚上', text: eveningText }
         ],
-        note: rainy
-          ? '天气提醒：降雨概率较高，建议把户外打卡压缩在晴朗窗口内。'
-          : hot
-            ? '天气提醒：高温明显，建议把户外活动前移至早晚时段。'
-            : cool
-              ? '天气提醒：气温较低，建议外套、保暖层和长时间驻足少一些。'
-              : '天气提醒：适合全天外出，白天和傍晚都可安排重点活动。'
+        note: !this.formSeason.startDate
+          ? '天气提醒：设定出发日期后，可按天对齐天气。'
+          : !hasWeather
+          ? '天气提醒：暂无逐日预报，出发前 3 天再确认当地天气。'
+          : `${weather!.source === 'climate' ? '常年同期参考' : '天气提醒'}：${
+              rainy
+                ? '降雨概率较高，建议把户外打卡压缩在晴朗窗口内。'
+                : hot
+                  ? '高温明显，建议把户外活动前移至早晚时段。'
+                  : cool
+                    ? '气温较低，建议外套、保暖层和长时间驻足少一些。'
+                    : '适合全天外出，白天和傍晚都可安排重点活动。'
+            }`
       };
     });
   }
@@ -559,6 +586,7 @@ export class ResultComponent implements OnInit, OnDestroy {
     const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
 
     // 如果之前已经保存过，走 update；否则走 create
+    const isUpdate = !!this.savedPlanId;
     const save$ = this.savedPlanId
       ? this.planService.update(this.savedPlanId, name, prefs, rec)
       : this.planService.create(name, prefs, rec);
@@ -566,6 +594,7 @@ export class ResultComponent implements OnInit, OnDestroy {
     save$.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
+          this.tracking.track('save_plan', { mode: isUpdate ? 'update' : 'create' });
           if ((res as any).plan?.id) {
             this.savedPlanId = (res as any).plan.id;
           }
@@ -615,6 +644,7 @@ export class ResultComponent implements OnInit, OnDestroy {
         next: (share) => {
           this.shareDialog.loading = false;
           this.shareDialog.result = share;
+          this.tracking.track('share_create', { ok: true });
           // 生成成功后启动定时刷新统计
           this.startShareStatsRefresh();
         },
@@ -841,11 +871,27 @@ export class ResultComponent implements OnInit, OnDestroy {
         this.travelContext = context;
         this.travelContextDestination = destination;
         this.weatherLoading = false;
+        this.trackWeatherMode();
         setTimeout(() => {
           this.initMap();
           this.refreshMapMarkers();
         }, 0);
       });
+  }
+
+  /** 记录当前行程天气的数据来源，便于判断「常年参考/无数据」的占比 */
+  private trackWeatherMode(): void {
+    const list = this.tripWeather;
+    const mode = list.length === 0
+      ? 'none'
+      : list.every(item => item.source === 'forecast')
+        ? 'forecast'
+        : list.some(item => item.source === 'forecast')
+          ? 'mixed'
+          : list.every(item => item.source === 'climate')
+            ? 'climate'
+            : 'none';
+    this.tracking.track('weather_mode_view', { mode, days: list.length });
   }
 
   /** 把日程计划内的所有景点标注到地图概览（按天着色、数字表示当天游览顺序） */

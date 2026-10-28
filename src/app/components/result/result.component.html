@@ -125,10 +125,16 @@
           <div class="day-topbar">
             <div class="day-topbar__left">
               <span class="day-badge">第 {{ day.day }} 天</span>
-              <span class="day-focus" style="padding-left: 1rem;">{{ day.focus }}</span>
+              <!-- 日期 + 当天天气：数据来源用徽标区分预报/常年参考 -->
+              <span class="day-weather" *ngIf="tripWeather[i] as w" [class.is-climate]="w.source === 'climate'" [class.is-none]="w.source === 'none'">
+                <span class="dw-date">{{ w.dateLabel }}</span>
+                <span class="dw-temp" *ngIf="w.max !== null">{{ w.min }}°~{{ w.max }}°</span>
+                <span class="dw-label">{{ w.label }}</span>
+              </span>
+              <span class="day-focus">{{ day.focus }}</span>
             </div>
 
-            <div class="day-advice" *ngIf="dailyAdjustments[i] as advice">
+            <div class="day-advice" *ngIf="!weatherLoading && dailyAdjustments[i] as advice">
               <span class="advice-label">☀️ 天气适配</span>
               <p>{{ advice.note }}</p>
             </div>
@@ -348,43 +354,59 @@
           <span class="sk-line sk-w60 sk-h24"></span>
           <span class="sk-line sk-w50"></span>
         </div>
-        <div class="forecast-row forecast-skeleton" *ngIf="weatherLoading">
-          <div class="forecast-item" *ngFor="let _ of [1, 2, 3, 4, 5]">
-            <span class="sk-line sk-w60"></span>
+        <div class="trip-weather-list" *ngIf="weatherLoading">
+          <div class="trip-weather-row" *ngFor="let _ of [1, 2, 3]">
+            <span class="sk-line sk-w25"></span>
             <span class="sk-line sk-w45"></span>
-            <span class="sk-line sk-w70"></span>
+            <span class="sk-line sk-w30"></span>
           </div>
         </div>
 
         <ng-container *ngIf="!weatherLoading">
-          <div class="weather-summary" *ngIf="weatherToday as today; else noWeatherTpl">
-            <div class="weather-pill">{{ today.summary }}</div>
-            <div class="weather-temp">
-              <strong>{{ today.min ?? '-' }}°</strong>
-              <span>~</span>
-              <strong>{{ today.max ?? '-' }}°</strong>
+          <ng-container *ngIf="tripWeather.length; else noTripWeatherTpl">
+            <!-- 行程首日天气：日期 + 来源徽标，避免把「今天」当成出发日 -->
+            <div class="weather-summary">
+              <div class="weather-pill">{{ tripWeather[0].summary }}</div>
+              <div class="weather-temp" *ngIf="tripWeather[0].max !== null">
+                <strong>{{ tripWeather[0].min ?? '-' }}°</strong>
+                <span>~</span>
+                <strong>{{ tripWeather[0].max }}°</strong>
+              </div>
+              <div class="weather-meta">
+                <span>{{ tripWeather[0].dateLabel }} 出发</span>
+                <span class="weather-source-badge" [class.is-climate]="tripWeather[0].source === 'climate'" [class.is-none]="tripWeather[0].source === 'none'">
+                  {{ tripWeather[0].label }}
+                </span>
+              </div>
             </div>
-            <div class="weather-meta">
-              <span>降雨 {{ today.rainChance ?? 0 }}%</span>
-              <span>{{ today.date }}</span>
-            </div>
-          </div>
 
-          <ng-template #noWeatherTpl>
-            <div class="weather-empty" *ngIf="!hasSeason">
-              还没定日期？先设定出发日期，行程会更贴合天气。
+            <!-- 逐天天气：与每日行程一一对应 -->
+            <div class="trip-weather-list">
+              <div class="trip-weather-row" *ngFor="let item of tripWeather">
+                <span class="tw-day">第 {{ item.day }} 天</span>
+                <span class="tw-date">{{ item.dateLabel }}</span>
+                <span class="tw-temp">{{ item.min !== null ? (item.min + '°') : '-' }} ~ {{ item.max !== null ? (item.max + '°') : '-' }}</span>
+                <span class="tw-rain" *ngIf="item.rainChance !== null">雨 {{ item.rainChance }}%</span>
+                <span class="tw-source" [class.is-climate]="item.source === 'climate'" [class.is-none]="item.source === 'none'">
+                  {{ item.source === 'forecast' ? '预报' : item.source === 'climate' ? '常年' : '暂无' }}
+                </span>
+              </div>
             </div>
-            <div class="weather-empty" *ngIf="hasSeason && showSeasonAdvice">
+          </ng-container>
+
+          <ng-template #noTripWeatherTpl>
+            <div class="weather-empty" *ngIf="!hasSeason">
+              还没定日期？先设定出发日期，天气会逐天对齐到行程。
+            </div>
+            <div class="weather-empty" *ngIf="hasSeason">
               {{ season.dateLabel }} · {{ season.seasonLabel }} · {{ season.weatherTips[0] || '适合按季节舒适度安排' }}
             </div>
           </ng-template>
 
-          <div class="forecast-row" *ngIf="weatherForecast.length">
-            <div class="forecast-item" *ngFor="let item of weatherForecast">
-              <span class="forecast-date">{{ item.date.slice(5) }}</span>
-              <strong>{{ item.max ?? '-' }}°</strong>
-              <small>{{ item.summary }}</small>
-            </div>
+          <!-- 当地今日天气：仅作临行参考，不再代表整个行程 -->
+          <div class="today-weather" *ngIf="showTodayWeather && weatherToday as today">
+            <span>当地今日天气（参考）</span>
+            <span>{{ today.date }} · {{ today.min ?? '-' }}°~{{ today.max ?? '-' }}° · 降雨 {{ today.rainChance ?? 0 }}%</span>
           </div>
         </ng-container>
 
