@@ -226,6 +226,23 @@
   border: 1px solid rgba(109, 106, 233, 0.25);
 }
 
+.action-pill.warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 189, 89, 0.14);
+  color: #8b5c1f;
+  border: 1px solid rgba(255, 189, 89, 0.42);
+}
+
+.undo-btn-p {
+  padding: 2px 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #8b5c1f !important;
+  text-decoration: underline !important;
+}
+
 .saved-hint {
   margin: 10px 0 0;
   padding: 8px 12px;
@@ -234,6 +251,30 @@
   border: 1px solid rgba(109, 106, 233, 0.2);
   font-size: 12px;
   color: #4c4a9e;
+}
+
+/* 行程就地调整后的未保存提示 */
+.unsaved-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 189, 89, 0.12);
+  border: 1px solid rgba(255, 189, 89, 0.42);
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b5c1f;
+}
+
+.unsaved-hint-btn-p {
+  padding: 2px 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #8b5c1f !important;
 }
 
 /* ============================================================
@@ -418,6 +459,24 @@
   font-weight: 500;
 }
 
+/* 当天游览时长估算（由各景点建议停留累加） */
+.day-duration {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.12);
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+.day-duration.is-packed {
+  background: rgba(255, 189, 89, 0.14);
+  color: #8b5c1f;
+}
+
 /* 每日行程标题行的「日期 + 天气」徽标：预报/常年参考靠颜色与后缀区分 */
 .day-weather {
   display: inline-flex;
@@ -497,17 +556,77 @@
 
 .spot-row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 14px 52px minmax(0, 1fr);
+  gap: 8px;
   align-items: start;
 }
 
-.spot-time {
+/* 拖拽手柄：桌面端拖动排序，可拖到其他天 */
+.drag-handle {
+  padding-top: 13px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-soft);
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.drag-handle.is-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.spot-row.drop-before {
+  box-shadow: inset 0 2px 0 var(--primary);
+}
+.spot-row.drop-after {
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+.spot-time-cell {
+  padding-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 时间可点击修改 */
+.spot-time-btn {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 800;
   color: var(--primary);
-  padding-top: 14px;
-  text-align: right;
+  cursor: pointer;
+}
+.spot-time-btn:hover {
+  text-decoration: underline;
+}
+
+.spot-time-input {
+  width: 78px;
+  padding: 2px 4px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* 手机端跨天移动（原生拖拽在触屏不可用） */
+.move-day-select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  color: var(--text-soft);
 }
 
 .spot-card-shell {
@@ -607,6 +726,23 @@
 .tool-btn-accent-p:hover:not(:disabled) {
   background: rgba(109, 106, 233, 0.08) !important;
   border-color: var(--primary) !important;
+}
+
+/* 删除景点：低强调红色，避免和「换景点」抢视觉 */
+.tool-btn-del-p {
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+}
+
+.tool-btn-del-p:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+
+.tool-btn-del-p:disabled {
+  color: var(--text-soft) !important;
+  opacity: 0.45 !important;
 }
 
 /* ============================================================
@@ -829,6 +965,19 @@
   margin: 4px 2px 0;
 }
 
+/* 预算快捷档位 */
+.budget-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.budget-quick .chip-p {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
 /* dropdown 全宽 */
 .pref-edit-zone .full-width {
   width: 100%;
@@ -1038,6 +1187,19 @@
    ============================================================ */
 .map-wrap {
   margin-top: 4px;
+}
+
+/* 地图按天筛选 */
+.map-day-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.map-day-chip-p {
+  padding: 4px 10px !important;
+  font-size: 11px !important;
 }
 
 .travel-map {
@@ -1730,11 +1892,15 @@
     scroll-snap-align: start;
   }
   .spot-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 8px;
   }
-  .spot-time {
-    text-align: left;
-    padding-top: 0;
+  /* 触屏无原生拖拽，隐藏手柄，改用“移至…”下拉 */
+  .drag-handle {
+    display: none;
+  }
+  .spot-time-cell {
+    justify-content: flex-start;
   }
   .day-card {
     padding: 12px 14px;

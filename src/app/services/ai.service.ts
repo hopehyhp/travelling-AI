@@ -4,12 +4,14 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
   COMPANION_LABELS,
+  AddSpotResult,
   Destination,
   PLACE_TYPE_LABELS,
   PURPOSE_LABELS,
   Recommendation,
   SeasonContext,
   SpotPlan,
+  SpotInfoResult,
   SpotReplacementResult,
   TravelContext,
   TravelPreferences
@@ -57,34 +59,15 @@ export class AiService {
     dayIndex: number,
     recommendation: Recommendation | null
   ): Observable<SpotReplacementResult> {
-    const destination = this.resolveDestination(prefs);
-    const season = this.seasonService.buildContext(destination, prefs);
-
     const day = recommendation?.days?.[dayIndex];
-    const daySpotNames = day?.spots.map((s) => s.name) ?? [];
-    const plannedSpotNames = (recommendation?.days ?? [])
-      .flatMap((d) => d.spots.map((s) => s.name));
 
     const body = {
-      destinationId: prefs.destinationId,
-      destinationName: this.resolveDestinationName(prefs),
-      customDestination: prefs.customDestination,
-      travelIdea: (prefs.travelIdea ?? '').trim(),
-      days: prefs.days,
-      people: prefs.people,
-      companionLabel: COMPANION_LABELS[prefs.companion],
-      placeTypeLabels: prefs.placeTypes.map((t) => PLACE_TYPE_LABELS[t]),
-      purposeLabel: PURPOSE_LABELS[prefs.purpose],
-      budget: prefs.budget,
-      dateLabel: season.dateLabel,
-      seasonLabel: season.seasonLabel,
-      tempLabel: season.tempLabel,
-      climateNote: destination?.climate?.note ?? '',
+      ...this.buildSpotPromptBody(prefs),
       dayIndex,
       dayTitle: day?.title ?? '',
       dayFocus: day?.focus ?? '',
-      daySpotNames,
-      plannedSpotNames,
+      daySpotNames: day?.spots.map((s) => s.name) ?? [],
+      plannedSpotNames: (recommendation?.days ?? []).flatMap((d) => d.spots.map((s) => s.name)),
       currentSpot: {
         name: spot.name,
         category: spot.category,
@@ -100,6 +83,75 @@ export class AiService {
         candidates: []
       }))
     );
+  }
+
+  /** 为某一天补充候选景点（/api/add-spot） */
+  addSpot(
+    prefs: TravelPreferences,
+    recommendation: Recommendation | null,
+    dayIndex: number,
+    occupiedHours: number
+  ): Observable<AddSpotResult> {
+    const day = recommendation?.days?.[dayIndex];
+
+    const body = {
+      ...this.buildSpotPromptBody(prefs),
+      dayIndex,
+      dayTitle: day?.title ?? '',
+      dayFocus: day?.focus ?? '',
+      daySpotNames: day?.spots.map((s) => s.name) ?? [],
+      plannedSpotNames: (recommendation?.days ?? []).flatMap((d) => d.spots.map((s) => s.name)),
+      daySpotHourTotal: occupiedHours,
+      maxPerDay: 5
+    };
+
+    return this.http.post<AddSpotResult>('/api/add-spot', body).pipe(
+      catchError(() => of({
+        destinationName: this.resolveDestinationName(prefs),
+        dayIndex,
+        message: 'AI 暂时不可用，你可以手动添加一个地点。',
+        candidates: []
+      }))
+    );
+  }
+
+  /** 用户手动输入地点 → 确认景点信息（坐标确认在结果页用 /api/geocode 完成） */
+  lookupSpot(prefs: TravelPreferences, spotName: string): Observable<SpotInfoResult> {
+    const body = {
+      ...this.buildSpotPromptBody(prefs),
+      spotName
+    };
+
+    return this.http.post<SpotInfoResult>('/api/spot-info', body).pipe(
+      catchError(() => of({
+        found: false,
+        name: spotName,
+        message: '暂时无法确认该地点信息，请稍后重试。'
+      }))
+    );
+  }
+
+  /** replace-spot 与 add-spot 共享的行程上下文参数 */
+  private buildSpotPromptBody(prefs: TravelPreferences) {
+    const destination = this.resolveDestination(prefs);
+    const season = this.seasonService.buildContext(destination, prefs);
+
+    return {
+      destinationId: prefs.destinationId,
+      destinationName: this.resolveDestinationName(prefs),
+      customDestination: prefs.customDestination,
+      travelIdea: (prefs.travelIdea ?? '').trim(),
+      days: prefs.days,
+      people: prefs.people,
+      companionLabel: COMPANION_LABELS[prefs.companion],
+      placeTypeLabels: prefs.placeTypes.map((t) => PLACE_TYPE_LABELS[t]),
+      purposeLabel: PURPOSE_LABELS[prefs.purpose],
+      budget: prefs.budget,
+      dateLabel: season.dateLabel,
+      seasonLabel: season.seasonLabel,
+      tempLabel: season.tempLabel,
+      climateNote: destination?.climate?.note ?? ''
+    };
   }
 
   private resolveDestination(prefs: TravelPreferences): Destination | null {

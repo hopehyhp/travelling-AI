@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 import {
+  AddSpotResult,
   COMPANION_LABELS,
   COMPANION_OPTIONS,
   CompanionId,
+  DayPlan,
   Destination,
   PLACE_TYPE_LABELS,
   PLACE_TYPE_OPTIONS,
@@ -85,8 +87,31 @@ export class ResultComponent implements OnInit, OnDestroy {
   replacementContext: { dayIndex: number; spotIndex: number; spot: SpotPlan } | null = null;
   replacementOptions: SpotReplacementOption[] = [];
   replacementNotice: string | null = null;
+  replacementLoading = false;
+  /** 补景点面板状态 */
+  addContext: { dayIndex: number } | null = null;
+  addOptions: SpotReplacementOption[] = [];
+  addNotice: string | null = null;
+  addLoading = false;
+  /** 手动输入地点：查询中 / 待确认信息与位置 */
+  manualLookupLoading = false;
+  pendingManualSpot: SpotPlan | null = null;
+  pendingManualLocationText = '';
+  pendingManualLocationOk = false;
   shareNotice: string | null = null;
   saveNotice: string | null = null;
+  /** 行程被就地调整（换景点/调顺序）但尚未保存到账户 */
+  hasUnsavedChanges = false;
+  /** 刚被删除的景点，用于提供「撤销」 */
+  undoRemove: { name: string; day: number; snapshot: Recommendation } | null = null;
+  private undoRemoveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 地图按天筛选：null 表示全部天数 */
+  activeMapDay: number | null = null;
+  /** 时间编辑中的景点（`dayIndex:spotIndex`） */
+  editingTimeKey: string | null = null;
+  /** 拖拽源与当前悬停的落点 */
+  private dragSource: { dayIndex: number; spotIndex: number } | null = null;
+  dragOverKey: string | null = null;
   user: AuthUser | null = null;
 
   /** 定时刷新分享统计的定时器（owner 已分享时） */
@@ -102,7 +127,8 @@ export class ResultComponent implements OnInit, OnDestroy {
   /** 行程景点标注：按天着色 + 当天序号 */
   itineraryPoints: ItineraryMapPoint[] = [];
   itineraryGeoLoading = false;
-  geoFailedSpots: string[] = [];
+  /** 定位失败的景点（带天数，便于定位到「第几天没标上」） */
+  geoFailedSpots: { day: number; name: string }[] = [];
   /** 景点坐标缓存（按 目的地::景点名），避免移动/换景点后重复地理编码 */
   private geoCache = new Map<string, { lat: number; lng: number } | null>();
   private itineraryGeoRunId = 0;
@@ -119,9 +145,15 @@ export class ResultComponent implements OnInit, OnDestroy {
   placeTypeOptions = PLACE_TYPE_OPTIONS;
   purposeOptions = PURPOSE_OPTIONS;
 
-  budgetMin = 500;
-  budgetMax = 100000;
-  budgetStep = 500;
+  /**
+   * 预算档位（非线性）：低预算区间步长细、高预算区间步长粗。
+   * 避免旧方案「全区间 ¥500 步长 + 上限 ¥100,000」导致滑块既难精确控制又脱离实际。
+   */
+  budgetStops: number[] = [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 30000, 50000, 80000, 120000];
+  /** 滑块当前停在的档位下标 */
+  budgetSliderIndex = 4;
+  /** 常用预算快捷档 */
+  budgetQuickStops = [3000, 5000, 8000, 15000, 30000];
 
   constructor(
     private http: HttpClient,
@@ -154,6 +186,11 @@ export class ResultComponent implements OnInit, OnDestroy {
       .subscribe((rec) => {
         this.recommendation = rec;
         this.isLoading = !rec;
+        // 新推荐到达 = 旧的就地调整已失效，清空未保存标记
+        this.hasUnsavedChanges = false;
+        this.undoRemove = null;
+        this.activeMapDay = null;
+        this.addContext = null;
         if (!rec) {
           return;
         }
@@ -172,6 +209,10 @@ export class ResultComponent implements OnInit, OnDestroy {
     // 组件销毁时兜底解锁所有 body 滚动（覆盖可能遗留的多 modal 叠加）
     this.modalLock.reset();
     this.clearShareStatsTimer();
+    if (this.undoRemoveTimer) {
+      clearTimeout(this.undoRemoveTimer);
+      this.undoRemoveTimer = null;
+    }
     if (this.map) {
       this.map.remove();
       this.map = null;
@@ -254,6 +295,11 @@ export class ResultComponent implements OnInit, OnDestroy {
     return this.seasonService.quickDateOptions();
   }
 
+  /** 滑块当前档位对应的预算金额 */
+  get budgetDisplay(): number {
+    return this.budgetStops[this.budgetSliderIndex] ?? this.form.budget;
+  }
+
   get fields(): { key: FieldKey; icon: string; label: string; value: string }[] {
     return [
       { key: 'destination', icon: '📍', label: '目的地', value: this.destinationName },
@@ -296,6 +342,23 @@ export class ResultComponent implements OnInit, OnDestroy {
 
   get mapPoints() {
     return this.travelContext?.highlights ?? [];
+  }
+
+  /** 定位失败景点的可读文案，带天数 */
+  get geoFailedLabel(): string {
+    return this.geoFailedSpots.map((item) => `第${item.day}天·${item.name}`).join('、');
+  }
+
+  /** 完全没有可用坐标的天数：这一天在地图上看不到，需要明确提示用户 */
+  get daysWithoutMarkers(): number[] {
+    const rec = this.recommendation;
+    if (!rec || this.itineraryGeoLoading) {
+      return [];
+    }
+    const located = new Set(this.itineraryPoints.map((point) => point.name));
+    return rec.days
+      .filter((day) => day.spots.length > 0 && !day.spots.some((spot) => located.has(spot.name)))
+      .map((day) => day.day);
   }
 
   get smartAdvice(): string[] {
@@ -413,8 +476,29 @@ export class ResultComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** 每日游览时长估算：由各景点「建议停留」累加，用于提示当天是否排得过满 */
+  get dayDurations(): { day: number; hours: number; packed: boolean }[] {
+    return (this.recommendation?.days ?? []).map((day) => {
+      const hours = day.spots.reduce((sum, spot) => sum + this.parseStayHours(spot.stay), 0);
+      return { day: day.day, hours: Math.round(hours * 10) / 10, packed: hours > 10 };
+    });
+  }
+
+  /** 从「1.5–2 小时」这类文案中取最大时长；无法解析时按 2 小时估算 */
+  private parseStayHours(stay: string): number {
+    const numbers = (stay || '').match(/\d+(\.\d+)?/g);
+    if (!numbers?.length) {
+      return 2;
+    }
+    return Math.max(...numbers.map(Number));
+  }
+
   openEdit(key: FieldKey): void {
     this.editing = this.editing === key ? null : key;
+    // 打开预算编辑器时，把滑块同步到当前预算最近的档位
+    if (this.editing === 'budget') {
+      this.budgetSliderIndex = this.nearestBudgetIndex(this.form.budget);
+    }
   }
 
   closeEdit(): void {
@@ -481,25 +565,356 @@ export class ResultComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const days = this.recommendation.days.map((entry, idx) => {
-      if (idx !== dayIndex) {
-        return { ...entry, spots: [...entry.spots] };
-      }
+    // 时间属于「当天的时间槽」：只交换景点位置，时间按槽位重新分配
+    const times = day.spots.map((spot) => spot.time);
+    const spots = [...day.spots];
+    const [moved] = spots.splice(spotIndex, 1);
+    spots.splice(nextIndex, 0, moved);
+    const reslotted = spots.map((spot, index) => ({ ...spot, time: times[index] }));
 
-      const spots = [...entry.spots];
-      const [moved] = spots.splice(spotIndex, 1);
-      spots.splice(nextIndex, 0, moved);
-      return { ...entry, spots };
-    });
+    const days = this.recommendation.days.map((entry, idx) => (
+      idx === dayIndex ? { ...entry, spots: reslotted } : { ...entry, spots: [...entry.spots] }
+    ));
 
     this.publishRecommendation({ ...this.recommendation, days, attractionCount: days.reduce((count, dayEntry) => count + dayEntry.spots.length, 0) });
   }
 
+  // —— 拖拽排序 / 跨天移动 ——
+
+  onSpotDragStart(dayIndex: number, spotIndex: number, event: DragEvent): void {
+    // 当天只剩一个景点时不允许移动：避免出现空白天
+    if ((this.recommendation?.days?.[dayIndex]?.spots.length ?? 0) <= 1) {
+      event.preventDefault();
+      return;
+    }
+    this.dragSource = { dayIndex, spotIndex };
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', `${dayIndex}:${spotIndex}`);
+    }
+  }
+
+  onSpotDragOver(dayIndex: number, spotIndex: number, event: DragEvent): void {
+    if (!this.dragSource) {
+      return;
+    }
+    // 必须阻止默认行为才允许 drop
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.dragOverKey = `${dayIndex}:${spotIndex}:${this.isDropBelow(event) ? 'after' : 'before'}`;
+  }
+
+  onSpotDragLeave(): void {
+    this.dragOverKey = null;
+  }
+
+  onSpotDrop(dayIndex: number, spotIndex: number, event: DragEvent): void {
+    event.preventDefault();
+    const source = this.dragSource;
+    this.dragSource = null;
+    this.dragOverKey = null;
+    if (!source) {
+      return;
+    }
+    const insertAfter = this.isDropBelow(event);
+    this.moveSpotTo(source.dayIndex, source.spotIndex, dayIndex, spotIndex + (insertAfter ? 1 : 0));
+  }
+
+  onSpotDragEnd(): void {
+    this.dragSource = null;
+    this.dragOverKey = null;
+  }
+
+  /** 落点是否在行的下半部分（决定插入到前/后） */
+  private isDropBelow(event: DragEvent): boolean {
+    const element = event.currentTarget as HTMLElement | null;
+    if (!element) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    return event.clientY > rect.top + rect.height / 2;
+  }
+
+  dropPosition(dayIndex: number, spotIndex: number): 'before' | 'after' | null {
+    const key = `${dayIndex}:${spotIndex}:`;
+    if (!this.dragOverKey || !this.dragOverKey.startsWith(key)) {
+      return null;
+    }
+    return this.dragOverKey.endsWith(':after') ? 'after' : 'before';
+  }
+
+  /** 手机端兜底：把景点直接移到指定天（插入到该天末尾） */
+  moveSpotToDay(dayIndex: number, spotIndex: number, rawDayIndex: string): void {
+    if (!rawDayIndex) {
+      return;
+    }
+    const targetDay = Number(rawDayIndex);
+    const targetDayPlan = this.recommendation?.days?.[targetDay];
+    if (!Number.isInteger(targetDay) || !targetDayPlan) {
+      return;
+    }
+    this.moveSpotTo(dayIndex, spotIndex, targetDay, targetDayPlan.spots.length);
+  }
+
+  /**
+   * 移动景点到任意天任意位置（含跨天）。
+   * 时间槽按天重新分配，避免"时间跟着景点跑"。
+   */
+  private moveSpotTo(fromDayIndex: number, fromSpotIndex: number, toDayIndex: number, insertIndex: number): void {
+    const rec = this.recommendation;
+    const sourceDay = rec?.days?.[fromDayIndex];
+    const targetDay = rec?.days?.[toDayIndex];
+    const spot = sourceDay?.spots?.[fromSpotIndex];
+    if (!rec || !sourceDay || !targetDay || !spot) {
+      return;
+    }
+    // 当天只剩一个景点时禁止移动（含跨天），删除按钮也保持禁用
+    if (sourceDay.spots.length <= 1) {
+      return;
+    }
+
+    const sourceTimes = sourceDay.spots.map((entry) => entry.time);
+    let days: DayPlan[];
+
+    if (fromDayIndex === toDayIndex) {
+      const remaining = sourceDay.spots.filter((_, index) => index !== fromSpotIndex);
+      const target = Math.max(0, Math.min(
+        insertIndex > fromSpotIndex ? insertIndex - 1 : insertIndex,
+        remaining.length
+      ));
+      const spots = [...remaining];
+      spots.splice(target, 0, spot);
+      const reslotted = spots.map((entry, index) => ({ ...entry, time: sourceTimes[index] }));
+      // 移动后按当天安排顺延后续时间，避免时间重叠
+      const adjusted = this.cascadeTimes(reslotted, target);
+      days = rec.days.map((entry, index) => (
+        index === toDayIndex ? { ...entry, spots: adjusted } : { ...entry, spots: [...entry.spots] }
+      ));
+    } else {
+      const remainingSource = sourceDay.spots.filter((_, index) => index !== fromSpotIndex);
+      const sourceSlots = sourceTimes.filter((_, index) => index !== fromSpotIndex);
+      const targetSlots = this.insertTimeSlot(targetDay.spots.map((entry) => entry.time), insertIndex);
+      const targetSpots = [...targetDay.spots];
+      const safeInsert = Math.max(0, Math.min(insertIndex, targetSpots.length));
+      targetSpots.splice(safeInsert, 0, spot);
+
+      days = rec.days.map((entry, index) => {
+        if (index === fromDayIndex) {
+          return { ...entry, spots: remainingSource.map((item, i) => ({ ...item, time: sourceSlots[i] ?? item.time })) };
+        }
+        if (index === toDayIndex) {
+          const slotted = targetSpots.map((item, i) => ({ ...item, time: targetSlots[i] ?? item.time }));
+          // 目标日的时间要跟当天安排走：从插入位置起按停留时长顺延
+          return { ...entry, spots: this.cascadeTimes(slotted, safeInsert) };
+        }
+        return { ...entry, spots: [...entry.spots] };
+      });
+    }
+
+    this.toolsOpenKey = null;
+    this.tracking.track('move_spot', { fromDay: fromDayIndex, toDay: toDayIndex });
+    this.publishRecommendation({
+      ...rec,
+      days,
+      attractionCount: days.reduce((count, entry) => count + entry.spots.length, 0)
+    });
+  }
+
+  /** 为目标天插入一个新的时间槽（取前后时间的中点） */
+  private insertTimeSlot(times: string[], index: number): string[] {
+    const result = [...times];
+    const safeIndex = Math.max(0, Math.min(index, times.length));
+    const prev = safeIndex > 0 ? this.timeToMinutes(times[safeIndex - 1]) : null;
+    const next = safeIndex < times.length ? this.timeToMinutes(times[safeIndex]) : null;
+
+    let minutes: number;
+    if (prev !== null && next !== null) {
+      minutes = Math.round((prev + next) / 2);
+    } else if (prev !== null) {
+      minutes = prev + 90;
+    } else if (next !== null) {
+      minutes = next - 90;
+    } else {
+      minutes = 9 * 60 + 30;
+    }
+    result.splice(safeIndex, 0, this.minutesToTime(minutes));
+    return result;
+  }
+
+  /**
+   * 按当天安排顺延时间：从 fromIndex 起，保证每个景点至少在上一个景点
+   * 结束（含 30 分钟衔接）之后开始；fromIndex 之前的自定义时间保持不动。
+   */
+  private cascadeTimes(spots: SpotPlan[], fromIndex: number): SpotPlan[] {
+    let prevEnd: number | null = null;
+    return spots.map((spot, index) => {
+      const current = this.timeToMinutes(spot.time);
+      if (current === null) {
+        return spot;
+      }
+
+      let start = current;
+      if (index >= fromIndex && prevEnd !== null) {
+        start = Math.max(current, prevEnd + 30);
+      }
+      prevEnd = start + this.parseStayMinutes(spot.stay);
+      return start === current ? { ...spot } : { ...spot, time: this.minutesToTime(start) };
+    });
+  }
+
+  // —— 自定义景点时间 ——
+
+  isEditingTime(dayIndex: number, spotIndex: number): boolean {
+    return this.editingTimeKey === `${dayIndex}:${spotIndex}`;
+  }
+
+  startEditTime(dayIndex: number, spotIndex: number): void {
+    this.editingTimeKey = `${dayIndex}:${spotIndex}`;
+  }
+
+  cancelTimeEdit(): void {
+    this.editingTimeKey = null;
+  }
+
+  /** 修改时间后按时间重新排序，保证时间轴单调递增 */
+  commitSpotTime(dayIndex: number, spotIndex: number, value: string): void {
+    const rec = this.recommendation;
+    const day = rec?.days?.[dayIndex];
+    const spot = day?.spots?.[spotIndex];
+    this.editingTimeKey = null;
+    if (!rec || !day || !spot || !/^\d{1,2}:\d{2}$/.test(value) || value === spot.time) {
+      return;
+    }
+
+    const spots = this.sortSpotsByTime(day.spots.map((entry, index) => (
+      index === spotIndex ? { ...entry, time: this.minutesToTime(this.timeToMinutes(value) ?? 0) } : entry
+    )));
+    const days = rec.days.map((entry, index) => (
+      index === dayIndex ? { ...entry, spots } : { ...entry, spots: [...entry.spots] }
+    ));
+
+    this.tracking.track('edit_spot_time', { dayIndex });
+    this.publishRecommendation({ ...rec, days });
+  }
+
+  private sortSpotsByTime(spots: SpotPlan[]): SpotPlan[] {
+    return [...spots].sort((left, right) => {
+      const leftMinutes = this.timeToMinutes(left.time);
+      const rightMinutes = this.timeToMinutes(right.time);
+      if (leftMinutes === null && rightMinutes === null) {
+        return 0;
+      }
+      if (leftMinutes === null) {
+        return 1;
+      }
+      if (rightMinutes === null) {
+        return -1;
+      }
+      return leftMinutes - rightMinutes;
+    });
+  }
+
+  private timeToMinutes(value: string): number | null {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(value || '');
+    if (!match) {
+      return null;
+    }
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  private minutesToTime(totalMinutes: number): string {
+    const clamped = Math.max(0, Math.min(23 * 60 + 59, totalMinutes));
+    const hours = String(Math.floor(clamped / 60)).padStart(2, '0');
+    const minutes = String(clamped % 60).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  /** 删除单个景点（每天至少保留一个，避免出现空白天） */
+  removeSpot(dayIndex: number, spotIndex: number): void {
+    const rec = this.recommendation;
+    const day = rec?.days?.[dayIndex];
+    if (!rec || !day || day.spots.length <= 1) {
+      return;
+    }
+    const spot = day.spots[spotIndex];
+    if (!spot) {
+      return;
+    }
+
+    const days = rec.days.map((entry, index) => {
+      if (index !== dayIndex) {
+        return { ...entry, spots: [...entry.spots] };
+      }
+      return { ...entry, spots: entry.spots.filter((_, i) => i !== spotIndex) };
+    });
+
+    this.undoRemove = { name: spot.name, day: day.day, snapshot: this.cloneRecommendation(rec) };
+    if (this.undoRemoveTimer) {
+      clearTimeout(this.undoRemoveTimer);
+    }
+    this.undoRemoveTimer = setTimeout(() => {
+      this.undoRemove = null;
+      this.undoRemoveTimer = null;
+    }, 6000);
+
+    this.toolsOpenKey = null;
+    this.tracking.track('remove_spot', { day: day.day });
+    this.publishRecommendation({
+      ...rec,
+      days,
+      attractionCount: days.reduce((count, entry) => count + entry.spots.length, 0)
+    });
+  }
+
+  undoRemoveSpot(): void {
+    if (!this.undoRemove) {
+      return;
+    }
+    this.publishRecommendation(this.undoRemove.snapshot);
+    this.undoRemove = null;
+    if (this.undoRemoveTimer) {
+      clearTimeout(this.undoRemoveTimer);
+      this.undoRemoveTimer = null;
+    }
+  }
+
+  /** 地图按天筛选 */
+  setMapDay(day: number | null): void {
+    this.activeMapDay = day;
+    this.applyItineraryDayFilter();
+    this.fitMapToItinerary();
+  }
+
+  /** 依据 activeMapDay 增删行程标注（全部时全部显示） */
+  private applyItineraryDayFilter(): void {
+    if (!this.map) {
+      return;
+    }
+    this.itineraryMarkers.forEach((marker) => {
+      const point = (marker as any).itineraryPoint as ItineraryMapPoint | undefined;
+      const visible = !point || this.activeMapDay === null || point.day === this.activeMapDay;
+      const onMap = this.map!.hasLayer(marker);
+      if (visible && !onMap) {
+        this.map!.addLayer(marker);
+      } else if (!visible && onMap) {
+        if (this.selectedMapPointName === point?.name) {
+          this.selectedMapPointName = null;
+        }
+        this.map!.removeLayer(marker);
+      }
+    });
+  }
+
   requestReplacement(dayIndex: number, spotIndex: number, spot: SpotPlan): void {
+    this.discardManualSpot();
     this.replacementContext = { dayIndex, spotIndex, spot };
     this.replacementOptions = [];
     this.replacementNotice = null;
+    this.replacementLoading = true;
     this.aiService.replaceSpot(this.form, spot, dayIndex, this.recommendation).subscribe((result: SpotReplacementResult) => {
+      this.replacementLoading = false;
       this.replacementOptions = result.candidates ?? [];
       this.replacementNotice = result.message ?? (this.replacementOptions.length
         ? '请选择一个更适合当前目的地的替换方案。'
@@ -511,6 +926,8 @@ export class ResultComponent implements OnInit, OnDestroy {
     this.replacementContext = null;
     this.replacementOptions = [];
     this.replacementNotice = null;
+    this.replacementLoading = false;
+    this.discardManualSpot();
   }
 
   applyReplacement(option: SpotReplacementOption): void {
@@ -548,6 +965,231 @@ export class ResultComponent implements OnInit, OnDestroy {
 
     this.publishRecommendation(updated);
     this.cancelReplacement();
+  }
+
+  // —— 补景点（AI 候选 + 手动兜底）——
+
+  requestAddition(dayIndex: number): void {
+    const rec = this.recommendation;
+    if (!rec?.days?.[dayIndex]) {
+      return;
+    }
+    const day = rec.days[dayIndex];
+    const hours = this.dayDurations[dayIndex]?.hours ?? 0;
+
+    this.addContext = { dayIndex };
+    this.addOptions = [];
+    this.addNotice = null;
+    this.discardManualSpot();
+    this.addLoading = true;
+    this.tracking.track('add_spot_request', {
+      dayIndex,
+      occupiedHours: hours,
+      spotCount: day.spots.length
+    });
+
+    this.aiService.addSpot(this.form, rec, dayIndex, hours).subscribe((result: AddSpotResult) => {
+      this.addLoading = false;
+      this.addOptions = result.candidates ?? [];
+      this.addNotice = result.message ?? (this.addOptions.length
+        ? '请选择一个想补充进这一天的地点。'
+        : '暂无可补充候选，可以手动添加一个地点。');
+      if (!this.addOptions.length) {
+        this.tracking.track('add_spot_empty', { dayIndex });
+      }
+    });
+  }
+
+  cancelAddition(): void {
+    this.addContext = null;
+    this.addOptions = [];
+    this.addNotice = null;
+    this.addLoading = false;
+    this.discardManualSpot();
+  }
+
+  applyAddition(option: SpotReplacementOption): void {
+    if (!this.addContext || !this.recommendation) {
+      return;
+    }
+    const { dayIndex } = this.addContext;
+    const timeLabel = option.bestTime === '上午' ? '09:30'
+      : option.bestTime === '下午' ? '14:30'
+      : option.bestTime === '傍晚' ? '18:00'
+      : '10:30';
+    const spot = this.buildSpotPlan(option, timeLabel);
+    const days = this.recommendation.days.map((entry, index) => (
+      index === dayIndex
+        ? { ...entry, spots: this.insertSpotByTime(entry.spots, spot, option.bestTime) }
+        : { ...entry, spots: [...entry.spots] }
+    ));
+
+    this.tracking.track('add_spot', { dayIndex, source: 'ai', name: option.name, cost: option.cost });
+    this.publishRecommendation({
+      ...this.recommendation,
+      days,
+      attractionCount: days.reduce((count, entry) => count + entry.spots.length, 0)
+    });
+    this.cancelAddition();
+  }
+
+  // —— 手动输入地点：先确认信息与位置，再写入行程 ——
+
+  /** 用户输入地名 → AI 补全信息 → 地理编码确认位置 → 展示确认卡片 */
+  async lookupManualSpot(name: string): Promise<void> {
+    const rec = this.recommendation;
+    const normalized = (name || '').trim();
+    if (!rec || !normalized) {
+      return;
+    }
+
+    const existing = new Set(rec.days.flatMap((day) => day.spots.map((spot) => spot.name.trim().toLowerCase())));
+    if (existing.has(normalized.toLowerCase())) {
+      this.setManualNotice(`「${normalized}」已在行程中，请换一个地点。`);
+      return;
+    }
+
+    this.pendingManualSpot = null;
+    this.manualLookupLoading = true;
+    const result = await firstValueFrom(this.aiService.lookupSpot(this.form, normalized));
+    if (!result.found) {
+      this.manualLookupLoading = false;
+      this.setManualNotice(result.message ?? `未能确认「${normalized}」，请检查名称后重试。`);
+      return;
+    }
+
+    const coords = await this.geocodeSpot(result.name);
+    const dayIndex = this.addContext?.dayIndex;
+    const time = dayIndex !== undefined && rec.days[dayIndex]
+      ? this.nextTimeForDay(rec.days[dayIndex])
+      : '10:30';
+
+    this.pendingManualSpot = {
+      time,
+      name: result.name,
+      category: result.category || '景点',
+      description: result.description || `${this.destinationName}的自定义景点。`,
+      cost: result.cost ?? 0,
+      priceNote: result.priceNote,
+      locationNote: result.locationNote,
+      locationQuery: `${result.name} ${this.destinationName}`,
+      stay: result.stay || '1–1.5 小时',
+      reasons: []
+    };
+    this.pendingManualLocationOk = !!coords;
+    this.pendingManualLocationText = coords
+      ? `已定位：${result.addressHint || result.name}（${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}）`
+      : `未能定位到精确坐标（${result.addressHint || result.name}），地图可能不显示该点，仍可先加入行程。`;
+    this.manualLookupLoading = false;
+  }
+
+  /** 确认卡片里的「确认添加 / 确认替换」 */
+  confirmManualSpot(): void {
+    const spot = this.pendingManualSpot;
+    const rec = this.recommendation;
+    if (!spot || !rec) {
+      return;
+    }
+
+    if (this.replacementContext?.spot) {
+      const { dayIndex, spotIndex } = this.replacementContext;
+      const original = rec.days[dayIndex]?.spots[spotIndex];
+      if (!original) {
+        return;
+      }
+      // 替换时沿用原来的时间槽，避免"时间跟着景点跑"
+      const replaced: SpotPlan = { ...spot, time: original.time };
+      const days = rec.days.map((entry, index) => (
+        index === dayIndex
+          ? { ...entry, spots: entry.spots.map((item, i) => (i === spotIndex ? replaced : item)) }
+          : { ...entry, spots: [...entry.spots] }
+      ));
+
+      this.tracking.track('replace_spot', { dayIndex, source: 'manual', name: replaced.name, cost: replaced.cost });
+      this.publishRecommendation({ ...rec, days });
+      this.discardManualSpot();
+      this.cancelReplacement();
+      return;
+    }
+
+    if (this.addContext) {
+      const { dayIndex } = this.addContext;
+      const days = rec.days.map((entry, index) => (
+        index === dayIndex
+          ? { ...entry, spots: [...entry.spots, spot] }
+          : { ...entry, spots: [...entry.spots] }
+      ));
+
+      this.tracking.track('add_spot', { dayIndex, source: 'manual', name: spot.name, cost: spot.cost });
+      this.publishRecommendation({
+        ...rec,
+        days,
+        attractionCount: days.reduce((count, entry) => count + entry.spots.length, 0)
+      });
+      this.discardManualSpot();
+      this.cancelAddition();
+    }
+  }
+
+  discardManualSpot(): void {
+    this.pendingManualSpot = null;
+    this.pendingManualLocationOk = false;
+    this.pendingManualLocationText = '';
+    this.manualLookupLoading = false;
+  }
+
+  /** 手动输入相关的提示走当前面板的 notice，避免两套文案 */
+  private setManualNotice(message: string): void {
+    if (this.addContext) {
+      this.addNotice = message;
+    } else if (this.replacementContext) {
+      this.replacementNotice = message;
+    }
+  }
+
+  /** 新景点追加到当天末尾时的开始时间：上一个景点结束 + 30 分钟 */
+  private nextTimeForDay(day: DayPlan): string {
+    const last = day.spots[day.spots.length - 1];
+    const lastStart = last ? this.timeToMinutes(last.time) : null;
+    if (lastStart === null) {
+      return '10:30';
+    }
+    return this.minutesToTime(lastStart + this.parseStayMinutes(last?.stay) + 30);
+  }
+
+  /** 解析停留时长（如 "1–1.5 小时"）为分钟，解析不到按 90 分钟 */
+  private parseStayMinutes(stay?: string): number {
+    const match = /(\d+(?:\.\d+)?)/.exec(stay || '');
+    if (!match) {
+      return 90;
+    }
+    return Math.round(Number(match[1]) * 60);
+  }
+
+  /** 候选 -> 行程景点，补齐费用/位置说明与地图检索关键词 */
+  private buildSpotPlan(option: SpotReplacementOption, time: string): SpotPlan {
+    return {
+      time,
+      name: option.name,
+      category: option.category || '景点',
+      description: option.description,
+      cost: option.cost,
+      priceNote: option.priceNote ?? '参考预算，仅作估算，不等于官方票价。',
+      locationNote: option.locationNote ?? '地图入口基于 OpenStreetMap 中的地点搜索结果。',
+      locationQuery: `${option.name} ${this.destinationName}`,
+      stay: option.stay || '1–1.5 小时',
+      reasons: option.reasons ?? []
+    };
+  }
+
+  /** 按建议时段决定插入位置：上午→开头，下午→中间，傍晚→结尾 */
+  private insertSpotByTime(spots: SpotPlan[], spot: SpotPlan, bestTime?: string): SpotPlan[] {
+    const position = bestTime === '上午' ? 0
+      : bestTime === '下午' ? Math.ceil(spots.length / 2)
+      : spots.length;
+    const result = [...spots];
+    result.splice(position, 0, spot);
+    return result;
   }
 
   // —— 保存方案（命名 Modal）——
@@ -602,6 +1244,8 @@ export class ResultComponent implements OnInit, OnDestroy {
             this.state.setCurrentPlan(this.savedPlanId, name);
           }
           this.saveNotice = '✅ 方案已保存到你的账户';
+          this.hasUnsavedChanges = false;
+          this.undoRemove = null;
           setTimeout(() => { this.saveNotice = null; }, 2400);
           this.closeSaveDialog();
         },
@@ -702,10 +1346,42 @@ export class ResultComponent implements OnInit, OnDestroy {
   }
 
   private publishRecommendation(updated: Recommendation): void {
-    this.recommendation = updated;
-    this.state.setRecommendation(this.cloneRecommendation(updated));
+    const adjusted = this.withRecalculatedBudget(updated);
+    this.recommendation = adjusted;
+    this.state.setRecommendation(this.cloneRecommendation(adjusted));
+    // setRecommendation 会同步回放订阅并把标记清空，因此在它之后置为 true
+    this.hasUnsavedChanges = true;
     // 移动/换景点后重排地图上的行程标注（已有坐标的景点走缓存，不会重复请求）
     this.loadItineraryPoints();
+  }
+
+  /**
+   * 景点被替换后重算预计支出：
+   * 门票按人数计入，其余成本（住宿/餐饮/交通）沿用原估算，按差值平移总额，
+   * 避免出现「行程已换景点、预算数字仍是旧值」。
+   */
+  private withRecalculatedBudget(updated: Recommendation): Recommendation {
+    const prev = this.recommendation;
+    if (!prev) {
+      return updated;
+    }
+    const previousSpotCost = this.spotCostSum(prev.days);
+    const nextSpotCost = this.spotCostSum(updated.days);
+    const estimatedTotal = previousSpotCost === nextSpotCost
+      ? prev.estimatedTotal
+      : Math.max(0, Math.round(prev.estimatedTotal + (nextSpotCost - previousSpotCost) * Math.max(1, this.form.people)));
+    return {
+      ...updated,
+      estimatedTotal,
+      overBudget: estimatedTotal > this.form.budget * 1.1
+    };
+  }
+
+  private spotCostSum(days: DayPlan[]): number {
+    return days.reduce(
+      (sum, day) => sum + day.spots.reduce((daySum, spot) => daySum + (Number(spot.cost) || 0), 0),
+      0
+    );
   }
 
   private cloneRecommendation(value: Recommendation): Recommendation {
@@ -843,6 +1519,30 @@ export class ResultComponent implements OnInit, OnDestroy {
     this.emitChange();
   }
 
+  /** 松开滑块时才写回预算并重新生成，避免拖动过程中反复请求 */
+  applyBudgetSlider(): void {
+    this.onBudgetChange(this.budgetDisplay);
+  }
+
+  /** 快捷档位点击：同步滑块位置并应用 */
+  selectBudget(value: number): void {
+    this.budgetSliderIndex = this.nearestBudgetIndex(value);
+    this.onBudgetChange(this.budgetDisplay);
+  }
+
+  private nearestBudgetIndex(value: number): number {
+    let best = 0;
+    let bestDiff = Number.POSITIVE_INFINITY;
+    this.budgetStops.forEach((stop, index) => {
+      const diff = Math.abs(stop - value);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = index;
+      }
+    });
+    return best;
+  }
+
   private emitChange(): void {
     const prefs = {
       ...this.form,
@@ -905,6 +1605,11 @@ export class ResultComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // 筛选的天已不存在（例如当天景点被删空）时回到「全部」
+    if (this.activeMapDay !== null && !rec.days.some((day) => day.day === this.activeMapDay)) {
+      this.activeMapDay = null;
+    }
+
     // 按「天 → 当天顺序」收集景点，同名景点只标注第一次出现的位置
     const seen = new Set<string>();
     const list: Omit<ItineraryMapPoint, 'lat' | 'lng'>[] = [];
@@ -950,7 +1655,10 @@ export class ResultComponent implements OnInit, OnDestroy {
       }
       this.itineraryGeoLoading = false;
       this.itineraryPoints = results.filter((p): p is ItineraryMapPoint => !!p);
-      this.geoFailedSpots = list.filter((_, i) => !results[i]).map((item) => item.name);
+      this.geoFailedSpots = list
+        .filter((_, i) => !results[i])
+        .map((item) => ({ day: item.day, name: item.name }));
+      this.applyItineraryDayFilter();
       this.fitMapToItinerary();
     });
   }
@@ -1038,6 +1746,7 @@ export class ResultComponent implements OnInit, OnDestroy {
     // 行程景点标注：按天着色的序号圆点，点击复用景点详情弹窗
     this.itineraryPoints.forEach((point) => this.addItineraryMarker(point));
 
+    this.applyItineraryDayFilter();
     this.fitMapToItinerary();
     this.syncMapHighlight();
   }
@@ -1060,6 +1769,8 @@ export class ResultComponent implements OnInit, OnDestroy {
     marker.on('click', () => this.openMapPoint(point.name));
     this.mapMarkers.push(marker);
     this.itineraryMarkers.push(marker);
+    // 增量渲染时同步当前按天筛选（若该天被隐藏则立刻移除）
+    this.applyItineraryDayFilter();
     if (this.selectedMapPointName) {
       this.syncMapHighlight();
     }
@@ -1085,9 +1796,12 @@ export class ResultComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const visiblePoints = this.itineraryPoints.filter(
+      (p) => this.activeMapDay === null || p.day === this.activeMapDay
+    );
     const boundsPoints: [number, number][] = [
       ...(this.travelContext?.highlights ?? []).map((p) => [p.lat, p.lng] as [number, number]),
-      ...this.itineraryPoints.map((p) => [p.lat, p.lng] as [number, number])
+      ...visiblePoints.map((p) => [p.lat, p.lng] as [number, number])
     ];
     if (boundsPoints.length > 0) {
       this.map.fitBounds(L.latLngBounds(boundsPoints).pad(0.35));

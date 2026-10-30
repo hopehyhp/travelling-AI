@@ -33,14 +33,24 @@
           </div>
         </div>
 
-        <div class="action-status" *ngIf="saveNotice || shareNotice">
+        <div class="action-status" *ngIf="saveNotice || shareNotice || undoRemove">
           <div *ngIf="saveNotice" class="action-pill success">✅ {{ saveNotice }}</div>
           <div *ngIf="shareNotice" class="action-pill info">ℹ️ {{ shareNotice }}</div>
+          <div *ngIf="undoRemove" class="action-pill warn">
+            <span>🗑️ 已移除「{{ undoRemove.name }}」</span>
+            <button pButton type="button" class="undo-btn-p" (click)="undoRemoveSpot()">撤销</button>
+          </div>
         </div>
 
         <p class="saved-hint" *ngIf="savedPlanId">
           已关联账户方案「{{ savedPlanName }}」，再次保存会更新该方案。
         </p>
+
+        <!-- 就地调整（换景点/调顺序）后提醒保存，避免用户误以为已生效 -->
+        <div class="unsaved-hint" *ngIf="hasUnsavedChanges">
+          <span>✏️ 行程已调整（换景点 / 调顺序），仅保存在本地，保存后才能长期保留</span>
+          <button pButton type="button" class="p-button-text unsaved-hint-btn-p" (click)="saveCurrentPlan()">立即保存</button>
+        </div>
 
         <p class="summary">{{ recommendation.summary }}</p>
 
@@ -132,6 +142,9 @@
                 <span class="dw-label">{{ w.label }}</span>
               </span>
               <span class="day-focus">{{ day.focus }}</span>
+              <span class="day-duration" *ngIf="dayDurations[i] as dur" [class.is-packed]="dur.packed">
+                ⏱ 约 {{ dur.hours }} 小时{{ dur.packed ? ' · 偏紧凑' : '' }}
+              </span>
             </div>
 
             <div class="day-advice" *ngIf="!weatherLoading && dailyAdjustments[i] as advice">
@@ -143,8 +156,41 @@
           <h3 class="day-title">{{ day.title }}</h3>
 
           <div class="timeline">
-            <div class="spot-row" *ngFor="let spot of day.spots; let spotIndex = index">
-              <span class="spot-time">{{ spot.time }}</span>
+            <div
+              class="spot-row"
+              *ngFor="let spot of day.spots; let spotIndex = index"
+              [class.drop-before]="dropPosition(i, spotIndex) === 'before'"
+              [class.drop-after]="dropPosition(i, spotIndex) === 'after'"
+              (dragover)="onSpotDragOver(i, spotIndex, $event)"
+              (dragleave)="onSpotDragLeave()"
+              (drop)="onSpotDrop(i, spotIndex, $event)"
+            >
+              <span
+                class="drag-handle"
+                [class.is-disabled]="day.spots.length <= 1"
+                [attr.draggable]="day.spots.length > 1 ? 'true' : 'false'"
+                [title]="day.spots.length > 1 ? '拖动调整顺序，可拖到其他天' : '当天只剩一个景点，不能移动'"
+                (dragstart)="onSpotDragStart(i, spotIndex, $event)"
+                (dragend)="onSpotDragEnd()"
+              >⠿</span>
+
+              <!-- 时间可点击修改：时间属于当天的时间槽 -->
+              <div class="spot-time-cell">
+                <input
+                  *ngIf="isEditingTime(i, spotIndex); else timeLabelTpl"
+                  class="spot-time-input"
+                  type="time"
+                  [value]="spot.time"
+                  (change)="commitSpotTime(i, spotIndex, $any($event.target).value)"
+                  (blur)="cancelTimeEdit()"
+                />
+                <ng-template #timeLabelTpl>
+                  <button type="button" class="spot-time-btn" title="点击修改时间" (click)="startEditTime(i, spotIndex)">
+                    {{ spot.time || '设时间' }}
+                  </button>
+                </ng-template>
+              </div>
+
               <div class="spot-card-shell">
                 <button pButton type="button" class="spot-card-p" (click)="openSpotDetail(spot)">
                   <div class="spot-card__header">
@@ -177,17 +223,76 @@
                     <span class="pi pi-arrow-down"></span>
                   </button>
                   <button pButton type="button" class="p-button-outlined tool-btn-accent-p" (click)="requestReplacement(i, spotIndex, spot)">换景点</button>
+                  <button
+                    pButton
+                    type="button"
+                    class="p-button-text tool-btn-del-p"
+                    [disabled]="day.spots.length <= 1"
+                    [title]="day.spots.length <= 1 ? '每天至少保留一个景点' : '删除该景点'"
+                    (click)="removeSpot(i, spotIndex)"
+                  >删除</button>
+
+                  <!-- 手机端无原生拖拽：提供「移到其他天」的兜底入口（当天仅剩 1 个时不可移动） -->
+                  <select
+                    *ngIf="recommendation.days.length > 1 && day.spots.length > 1"
+                    class="move-day-select"
+                    title="移到其他天"
+                    (change)="moveSpotToDay(i, spotIndex, $any($event.target).value)"
+                  >
+                    <option value="" selected disabled>移至…</option>
+                    <option *ngFor="let target of recommendation.days; let di = index" [value]="di" [disabled]="di === i">
+                      第{{ target.day }}天
+                    </option>
+                  </select>
                 </div>
+
+                <!-- 换景点面板挂在当前景点下方，而不是整天末尾 -->
+                <app-spot-replacement-panel
+                  *ngIf="replacementContext && replacementContext.dayIndex === i && replacementContext.spotIndex === spotIndex"
+                  [options]="replacementOptions"
+                  [notice]="replacementNotice"
+                  [loading]="replacementLoading"
+                  [allowManual]="!replacementLoading"
+                  [manualLoading]="manualLookupLoading"
+                  [pendingSpot]="pendingManualSpot"
+                  [pendingLocationText]="pendingManualLocationText"
+                  [pendingLocationOk]="pendingManualLocationOk"
+                  (cancel)="cancelReplacement()"
+                  (apply)="applyReplacement($event)"
+                  (lookup)="lookupManualSpot($event)"
+                  (confirmManual)="confirmManualSpot()"
+                  (discardManual)="discardManualSpot()"
+                ></app-spot-replacement-panel>
               </div>
             </div>
 
+            <!-- 补景点：AI 候选 / 手动兜底 -->
             <app-spot-replacement-panel
-              *ngIf="replacementContext && replacementContext.dayIndex === i"
-              [options]="replacementOptions"
-              [notice]="replacementNotice"
-              (cancel)="cancelReplacement()"
-              (apply)="applyReplacement($event)"
+              *ngIf="addContext && addContext.dayIndex === i"
+              mode="add"
+              [options]="addOptions"
+              [notice]="addNotice"
+              [loading]="addLoading"
+              [allowManual]="!addLoading"
+              [manualLoading]="manualLookupLoading"
+              [pendingSpot]="pendingManualSpot"
+              [pendingLocationText]="pendingManualLocationText"
+              [pendingLocationOk]="pendingManualLocationOk"
+              (cancel)="cancelAddition()"
+              (apply)="applyAddition($event)"
+              (lookup)="lookupManualSpot($event)"
+              (confirmManual)="confirmManualSpot()"
+              (discardManual)="discardManualSpot()"
             ></app-spot-replacement-panel>
+
+            <button
+              *ngIf="!addContext || addContext.dayIndex !== i"
+              pButton
+              type="button"
+              class="p-button-outlined add-spot-btn-p"
+              [disabled]="day.spots.length >= 5"
+              (click)="requestAddition(i)"
+            >＋ 添加景点{{ day.spots.length >= 5 ? '（当天已较满）' : '' }}</button>
           </div>
         </div>
       </p-card>
@@ -317,18 +422,28 @@
             </div>
 
             <div class="editor" *ngIf="editing === 'budget'">
-              <div class="budget-value">¥ {{ form.budget.toLocaleString('zh-CN') }}</div>
+              <div class="budget-value">¥ {{ budgetDisplay.toLocaleString('zh-CN') }}</div>
               <p-slider
-                [(ngModel)]="form.budget"
-                [min]="budgetMin"
-                [max]="budgetMax"
-                [step]="budgetStep"
-                (onSlideEnd)="onBudgetChange($event.value ?? 0)"
+                [(ngModel)]="budgetSliderIndex"
+                [min]="0"
+                [max]="budgetStops.length - 1"
+                [step]="1"
+                (onSlideEnd)="applyBudgetSlider()"
                 [style]="{ width: '100%' }"
               ></p-slider>
               <div class="slider-scale">
-                <span>¥{{ budgetMin.toLocaleString('zh-CN') }}</span>
-                <span>¥{{ budgetMax.toLocaleString('zh-CN') }}</span>
+                <span>¥{{ budgetStops[0].toLocaleString('zh-CN') }}</span>
+                <span>¥{{ budgetStops[budgetStops.length - 1].toLocaleString('zh-CN') }}</span>
+              </div>
+              <div class="budget-quick">
+                <button
+                  pButton
+                  type="button"
+                  class="chip-p"
+                  *ngFor="let v of budgetQuickStops"
+                  [class.active]="budgetDisplay === v"
+                  (click)="selectBudget(v)"
+                >¥{{ v.toLocaleString('zh-CN') }}</button>
               </div>
             </div>
 
@@ -430,6 +545,24 @@
         </p-header>
 
         <div class="map-wrap">
+          <!-- 按天筛选：只看某一天的路线，避免所有天挤在一张图上 -->
+          <div class="map-day-filter" *ngIf="itineraryPoints.length">
+            <button
+              pButton
+              type="button"
+              class="chip-p map-day-chip-p"
+              [class.active]="activeMapDay === null"
+              (click)="setMapDay(null)"
+            >全部</button>
+            <button
+              pButton
+              type="button"
+              class="chip-p map-day-chip-p"
+              *ngFor="let day of recommendation.days"
+              [class.active]="activeMapDay === day.day"
+              (click)="setMapDay(day.day)"
+            >第{{ day.day }}天</button>
+          </div>
           <div id="travel-map" class="travel-map"></div>
           <div class="map-skeleton" *ngIf="!mapReady">
             <span class="map-skeleton__pulse"></span>
@@ -447,8 +580,9 @@
             <span>{{ mapPoints.length }} 个重点地点</span>
             <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
           </div>
-          <div class="map-meta map-meta-warn" *ngIf="mapReady && !itineraryGeoLoading && geoFailedSpots.length">
-            <span>{{ geoFailedSpots.length }} 个景点暂未定位：{{ geoFailedSpots.join('、') }}</span>
+          <div class="map-meta map-meta-warn" *ngIf="mapReady && !itineraryGeoLoading && (geoFailedSpots.length || daysWithoutMarkers.length)">
+            <span *ngIf="daysWithoutMarkers.length">第 {{ daysWithoutMarkers.join('、') }} 天的景点暂无坐标，地图未标注</span>
+            <span *ngIf="geoFailedSpots.length">{{ geoFailedSpots.length }} 个景点未定位：{{ geoFailedLabel }}</span>
           </div>
         </div>
       </p-card>

@@ -982,6 +982,65 @@ body.modal-locked {
 .replacement-item-p .replacement-meta { font-size: 11px; color: var(--text-soft); font-weight: 600; }
 .replacement-item-p .replacement-desc { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
 .replacement-empty { padding: 14px; text-align: center; font-size: 12px; color: var(--text-soft); }
+.replacement-loading { margin: 0 0 10px; font-size: 12px; color: var(--text-soft); }
+.replacement-loading::before {
+  content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px;
+  border-radius: 50%; border: 2px solid rgba(109,106,233,0.35); border-top-color: var(--primary);
+  animation: replacement-spin 0.8s linear infinite; vertical-align: middle;
+}
+@keyframes replacement-spin { to { transform: rotate(360deg); } }
+
+/* AI 无候选时的手动补充入口 */
+.replacement-manual { display: flex; gap: 6px; margin-top: 10px; }
+.replacement-manual-input {
+  flex: 1; min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  color: var(--text);
+}
+.replacement-manual-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(109,106,233,0.12); }
+.replacement-manual-btn-p { padding: 6px 12px !important; font-size: 12px !important; }
+
+/* 手动输入地点后的确认卡片：先确认信息与位置，再写入行程 */
+.manual-confirm {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(109, 106, 233, 0.4);
+  border-radius: 12px;
+  background: rgba(109, 106, 233, 0.04);
+}
+.manual-confirm__header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text);
+}
+.manual-confirm__meta { font-size: 11px; font-weight: 600; color: var(--text-soft); }
+.manual-confirm__desc { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-soft); }
+.manual-confirm__location { margin: 6px 0 0; font-size: 11px; line-height: 1.5; color: #2f855a; }
+.manual-confirm__location.is-missing { color: #b45309; }
+.manual-confirm__actions { display: flex; gap: 8px; margin-top: 10px; }
+.manual-confirm__actions .p-button { padding: 6px 12px !important; font-size: 12px !important; }
+
+/* 每天行程底部的「添加景点」入口 */
+.add-spot-btn-p {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  border-style: dashed !important;
+  border-color: rgba(109,106,233,0.35) !important;
+  background: transparent !important;
+}
+.add-spot-btn-p:hover:not(:disabled) { background: rgba(109,106,233,0.06) !important; }
+.add-spot-btn-p:disabled { opacity: 0.5 !important; }
 
 /* ============================================================
    分享页 p-card：写在 result 组件里的同名规则受组件作用域限制不生效，

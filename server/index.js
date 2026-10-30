@@ -9,6 +9,8 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { buildPrompt } = require('./prompt');
 const { normalize } = require('./normalize');
 const { buildSpotReplacementPrompt, normalizeReplacement } = require('./spot-replacement');
+const { buildAddSpotPrompt, normalizeAddition } = require('./spot-addition');
+const { buildSpotInfoPrompt, normalizeSpotInfo } = require('./spot-info');
 const { authMiddleware, optionalAuthMiddleware } = require('./auth');
 const db = require('./db');
 const authRoutes = require('./auth-routes');
@@ -210,6 +212,90 @@ app.post('/api/replace-spot', generateLimiter, async (req, res) => {
       destinationName: prefs.destinationName || prefs.customDestination || '目的地',
       message: 'AI 替换失败，已保留原景点。',
       candidates: []
+    });
+  }
+});
+
+// 为某一天补充单个景点：与 replace-spot 同构，但候选面向"补足当天节奏"
+app.post('/api/add-spot', generateLimiter, async (req, res) => {
+  const prefs = req.body || {};
+  const dayIndex = Number(prefs.dayIndex) >= 0 ? Number(prefs.dayIndex) : 0;
+  const destinationName = prefs.destinationName || prefs.customDestination || '目的地';
+
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(503).json({
+      destinationName,
+      dayIndex,
+      message: `服务端未配置 API Key，暂时无法为第 ${dayIndex + 1} 天补充景点，你可以手动添加。`,
+      candidates: []
+    });
+  }
+
+  try {
+    const content = await callDeepSeek(buildAddSpotPrompt(prefs));
+    let data;
+    try {
+      data = JSON.parse(content);
+    } catch (e) {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (!match) {
+        throw new Error('AI 返回内容无法解析为 JSON');
+      }
+      data = JSON.parse(match[0]);
+    }
+    res.json(normalizeAddition(data, prefs));
+  } catch (err) {
+    console.error('[add-spot] error:', err && err.message ? err.message : err);
+    res.status(200).json({
+      destinationName,
+      dayIndex,
+      message: `第 ${dayIndex + 1} 天的补充暂不可用，你可以手动添加一个地点。`,
+      candidates: []
+    });
+  }
+});
+
+// 用户手动输入地名后，确认景点信息（坐标由前端 /api/geocode 校验）
+app.post('/api/spot-info', generateLimiter, async (req, res) => {
+  const prefs = req.body || {};
+  const spotName = (prefs.spotName || '').trim();
+  const destinationName = prefs.destinationName || prefs.customDestination || '目的地';
+
+  if (!spotName) {
+    return res.status(400).json({
+      found: false,
+      name: '',
+      message: '请先输入景点名称。'
+    });
+  }
+
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(503).json({
+      found: false,
+      name: spotName,
+      message: '服务端未配置 API Key，暂时无法确认该地点信息。'
+    });
+  }
+
+  try {
+    const content = await callDeepSeek(buildSpotInfoPrompt(prefs));
+    let data;
+    try {
+      data = JSON.parse(content);
+    } catch (e) {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (!match) {
+        throw new Error('AI 返回内容无法解析为 JSON');
+      }
+      data = JSON.parse(match[0]);
+    }
+    res.json(normalizeSpotInfo(data, prefs));
+  } catch (err) {
+    console.error('[spot-info] error:', err && err.message ? err.message : err);
+    res.status(200).json({
+      found: false,
+      name: spotName,
+      message: `暂时无法确认「${spotName}」的信息，请稍后重试。`
     });
   }
 });
@@ -494,8 +580,9 @@ function buildSmartAdvice({ weather, destination, startDate }) {
   return advice.slice(0, 4);
 }
 
-async function callDeepSeek(prefs) {
-  const prompt = buildPrompt(prefs);
+async function callDeepSeek(input) {
+  // 兼容两种用法：传偏好对象（内部生成行程 prompt），或直接传已构建好的 prompt 字符串
+  const prompt = typeof input === 'string' ? input : buildPrompt(input);
   const resp = await fetch(API_URL, {
     method: 'POST',
     headers: {

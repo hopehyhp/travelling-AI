@@ -180,6 +180,30 @@ export interface SpotReplacementOption {
   priceNote?: string;
   locationNote?: string;
   similarity?: number;
+  /** 仅补景点接口返回：建议插入当天的时间段 */
+  bestTime?: string;
+}
+
+/** /api/spot-info 的返回：用户手动输入地点后的信息确认 */
+export interface SpotInfoResult {
+  found: boolean;
+  name: string;
+  message?: string;
+  category?: string;
+  description?: string;
+  cost?: number;
+  stay?: string;
+  priceNote?: string;
+  locationNote?: string;
+  addressHint?: string;
+}
+
+/** /api/add-spot 的返回：复用替换候选结构，按天补充 */
+export interface AddSpotResult {
+  destinationName: string;
+  dayIndex: number;
+  message?: string;
+  candidates: SpotReplacementOption[];
 }
 
 export interface SpotReplacementResult {
