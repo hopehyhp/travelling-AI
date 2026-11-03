@@ -1,4 +1,99 @@
-const BUDGET_LEVEL_LABELS = { economy: '经济型', comfort: '舒适型', luxury: '豪华型' };
+﻿const BUDGET_LEVEL_LABELS = { economy: '经济型', comfort: '舒适型', luxury: '豪华型' };
+
+/**
+ * 从 AI 返回的数据里反推目的地名称（当 destinationName 为空或占位 "目的地" 时）。
+ * 推理链：
+ *   summary 里取 "·" 分隔的第一段（如 "北京 · 7天..." → "北京"）
+ *   tags 里取第一个非通用 tag（排除"独自一人""美食"等）
+ *   spots 名称里匹配已知目的地关键字
+ */
+function inferDestination(data, prefs) {
+  const GENERIC_TAGS = new Set(['独自一人', '情侣出游', '亲子家庭', '朋友组队', '放松休闲', '深度文化', '文化探索', '舒适型', '经济型', '豪华型', '美食', '历史文化', '自然风光', '主题乐园', '购物', '徒步']);
+
+  // 1. 从 summary 里切 " · " 之前的部分
+  if (typeof data.summary === 'string' && data.summary.trim()) {
+    const m = data.summary.match(/^(.+?)\s*[·\u00b7]\s*\d+\s*天/);
+    if (m && m[1]) return m[1].trim();
+    const m2 = data.summary.match(/^(.+?)\s*[·\u00b7]/);
+    if (m2 && m2[1]) return m2[1].trim();
+  }
+
+  // 2. 从 tags 里找第一个非通用 tag
+  if (Array.isArray(data.tags)) {
+    for (const t of data.tags) {
+      if (typeof t !== 'string') continue;
+      const clean = t.trim();
+      if (!clean) continue;
+      // 去掉 " · 中国" 后缀
+      const base = clean.split('·')[0].trim();
+      if (GENERIC_TAGS.has(base)) continue;
+      if (base.length >= 2 && base.length <= 10) return base;
+    }
+  }
+
+  // 3. 从 spots 名称里收集，找出现频次最高的城市关键字
+  if (Array.isArray(data.days)) {
+    const spotNames = [];
+    for (const d of data.days) {
+      if (Array.isArray(d.spots)) for (const s of d.spots) {
+        if (typeof s?.name === 'string') spotNames.push(s.name);
+      }
+    }
+    // 常见城市-景点映射（反向查）
+    const CITY_KEYWORDS = {
+      '北京': ['天坛', '故宫', '颐和园', '八达岭', '长城', '什刹海', '南锣鼓巷', '景山', '798', '圆明园', '鸟巢', '水立方', '天安门', '北海公园'],
+      '上海': ['外滩', '东方明珠', '南京路', '迪士尼', '豫园', '城隍庙', '陆家嘴', '田子坊', '朱家角'],
+      '成都': ['宽窄巷子', '大熊猫', '锦里', '武侯祠', '杜甫草堂', '都江堰', '春熙路', '太古里'],
+      '西安': ['兵马俑', '华清池', '大雁塔', '回民街', '古城墙', '大唐不夜城', '秦始皇陵'],
+      '杭州': ['西湖', '灵隐寺', '千岛湖', '宋城', '西溪湿地', '雷峰塔'],
+      '丽江': ['古城', '玉龙雪山', '束河', '泸沽湖', '黑龙潭'],
+      '大理': ['洱海', '大理古城', '苍山', '喜洲', '双廊'],
+      '重庆': ['洪崖洞', '解放碑', '磁器口', '武隆', '长江索道', '李子坝'],
+      '厦门': ['鼓浪屿', '曾厝垵', '环岛路', '南普陀', '集美学村'],
+      '三亚': ['亚龙湾', '天涯海角', '蜈支洲岛', '大东海', '南山']
+    };
+    const counts = {};
+    for (const spot of spotNames) {
+      for (const [city, kws] of Object.entries(CITY_KEYWORDS)) {
+        if (kws.some((k) => spot.includes(k))) {
+          counts[city] = (counts[city] || 0) + 1;
+        }
+      }
+    }
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (sorted[0] && sorted[0][1] >= 1) return sorted[0][0];
+  }
+
+  return '';
+}
+
+/**
+ * 修复 plan 对象里的 destinationName（原地修改 recommendation 字段）。
+ * 用于分享 API / 导入 API 返回历史数据前的兜底修复，
+ * 以及 normalize 阶段新生成数据的完善。
+ */
+function fixDestinationName(plan) {
+  if (!plan || !plan.recommendation) return plan;
+  const rec = plan.recommendation;
+  const current = typeof rec.destinationName === 'string' ? rec.destinationName.trim() : '';
+  if (current && current !== '目的地') return plan; // 已经是正确的
+
+  // 从 preferences / recommendation 里反推
+  const prefs = plan.preferences || {};
+  const prefDest = prefs.customDestination || prefs.destinationName || '';
+  if (prefDest) {
+    rec.destinationName = prefDest.trim();
+    return plan;
+  }
+
+  const inferred = inferDestination(rec, prefs);
+  if (inferred) {
+    rec.destinationName = inferred;
+    return plan;
+  }
+
+  return plan;
+}
 
 /** 安全取数字：非法/缺省都返 defaultVal */
 function toNum(val, defaultVal = 0) {
@@ -127,11 +222,22 @@ function normalize(data, prefs) {
   const days = Number(prefs.days) > 0 ? Number(prefs.days) : 1;
   const people = Number(prefs.people) > 0 ? Number(prefs.people) : 1;
   const budget = Number(prefs.budget) > 0 ? Number(prefs.budget) : 0;
-  const requestDestination = prefs.destinationName || prefs.customDestination || '目的地';
-  const hasTravelIdea = typeof prefs.travelIdea === 'string' && prefs.travelIdea.trim();
-  const destinationName = hasTravelIdea && typeof data.destinationName === 'string' && data.destinationName.trim()
+
+  // destinationName 解析链（优先级从高到低）：
+  //   1. AI 明确返回的非空、非占位字符串
+  //   2. prefs 里的 customDestination / destinationName
+  //   3. 从 summary 反推（AI 输出格式通常是 "目的地 · N天..."）
+  //   4. 从 tags 里找第一个非通用 tag
+  //   5. 从 spots 名称里匹配已知目的地
+  //   6. 兜底 "目的地"
+  const prefDest = prefs.customDestination || prefs.destinationName || '';
+  let destinationName = (typeof data.destinationName === 'string' && data.destinationName.trim() && data.destinationName.trim() !== '目的地')
     ? data.destinationName.trim()
-    : requestDestination;
+    : (prefDest || '');
+
+  if (!destinationName) {
+    destinationName = inferDestination(data, prefs) || '目的地';
+  }
 
   const rawDays = Array.isArray(data.days) ? data.days : [];
   const dayPlans = rawDays.slice(0, days).map((d, i) => normalizeDay(d, i));
@@ -200,4 +306,4 @@ function normalizeSpot(s) {
   };
 }
 
-module.exports = { normalize };
+module.exports = { normalize, fixDestinationName, inferDestination };

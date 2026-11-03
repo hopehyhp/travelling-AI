@@ -53,15 +53,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
   passwordNotice: string | null = null;
 
   renameTarget: PlanSummary | null = null;
+  renameDialogVisible = false;
   renameName = '';
   renameLoading = false;
   renameError: string | null = null;
 
   deleteTarget: PlanSummary | null = null;
+  deleteDialogVisible = false;
   deleteLoading = false;
   deleteError: string | null = null;
 
   shareDialog: ShareDialogState = { open: false, plan: null, loading: false, url: '', copied: false, error: null };
+  shareDialogVisible = false;
   importDialog: ImportDialogState = { open: false, token: '', loading: false, error: null };
 
   profileModalOpen = false;
@@ -266,6 +269,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   openRename(plan: PlanSummary): void {
     this.renameTarget = plan;
+    this.renameDialogVisible = true;
     this.renameName = plan.name;
     this.renameError = null;
     this.modalLock.lock();
@@ -273,6 +277,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   closeRename(): void {
     if (this.renameLoading) return;
+    this.renameDialogVisible = false;
     this.renameTarget = null;
     this.renameError = null;
     this.modalLock.unlock();
@@ -291,6 +296,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.planService.update(target.id, name).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.renameLoading = false;
         target.name = name;
         if (this.state.currentPlanId === target.id) {
           this.state.setCurrentPlan(target.id, name);
@@ -310,11 +316,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   askDelete(plan: PlanSummary): void {
     this.deleteTarget = plan;
     this.deleteError = null;
+    this.deleteDialogVisible = true;
     this.modalLock.lock();
   }
 
   closeDelete(): void {
     if (this.deleteLoading) return;
+    this.deleteDialogVisible = false;
     this.deleteTarget = null;
     this.deleteError = null;
     this.modalLock.unlock();
@@ -328,6 +336,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.planService.delete(target.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.deleteLoading = false;
         this.plans = this.plans.filter((p) => p.id !== target.id);
         if (this.state.currentPlanId === target.id) {
           this.state.clearCurrentPlan();
@@ -346,6 +355,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   openShare(plan: PlanSummary): void {
     this.shareDialog = { open: true, plan, loading: false, url: '', copied: false, error: null };
+    this.shareDialogVisible = true;
     this.modalLock.lock();
 
     if (plan.shared && plan.share_token) {
@@ -369,7 +379,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   closeShare(): void {
-    if (!this.shareDialog.open) return;
+    if (!this.shareDialog.open && !this.shareDialogVisible) return;
+    this.shareDialogVisible = false;
     this.shareDialog = { open: false, plan: null, loading: false, url: '', copied: false, error: null };
     this.modalLock.unlock();
   }
@@ -428,6 +439,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.planService.import(token).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.importDialog.loading = false;
         this.loadPlans();
         this.closeImport();
         this.showNotice('已导入分享方案');

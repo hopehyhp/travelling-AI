@@ -892,43 +892,97 @@ body.modal-locked {
   width: 100% !important; margin-top: 18px !important;
   padding: 12px !important; font-size: 14px !important; font-weight: 700 !important;
   border-radius: 12px !important;
+  text-align: center !important;
+  justify-content: center !important;
+  display: flex !important;
 }
 
-/* ---------- Auth / Plan Share / Plan Save Modal ---------- */
-.auth-modal-backdrop {
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(16, 23, 36, 0.42);
-  backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  animation: spotModalBackdrop 0.2s ease-out;
-}
-.auth-modal-card.p-card {
-  width: min(100%, 440px);
+/* ---------- 统一弹窗体系（p-dialog）----------
+   class="app-dialog" 即可获得统一外观。
+--------------------------------------------- */
+.app-dialog.p-dialog {
   border-radius: 20px !important;
   overflow: hidden !important;
-  border: 1px solid var(--border) !important;
-  background: rgba(255,255,255,0.98) !important;
-  box-shadow: 0 20px 50px rgba(29, 27, 51, 0.16) !important;
-  animation: spotModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 50px rgba(29, 27, 51, 0.18) !important;
 }
-.auth-modal-card.p-card > .p-card-body { padding: 22px 24px !important; }
-.auth-modal-card.p-card > .p-card-body > .p-card-content { padding: 0 !important; }
-.auth-modal-sub { font-size: 13px; color: var(--text-soft); margin: 8px 0 14px; line-height: 1.6; }
+.app-dialog.p-dialog > .p-dialog-header {
+  padding: 18px 24px !important;
+  border-bottom: 1px solid #e2e0f0 !important;
+  background: linear-gradient(180deg, rgba(241,240,250,0.6), transparent) !important;
+}
+.app-dialog.p-dialog > .p-dialog-header .p-dialog-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: #1d1b33 !important;
+  letter-spacing: -0.01em !important;
+}
+.app-dialog.p-dialog > .p-dialog-header-icons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+.app-dialog.p-dialog > .p-dialog-header-icons > .p-dialog-header-icon {
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  color: #9491b4 !important;
+  display: grid !important;
+  place-items: center !important;
+  transition: background 0.12s ease, color 0.12s ease !important;
+}
+.app-dialog.p-dialog > .p-dialog-header-icons > .p-dialog-header-icon:hover {
+  background: #f1f0fa !important;
+  color: #1d1b33 !important;
+}
+.app-dialog.p-dialog > .p-dialog-content {
+  padding: 22px 24px !important;
+  max-height: calc(100dvh - 140px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
 
-.auth-modal-error {
-  margin-top: 10px; padding: 8px 12px;
-  border-radius: 10px;
-  background: #fef2f2; border: 1px solid #fecaca;
-  color: #b91c1c; font-size: 12.5px; font-weight: 600;
+/* —— 内容区公共组件 —— */
+.app-dialog__sub {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: #5a5780;
+  line-height: 1.6;
 }
-.auth-modal-loading {
-  display: flex; align-items: center; gap: 10px;
-  padding: 16px 0; color: var(--text-soft); font-size: 13px;
-}
-.auth-modal-actions {
-  display: flex; gap: 8px; justify-content: flex-end;
+.app-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
   margin-top: 16px;
+}
+.app-dialog__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  color: #5a5780;
+  font-size: 13px;
+}
+.app-dialog__error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  color: #b91c1c;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* p-dialog 内 input 撑满宽度 */
+.app-dialog.p-dialog p-inputtext,
+.app-dialog.p-dialog .p-inputtext,
+.app-dialog.p-dialog input[pInputText] {
+  width: 100% !important;
+  font-size: 14px !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
 }
 
 .share-link-row { display: flex; gap: 8px; margin: 8px 0 4px; }

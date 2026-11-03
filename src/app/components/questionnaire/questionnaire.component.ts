@@ -204,6 +204,10 @@ export class QuestionnaireComponent implements OnInit {
 
   selectDestination(id: string): void {
     this.form.destinationId = id;
+    // 切到内置地点时，清空之前输入的自定义地点，避免残留
+    if (id !== 'custom') {
+      this.form.customDestination = '';
+    }
   }
 
   selectCompanion(id: CompanionId): void {

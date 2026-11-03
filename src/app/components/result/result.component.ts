@@ -1247,7 +1247,7 @@ export class ResultComponent implements OnInit, OnDestroy {
     this.saveDialog.error = null;
 
     const rec = this.cloneRecommendation(this.recommendation);
-    const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
+    const prefs = this.buildSavePrefs();
 
     // 如果之前已经保存过，走 update；否则走 create
     const isUpdate = !!this.savedPlanId;
@@ -1291,7 +1291,7 @@ export class ResultComponent implements OnInit, OnDestroy {
     this.modalLock.lock();
 
     const rec = this.cloneRecommendation(this.recommendation);
-    const prefs = { ...this.form, placeTypes: [...this.form.placeTypes] };
+    const prefs = this.buildSavePrefs();
     const planName = this.recommendation.destinationName + ' · 分享';
 
     // 如果已保存过 → 直接 share；否则先 create 再 share
@@ -1408,6 +1408,23 @@ export class ResultComponent implements OnInit, OnDestroy {
 
   private cloneRecommendation(value: Recommendation): Recommendation {
     return JSON.parse(JSON.stringify(value)) as Recommendation;
+  }
+
+  /**
+   * 构造保存/分享所需的 preferences 快照：
+   *  - 深拷贝 form，避免后续表单改动影响已存储数据
+   *  - 如果选了内置地点（destinationId !== 'custom'），清空 customDestination，
+   *    防止 wizard 阶段残留的自定义输入被一并存到数据库
+   */
+  private buildSavePrefs(): TravelPreferences {
+    const prefs: TravelPreferences = {
+      ...this.form,
+      placeTypes: [...this.form.placeTypes]
+    };
+    if (prefs.destinationId !== 'custom') {
+      prefs.customDestination = '';
+    }
+    return prefs;
   }
 
   /** 委托给 ModalLockService（引用计数，多 modal 叠开安全） */

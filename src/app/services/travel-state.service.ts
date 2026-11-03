@@ -41,7 +41,9 @@ export class TravelStateService {
 
   /** 设置 preferences 并通知订阅者（不触发 AI 重新生成） */
   setPreferences(prefs: TravelPreferences): void {
-    this.preferences = { ...prefs, placeTypes: [...prefs.placeTypes] };
+    // placeTypes 可能是非数组（老数据），安全兜底
+    const safePlaceTypes = Array.isArray(prefs?.placeTypes) ? [...prefs.placeTypes] : [];
+    this.preferences = { ...prefs, placeTypes: safePlaceTypes };
     this.preferences$.next(this.preferences);
   }
 

@@ -1,7 +1,7 @@
 // /api/plans 路由：方案 CRUD + 分享 + 导入
 const express = require('express');
 const db = require('./db');
-const { normalize } = require('./normalize');
+const { normalize, fixDestinationName } = require('./normalize');
 
 const router = express.Router();
 
@@ -23,6 +23,8 @@ router.get('/', async (req, res) => {
   res.json({
     plans: plans.map((p) => {
       const share = shareByPlanId.get(p.id);
+      // 兜底修复老攻略里的 destinationName
+      fixDestinationName(p);
       return {
         id: p.id,
         name: p.name,
@@ -48,6 +50,9 @@ router.post('/', async (req, res) => {
 
   const normalized = normalize(rec, prefs);
   const plan = await db.createPlan(req.userId, name, prefs, normalized);
+  if (!plan) {
+    return res.status(500).json({ error: 'CREATE_FAILED', message: '保存方案失败，请稍后重试' });
+  }
 
   res.status(201).json({
     plan: {
@@ -167,8 +172,15 @@ router.post('/import', async (req, res) => {
     return res.status(400).json({ error: 'INVALID_SHARE', message: '分享数据不完整' });
   }
 
+  // 导入也走 normalize：兜底修复老攻略的 destinationName、
+  // 兼容字段缺失、确保 recommendation 结构完整
+  const normalized = normalize(rec, prefs);
+
   const defaultName = `来自 ${snap.owner || '旅友'} 的 ${snap.name || '旅行方案'}`;
-  const plan = await db.createPlan(req.userId, defaultName, prefs, rec);
+  const plan = await db.createPlan(req.userId, defaultName, prefs, normalized);
+  if (!plan) {
+    return res.status(500).json({ error: 'CREATE_FAILED', message: '导入方案失败，请稍后重试' });
+  }
 
   await db.incrementShareStat(token, 'import_count');
 

@@ -16,7 +16,7 @@
     <p-card class="shared-card-p">
       <p-tag severity="info" [rounded]="true">朋友分享的旅行方案</p-tag>
       <h1 class="shared-title">{{ plan.plan_name }}</h1>
-      <p class="shared-meta">来自 <strong>{{ plan.owner }}</strong> · {{ plan.recommendation.destinationName || '' }}</p>
+      <p class="shared-meta">来自 <strong>{{ plan.owner }}</strong> · {{ resolvedDestinationName }}</p>
       <div class="shared-stats" *ngIf="plan.view_count !== undefined">
         <p-tag severity="info" [rounded]="true">👀 {{ plan.view_count }} 次浏览</p-tag>
         <p-tag severity="success" [rounded]="true" *ngIf="plan.import_count !== undefined">📥 {{ plan.import_count }} 次导入</p-tag>

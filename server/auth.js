@@ -20,6 +20,9 @@ if (!JWT_SECRET) {
 const SECRET = JWT_SECRET || 'dev-only-temp-secret-change-me';
 
 function sign(user) {
+  if (!user || user.id == null) {
+    throw new Error('sign(user): user is null or missing id');
+  }
   return jwt.sign(
     { sub: String(user.id), username: user.username },
     SECRET,

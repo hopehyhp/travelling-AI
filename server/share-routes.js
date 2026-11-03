@@ -1,6 +1,7 @@
 // /api/shared/:token —— 公开读取分享方案（无需登录）
 const express = require('express');
 const db = require('./db');
+const { fixDestinationName } = require('./normalize');
 
 const router = express.Router();
 
@@ -19,6 +20,9 @@ router.get('/:token', async (req, res) => {
   await db.incrementShareStat(token, 'view_count');
 
   const snap = share.snapshot || {};
+  // 兜底修复老攻略里错误的 destinationName
+  fixDestinationName(snap);
+
   res.json({
     token,
     owner: snap.owner || '旅友',

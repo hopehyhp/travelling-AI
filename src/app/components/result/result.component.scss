@@ -1626,73 +1626,16 @@
   font-size: 14px !important;
   font-weight: 700 !important;
   border-radius: 12px !important;
+  text-align: center !important;
+  justify-content: center !important;
+  display: flex !important;
 }
 
 /* ============================================================
-   保存 / 分享 Dialog（auth-modal-backdrop + p-card）
+   保存 / 分享 Dialog
+   样式统一抽到 styles.scss（p-modal-* / auth-modal-* 两套都覆盖）。
+   这里只保留 result 页独有的 share-link 相关样式。
    ============================================================ */
-.auth-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(16, 23, 36, 0.42);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: spotModalBackdrop 0.2s ease-out;
-}
-
-.auth-modal-card.p-card {
-  width: min(100%, 440px);
-  border-radius: 20px !important;
-  overflow: hidden !important;
-  animation: spotModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.auth-modal-card.p-card > .p-card-body {
-  padding: 22px 24px !important;
-}
-
-.auth-modal-sub {
-  font-size: 13px;
-  color: var(--text-soft);
-  margin: 8px 0 14px;
-  line-height: 1.6;
-}
-
-.auth-modal-card.p-card p-inputtext {
-  font-size: 14px;
-}
-
-.auth-modal-error {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  font-size: 12.5px;
-  font-weight: 600;
-}
-
-.auth-modal-loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 0;
-  color: var(--text-soft);
-  font-size: 13px;
-}
-
-.auth-modal-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
 .share-link-row {
   display: flex;
   gap: 8px;

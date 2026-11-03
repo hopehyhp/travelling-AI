@@ -206,65 +206,95 @@
 </div>
 
 <!-- —— 重命名弹窗 —— -->
-<div class="p-modal-mask" *ngIf="renameTarget" (click)="closeRename()">
-  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
-    <p-header><h3 style="margin: 0;">重命名方案</h3></p-header>
-    <input pInputText type="text" [(ngModel)]="renameName" maxlength="60" placeholder="输入新的方案名称" />
-    <div class="p-flash p-flash--err" *ngIf="renameError">{{ renameError }}</div>
-    <div class="p-modal__actions">
-      <button pButton type="button" class="p-button-text" (click)="closeRename()" [disabled]="renameLoading">取消</button>
-      <button pButton type="button" class="p-button-primary" (click)="confirmRename()" [disabled]="renameLoading || !renameName.trim()">
-        <span [class]="{ 'pi pi-spinner pi-spin': renameLoading }" style="margin-right: 6px;"></span>
-        {{ renameLoading ? '保存中…' : '保存' }}
-      </button>
-    </div>
-  </p-card>
-</div>
+<p-dialog
+  [(visible)]="renameDialogVisible"
+  header="重命名方案"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [style]="{ width: 'min(100%, 420px)' }"
+  [contentStyle]="{ padding: '0' }"
+  (onHide)="closeRename()"
+  class="app-dialog"
+>
+  <input pInputText type="text" [(ngModel)]="renameName" maxlength="60" placeholder="输入新的方案名称" />
+  <div class="app-dialog__error" *ngIf="renameError">{{ renameError }}</div>
+  <div class="app-dialog__actions">
+    <button pButton type="button" class="p-button-text" (click)="closeRename()" [disabled]="renameLoading">取消</button>
+    <button pButton type="button" class="p-button-primary" (click)="confirmRename()" [disabled]="renameLoading || !renameName.trim()">
+      <span [class]="{ 'pi pi-spinner pi-spin': renameLoading }" style="margin-right: 6px;"></span>
+      {{ renameLoading ? '保存中…' : '保存' }}
+    </button>
+  </div>
+</p-dialog>
 
 <!-- —— 分享弹窗 —— -->
-<div class="p-modal-mask" *ngIf="shareDialog.open" (click)="closeShare()">
-  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
-    <p-header>
-      <h3 style="margin: 0;">分享方案</h3>
-      <p class="p-modal__sub">{{ shareDialog.plan?.name }}</p>
-    </p-header>
+<p-dialog
+  [(visible)]="shareDialogVisible"
+  header="🔗 分享方案"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [style]="{ width: 'min(100%, 440px)' }"
+  [contentStyle]="{ padding: '0' }"
+  (onHide)="closeShare()"
+  class="app-dialog"
+>
+  <ng-container *ngIf="shareDialog.plan">
+    <p class="app-dialog__sub">{{ shareDialog.plan.name }}</p>
+  </ng-container>
 
-    <div class="p-flash p-flash--err" *ngIf="shareDialog.error">{{ shareDialog.error }}</div>
+  <div class="app-dialog__error" *ngIf="shareDialog.error">{{ shareDialog.error }}</div>
 
-    <div class="p-share-loading" *ngIf="shareDialog.loading">
-      <p-progressSpinner strokeWidth="2"></p-progressSpinner>
-      <span>正在生成分享链接…</span>
-    </div>
+  <div class="app-dialog__loading" *ngIf="shareDialog.loading">
+    <p-progressSpinner strokeWidth="2"></p-progressSpinner>
+    <span>正在生成分享链接…</span>
+  </div>
 
-    <ng-container *ngIf="!shareDialog.loading && shareDialog.url">
-      <p class="p-modal__sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
-      <input pInputText type="text" class="p-input-mono" [value]="shareDialog.url" readonly />
-      <div class="p-modal__actions p-modal__actions--split">
-        <button pButton *ngIf="shareDialog.plan" type="button" class="p-button-text p-danger-text" (click)="cancelShare(shareDialog.plan)">取消分享</button>
-        <button pButton type="button" class="p-button-primary" (click)="copyShareLink()">
-          <span class="pi pi-check" *ngIf="shareDialog.copied" style="margin-right: 6px;"></span>
-          {{ shareDialog.copied ? '已复制' : '复制链接' }}
-        </button>
-      </div>
-    </ng-container>
-  </p-card>
-</div>
-
-<!-- —— 删除弹窗 —— -->
-<div class="p-modal-mask" *ngIf="deleteTarget" (click)="closeDelete()">
-  <p-card class="p-modal-card" (click)="$event.stopPropagation()">
-    <p-header><h3 style="margin: 0;">删除方案</h3></p-header>
-    <p class="p-modal__sub">确定要删除「{{ deleteTarget.name }}」吗？该操作不可恢复。</p>
-    <div class="p-flash p-flash--err" *ngIf="deleteError">{{ deleteError }}</div>
-    <div class="p-modal__actions">
-      <button pButton type="button" class="p-button-text" (click)="closeDelete()" [disabled]="deleteLoading">取消</button>
-      <button pButton type="button" class="p-button-danger" (click)="confirmDelete()" [disabled]="deleteLoading">
-        <span [class]="{ 'pi pi-spinner pi-spin': deleteLoading }" style="margin-right: 6px;"></span>
-        {{ deleteLoading ? '删除中…' : '确认删除' }}
+  <ng-container *ngIf="!shareDialog.loading && shareDialog.url">
+    <p class="app-dialog__sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
+    <input pInputText type="text" class="share-link-input" [value]="shareDialog.url" readonly />
+    <div class="app-dialog__actions">
+      <button pButton *ngIf="shareDialog.plan" type="button" class="p-button-text p-danger-text" (click)="cancelShare(shareDialog.plan)">取消分享</button>
+      <button pButton type="button" class="p-button-primary" (click)="copyShareLink()">
+        <span [class]="shareDialog.copied ? 'pi pi-check' : 'pi pi-copy'" style="margin-right: 6px;"></span>
+        {{ shareDialog.copied ? '已复制' : '复制链接' }}
       </button>
     </div>
-  </p-card>
-</div>
+  </ng-container>
+</p-dialog>
+
+<!-- —— 删除弹窗 —— -->
+<p-dialog
+  [(visible)]="deleteDialogVisible"
+  header="删除方案"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [style]="{ width: 'min(100%, 420px)' }"
+  [contentStyle]="{ padding: '0' }"
+  (onHide)="closeDelete()"
+  class="app-dialog"
+>
+  <p class="app-dialog__sub">确定要删除「{{ deleteTarget?.name }}」吗？该操作不可恢复。</p>
+  <div class="app-dialog__error" *ngIf="deleteError">{{ deleteError }}</div>
+  <div class="app-dialog__actions">
+    <button pButton type="button" class="p-button-text" (click)="closeDelete()" [disabled]="deleteLoading">取消</button>
+    <button pButton type="button" class="p-button-danger" (click)="confirmDelete()" [disabled]="deleteLoading">
+      <span [class]="{ 'pi pi-spinner pi-spin': deleteLoading }" style="margin-right: 6px;"></span>
+      {{ deleteLoading ? '删除中…' : '确认删除' }}
+    </button>
+  </div>
+</p-dialog>
 
 <!-- —— 导入弹窗 —— -->
 <div class="p-modal-mask" *ngIf="importDialog.open" (click)="closeImport()">

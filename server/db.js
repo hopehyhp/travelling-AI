@@ -152,10 +152,21 @@ function queryOne(sql, params = []) {
   return rows[0] || null;
 }
 
+/**
+ * 执行写操作（INSERT/UPDATE/DELETE）。
+ * 注意：sql.js 的 db.export() 会重置 last_insert_rowid()，
+ * 因此对于 INSERT 语句，我们在 save() 之前先捕获 rowid 并返回，
+ * 供 createUser/createPlan/createShare 等函数使用。
+ * 返回值：{ rowsChanged: number, rowid: number | null }
+ */
 function run(sql, params = []) {
   if (!db) throw new Error('db not initialized');
   db.run(sql, params);
+  // 在 save() 之前捕获 last_insert_rowid()，避免 export() 重置它
+  const rowidResult = db.exec('SELECT last_insert_rowid() as id');
+  const rowid = rowidResult?.[0]?.values?.[0]?.[0] ?? null;
   save();
+  return { rowid };
 }
 
 // ——— 行转对象：JSON 字段解析 ———
@@ -207,11 +218,11 @@ async function findUserById(id) {
 async function createUser(username, passwordHash) {
   await init();
   const now = new Date().toISOString();
-  run(
+  const { rowid } = run(
     'INSERT INTO users (username, password_hash, created_at, updated_at) VALUES (?,?,?,?)',
     [username, passwordHash, now, now]
   );
-  return queryOne('SELECT * FROM users WHERE id = last_insert_rowid()');
+  return queryOne('SELECT * FROM users WHERE id = ?', [rowid]);
 }
 
 async function updateUserProfile(userId, patch) {
@@ -294,11 +305,11 @@ async function findPlanById(id, userId) {
 async function createPlan(userId, name, preferences, recommendation) {
   await init();
   const now = new Date().toISOString();
-  run(
+  const { rowid } = run(
     'INSERT INTO plans (user_id, name, preferences, recommendation, created_at, updated_at) VALUES (?,?,?,?,?,?)',
     [userId, (name || '').trim() || '未命名方案', JSON.stringify(preferences), JSON.stringify(recommendation), now, now]
   );
-  const row = queryOne('SELECT * FROM plans WHERE id = last_insert_rowid()');
+  const row = queryOne('SELECT * FROM plans WHERE id = ?', [rowid]);
   return hydratePlan(row);
 }
 
@@ -347,11 +358,11 @@ async function duplicatePlan(id, userId) {
   if (!source) return null;
 
   const now = new Date().toISOString();
-  run(
+  const { rowid } = run(
     'INSERT INTO plans (user_id, name, preferences, recommendation, created_at, updated_at) VALUES (?,?,?,?,?,?)',
     [userId, `${source.name}（副本）`.slice(0, 60), source.preferences, source.recommendation, now, now]
   );
-  const row = queryOne('SELECT * FROM plans WHERE id = last_insert_rowid()');
+  const row = queryOne('SELECT * FROM plans WHERE id = ?', [rowid]);
   return hydratePlan(row);
 }
 
@@ -374,11 +385,11 @@ async function createShare(planId, userId) {
 
   const crypto = require('crypto');
   const token = crypto.randomUUID();
-  run(
+  const { rowid } = run(
     'INSERT INTO shares (plan_id, owner_user_id, share_token, view_count, import_count, created_at) VALUES (?,?,?,?,?,?)',
     [planId, userId, token, 0, 0, new Date().toISOString()]
   );
-  const row = queryOne('SELECT * FROM shares WHERE id = last_insert_rowid()');
+  const row = queryOne('SELECT * FROM shares WHERE id = ?', [rowid]);
   return hydrateShare(row);
 }
 

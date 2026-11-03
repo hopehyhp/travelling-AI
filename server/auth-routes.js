@@ -32,6 +32,9 @@ router.post('/register', async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
   const user = await db.createUser(username, hash);
+  if (!user) {
+    return res.status(500).json({ error: 'CREATE_FAILED', message: '注册失败，请稍后重试' });
+  }
   const token = sign(user);
 
   res.status(201).json({

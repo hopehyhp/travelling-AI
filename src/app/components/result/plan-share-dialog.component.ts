@@ -1,48 +1,60 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ShareResult } from '../../services/plan.service';
 
 /**
- * 分享方案 Modal — 使用 PrimeNG p-card + p-button。
+ * 分享方案 Modal — 使用 PrimeNG p-dialog。
  */
 @Component({
   selector: 'app-plan-share-dialog',
   template: `
-    <div class="auth-modal-backdrop" *ngIf="open" (click)="close.emit()">
-      <p-card class="auth-modal-card" (click)="$event.stopPropagation()">
-        <p-header><h3 style="margin: 0;">🔗 分享方案</h3></p-header>
+    <p-dialog
+      [(visible)]="dialogVisible"
+      header="🔗 分享方案"
+      [modal]="true"
+      [closable]="true"
+      [dismissableMask]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [appendTo]="'body'"
+      [style]="{ width: 'min(100%, 440px)' }"
+      [showHeader]="true"
+      [contentStyle]="{ padding: '0' }"
+      (onHide)="close.emit()"
+      class="app-dialog"
+    >
+      <div *ngIf="loading" class="app-dialog__loading">
+        <p-progressSpinner strokeWidth="2"></p-progressSpinner>
+        <span>正在生成分享链接…</span>
+      </div>
 
-        <div *ngIf="loading" class="auth-modal-loading">
-          <p-progressSpinner strokeWidth="2"></p-progressSpinner>
-          <span>正在生成分享链接…</span>
+      <ng-container *ngIf="result && !loading">
+        <p class="app-dialog__sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
+        <div class="share-link-row">
+          <input pInputText readonly [value]="result.share_url" class="share-link-input" />
+          <button pButton type="button" class="p-button-primary" (click)="copyLink()">
+            <span [class]="copied ? 'pi pi-check' : 'pi pi-copy'" style="margin-right: 6px;"></span>
+            {{ copied ? '已复制' : '复制链接' }}
+          </button>
         </div>
-
-        <ng-container *ngIf="result && !loading">
-          <p class="auth-modal-sub">把下面的链接发给朋友，他们打开就能看到完整攻略，并可以保存到自己的账户里。</p>
-          <div class="share-link-row">
-            <input pInputText readonly [value]="result.share_url" class="share-link-input" />
-            <button pButton type="button" class="p-button-primary" (click)="copyLink()">
-              <span [class]="copied ? 'pi pi-check' : 'pi pi-copy'" style="margin-right: 6px;"></span>
-              {{ copied ? '已复制' : '复制链接' }}
-            </button>
-          </div>
-          <div class="share-stats" *ngIf="result.view_count !== undefined">
-            <span class="share-stat-item">👀 <strong>{{ result.view_count }}</strong> 次浏览</span>
-            <span class="share-stat-item">📥 <strong>{{ result.import_count }}</strong> 次导入</span>
-            <span class="share-stat-hint">链接永久有效 · 朋友登录可一键保存 · 每 15 秒刷新</span>
-          </div>
-          <p class="share-link-hint" *ngIf="result.view_count === undefined">分享链接永久有效 · 朋友登录后可一键保存</p>
-        </ng-container>
-
-        <div *ngIf="error" class="auth-modal-error">{{ error }}</div>
-
-        <div class="auth-modal-actions" *ngIf="!loading">
-          <button pButton type="button" class="p-button-text" (click)="close.emit()">关闭</button>
+        <div class="share-stats" *ngIf="result.view_count !== undefined">
+          <span class="share-stat-item">👀 <strong>{{ result.view_count }}</strong> 次浏览</span>
+          <span class="share-stat-item">📥 <strong>{{ result.import_count }}</strong> 次导入</span>
+          <span class="share-link-hint">链接永久有效 · 朋友登录可一键保存 · 每 15 秒刷新</span>
         </div>
-      </p-card>
-    </div>
+        <p class="share-link-hint" *ngIf="result.view_count === undefined">分享链接永久有效 · 朋友登录后可一键保存</p>
+      </ng-container>
+
+      <div *ngIf="error" class="app-dialog__error">{{ error }}</div>
+
+      <div class="app-dialog__actions" *ngIf="!loading">
+        <button pButton type="button" class="p-button-text" (click)="close.emit()">关闭</button>
+      </div>
+    </p-dialog>
   `
 })
 export class PlanShareDialogComponent {
+  dialogVisible = false;
+
   @Input() open = false;
   @Input() loading = false;
   @Input() result: ShareResult | null = null;
@@ -51,6 +63,11 @@ export class PlanShareDialogComponent {
   @Output() close = new EventEmitter<void>();
 
   copied = false;
+
+  ngOnChanges(): void {
+    // open 变化时同步 dialogVisible
+    this.dialogVisible = this.open;
+  }
 
   copyLink(): void {
     const url = this.result?.share_url;
