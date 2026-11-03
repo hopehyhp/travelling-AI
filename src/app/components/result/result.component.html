@@ -13,600 +13,802 @@
   </section>
 
   <ng-container *ngIf="recommendation">
-  <div class="result-layout">
-    <main class="result-main">
-      <!-- 方案摘要卡片 -->
-      <section class="summary-card">
-        <div class="summary-header">
-          <div>
-            <span class="eyebrow">专属旅行方案</span>
-            <h1 class="destination-name">{{ recommendation.destinationName }}</h1>
-          </div>
-          <div class="header-actions">
-            <button pButton type="button" class="p-button-outlined" (click)="saveCurrentPlan()">
-              <span class="pi pi-save" style="margin-right: 6px;"></span>保存攻略
-            </button>
-            <button pButton type="button" class="p-button-outlined" (click)="shareCurrentPlan()">
-              <span class="pi pi-share-alt" style="margin-right: 6px;"></span>分享
-            </button>
-            <button pButton type="button" class="p-button-text header-action-text" (click)="onRestart()">重选条件</button>
-          </div>
-        </div>
 
-        <div class="action-status" *ngIf="saveNotice || shareNotice || undoRemove">
-          <div *ngIf="saveNotice" class="action-pill success">✅ {{ saveNotice }}</div>
-          <div *ngIf="shareNotice" class="action-pill info">ℹ️ {{ shareNotice }}</div>
-          <div *ngIf="undoRemove" class="action-pill warn">
-            <span>🗑️ 已移除「{{ undoRemove.name }}」</span>
-            <button pButton type="button" class="undo-btn-p" (click)="undoRemoveSpot()">撤销</button>
-          </div>
-        </div>
+  <!-- ===== 摘要卡 & 登录引导：始终置顶，不随 Tab 切换 ===== -->
+  <section class="summary-card">
+    <div class="summary-header">
+      <div>
+        <span class="eyebrow">专属旅行方案</span>
+        <h1 class="destination-name">{{ recommendation.destinationName }}</h1>
+      </div>
+      <div class="header-actions">
+        <button pButton type="button" class="p-button-outlined" (click)="saveCurrentPlan()">
+          <span class="pi pi-save" style="margin-right: 6px;"></span>保存攻略
+        </button>
+        <button pButton type="button" class="p-button-outlined" (click)="shareCurrentPlan()">
+          <span class="pi pi-share-alt" style="margin-right: 6px;"></span>分享
+        </button>
+        <button pButton type="button" class="p-button-text header-action-text" (click)="onRestart()">重选条件</button>
+      </div>
+    </div>
 
-        <p class="saved-hint" *ngIf="savedPlanId">
-          已关联账户方案「{{ savedPlanName }}」，再次保存会更新该方案。
-        </p>
+    <div class="action-status" *ngIf="saveNotice || shareNotice || undoRemove">
+      <div *ngIf="saveNotice" class="action-pill success">✅ {{ saveNotice }}</div>
+      <div *ngIf="shareNotice" class="action-pill info">ℹ️ {{ shareNotice }}</div>
+      <div *ngIf="undoRemove" class="action-pill warn">
+        <span>🗑️ 已移除「{{ undoRemove.name }}」</span>
+        <button pButton type="button" class="undo-btn-p" (click)="undoRemoveSpot()">撤销</button>
+      </div>
+    </div>
 
-        <!-- 就地调整（换景点/调顺序）后提醒保存，避免用户误以为已生效 -->
-        <div class="unsaved-hint" *ngIf="hasUnsavedChanges">
-          <span>✏️ 行程已调整（换景点 / 调顺序），仅保存在本地，保存后才能长期保留</span>
-          <button pButton type="button" class="p-button-text unsaved-hint-btn-p" (click)="saveCurrentPlan()">立即保存</button>
-        </div>
+    <p class="saved-hint" *ngIf="savedPlanId">
+      已关联账户方案「{{ savedPlanName }}」，再次保存会更新该方案。
+    </p>
 
-        <p class="summary">{{ recommendation.summary }}</p>
+    <div class="unsaved-hint" *ngIf="hasUnsavedChanges">
+      <span>✏️ 行程已调整（换景点 / 调顺序），仅保存在本地，保存后才能长期保留</span>
+      <button pButton type="button" class="p-button-text unsaved-hint-btn-p" (click)="saveCurrentPlan()">立即保存</button>
+    </div>
 
-        <div class="tags">
-          <p-tag *ngFor="let t of recommendation.tags" severity="info" [rounded]="true">{{ t }}</p-tag>
-        </div>
+    <p class="summary">{{ recommendation.summary }}</p>
 
-        <div class="stats-row">
-          <div class="stat-pill">
-            <span>💰 预算档位</span>
-            <strong>{{ recommendation.budgetLevelLabel }}</strong>
-          </div>
-          <div class="stat-pill">
-            <span>💎 预计支出</span>
-            <strong>¥ {{ recommendation.estimatedTotal.toLocaleString('zh-CN') }}</strong>
-          </div>
-          <div class="stat-pill">
-            <span>📍 景点数量</span>
-            <strong>{{ recommendation.attractionCount }} 个</strong>
-          </div>
-        </div>
+    <div class="tags">
+      <p-tag *ngFor="let t of recommendation.tags" severity="info" [rounded]="true">{{ t }}</p-tag>
+    </div>
 
-        <div class="over-budget" *ngIf="recommendation.overBudget">
-          预算略超出预期，可缩短一两处景点或下调住宿档次。
-        </div>
-      </section>
+    <div class="stats-row">
+      <div class="stat-pill">
+        <span>💰 预算档位</span>
+        <strong>{{ recommendation.budgetLevelLabel }}</strong>
+      </div>
+      <div class="stat-pill">
+        <span>💎 预计支出</span>
+        <strong>¥ {{ recommendation.estimatedTotal.toLocaleString('zh-CN') }}</strong>
+      </div>
+      <div class="stat-pill">
+        <span>📍 景点数量</span>
+        <strong>{{ recommendation.attractionCount }} 个</strong>
+      </div>
+    </div>
 
-      <!-- 未登录价值引导卡（放在摘要之后，先给结果再谈登录） -->
-      <section class="login-cta-card" *ngIf="!user">
-        <div class="login-cta-left">
-          <p-tag severity="info" [rounded]="true">✨ 登录后解锁更多</p-tag>
-          <h3>登录 呼呼去哪儿，让这份攻略真正属于你</h3>
-          <ul class="login-benefits">
-            <li>💾 永久保存攻略，随时查看和修改</li>
-            <li>🔗 一键生成分享链接发给朋友</li>
-            <li>📱 多设备同步，手机电脑无缝切换</li>
-            <li>📊 看到谁浏览了你的分享，导入次数一目了然</li>
-          </ul>
-        </div>
-        <div class="login-cta-right">
-          <button pButton type="button" class="p-button-primary" (click)="goLogin()">立即登录 / 注册</button>
-          <span class="login-cta-sub">免费注册，30 秒搞定</span>
-        </div>
-      </section>
+    <div class="over-budget" *ngIf="recommendation.overBudget">
+      预算略超出预期，可缩短一两处景点或下调住宿档次。
+    </div>
+  </section>
 
-      <!-- AI 洞察 strip -->
-      <section class="insight-strip" *ngIf="routeOptimization.length || smartAdvice.length || recommendation.tips.length">
-        <div class="insight-item" *ngFor="let item of routeOptimization.slice(0, 3)">
-          <p-tag severity="info" [rounded]="true">{{ item.tag }}</p-tag>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.text }}</p>
-        </div>
+  <!-- 未登录价值引导卡 -->
+  <section class="login-cta-card" *ngIf="!user">
+    <div class="login-cta-left">
+      <p-tag severity="info" [rounded]="true">✨ 登录后解锁更多</p-tag>
+      <h3>登录 呼呼去哪儿，让这份攻略真正属于你</h3>
+      <ul class="login-benefits">
+        <li>💾 永久保存攻略，随时查看和修改</li>
+        <li>🔗 一键生成分享链接发给朋友</li>
+        <li>📱 多设备同步，手机电脑无缝切换</li>
+        <li>📊 看到谁浏览了你的分享，导入次数一目了然</li>
+      </ul>
+    </div>
+    <div class="login-cta-right">
+      <button pButton type="button" class="p-button-primary" (click)="goLogin()">立即登录 / 注册</button>
+      <span class="login-cta-sub">免费注册，30 秒搞定</span>
+    </div>
+  </section>
 
-        <div class="insight-item compact" *ngIf="smartAdvice.length && !routeOptimization.length">
-          <p-tag severity="info" [rounded]="true">智能提示</p-tag>
-          <h3>本地风向</h3>
-          <p>{{ smartAdvice[0] }}</p>
-        </div>
+  <!-- ===== Tab 容器 ===== -->
+  <p-tabView class="result-tabs" [(activeIndex)]="activeTab">
 
-        <!-- 天气未就绪时占位第三张卡，避免卡片稍后插入导致整行重排 -->
-        <div class="insight-item insight-skeleton" *ngIf="!weatherReady">
-          <span class="sk-pill"></span>
-          <span class="sk-line sk-w60"></span>
-          <span class="sk-line sk-w95"></span>
-          <span class="sk-line sk-w80"></span>
-        </div>
-      </section>
-
-      <!-- 行程卡片 -->
-      <p-card *ngIf="recommendation?.days?.length" class="itinerary-card-p">
-        <p-header>
-          <div class="section-head">
-            <div>
-              <span class="kicker">旅行安排</span>
-              <h2 style="margin: 0;">每日行程</h2>
-            </div>
-            <span class="mini-meta">{{ recommendation.days.length }} 天</span>
-          </div>
-        </p-header>
-
-        <div class="day-card" *ngFor="let day of recommendation.days; let i = index">
-          <div class="day-topbar">
-            <div class="day-topbar__left">
-              <span class="day-badge">第 {{ day.day }} 天</span>
-              <!-- 日期 + 当天天气：数据来源用徽标区分预报/常年参考 -->
-              <span class="day-weather" *ngIf="tripWeather[i] as w" [class.is-climate]="w.source === 'climate'" [class.is-none]="w.source === 'none'">
-                <span class="dw-date">{{ w.dateLabel }}</span>
-                <span class="dw-temp" *ngIf="w.max !== null">{{ w.min }}°~{{ w.max }}°</span>
-                <span class="dw-label">{{ w.label }}</span>
-              </span>
-              <span class="day-focus">{{ day.focus }}</span>
-              <span class="day-duration" *ngIf="dayDurations[i] as dur" [class.is-packed]="dur.packed">
-                ⏱ 约 {{ dur.hours }} 小时{{ dur.packed ? ' · 偏紧凑' : '' }}
-              </span>
+    <!-- ========== Tab 0: 行程 ========== -->
+    <p-tabPanel header="🗺️ 行程">
+      <div class="result-layout">
+        <main class="result-main">
+          <!-- AI 洞察 strip -->
+          <section class="insight-strip" *ngIf="routeOptimization.length || smartAdvice.length || recommendation.tips.length">
+            <div class="insight-item" *ngFor="let item of routeOptimization.slice(0, 3)">
+              <p-tag severity="info" [rounded]="true">{{ item.tag }}</p-tag>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.text }}</p>
             </div>
 
-            <div class="day-advice" *ngIf="!weatherLoading && dailyAdjustments[i] as advice">
-              <span class="advice-label">☀️ 天气适配</span>
-              <p>{{ advice.note }}</p>
+            <div class="insight-item compact" *ngIf="smartAdvice.length && !routeOptimization.length">
+              <p-tag severity="info" [rounded]="true">智能提示</p-tag>
+              <h3>本地风向</h3>
+              <p>{{ smartAdvice[0] }}</p>
             </div>
-          </div>
 
-          <h3 class="day-title">{{ day.title }}</h3>
+            <!-- 天气未就绪时占位第三张卡，避免卡片稍后插入导致整行重排 -->
+            <div class="insight-item insight-skeleton" *ngIf="!weatherReady">
+              <span class="sk-pill"></span>
+              <span class="sk-line sk-w60"></span>
+              <span class="sk-line sk-w95"></span>
+              <span class="sk-line sk-w80"></span>
+            </div>
+          </section>
 
-          <div class="timeline">
-            <div
-              class="spot-row"
-              *ngFor="let spot of day.spots; let spotIndex = index"
-              [class.drop-before]="dropPosition(i, spotIndex) === 'before'"
-              [class.drop-after]="dropPosition(i, spotIndex) === 'after'"
-              (dragover)="onSpotDragOver(i, spotIndex, $event)"
-              (dragleave)="onSpotDragLeave()"
-              (drop)="onSpotDrop(i, spotIndex, $event)"
-            >
-              <span
-                class="drag-handle"
-                [class.is-disabled]="day.spots.length <= 1"
-                [attr.draggable]="day.spots.length > 1 ? 'true' : 'false'"
-                [title]="day.spots.length > 1 ? '拖动调整顺序，可拖到其他天' : '当天只剩一个景点，不能移动'"
-                (dragstart)="onSpotDragStart(i, spotIndex, $event)"
-                (dragend)="onSpotDragEnd()"
-              >⠿</span>
-
-              <!-- 时间可点击修改：时间属于当天的时间槽 -->
-              <div class="spot-time-cell">
-                <input
-                  *ngIf="isEditingTime(i, spotIndex); else timeLabelTpl"
-                  class="spot-time-input"
-                  type="time"
-                  [value]="spot.time"
-                  (change)="commitSpotTime(i, spotIndex, $any($event.target).value)"
-                  (blur)="cancelTimeEdit()"
-                />
-                <ng-template #timeLabelTpl>
-                  <button type="button" class="spot-time-btn" title="点击修改时间" (click)="startEditTime(i, spotIndex)">
-                    {{ spot.time || '设时间' }}
-                  </button>
-                </ng-template>
+          <!-- 行程卡片 -->
+          <p-card *ngIf="recommendation?.days?.length" class="itinerary-card-p">
+            <p-header>
+              <div class="section-head">
+                <div>
+                  <span class="kicker">旅行安排</span>
+                  <h2 style="margin: 0;">每日行程</h2>
+                </div>
+                <span class="mini-meta">{{ recommendation.days.length }} 天</span>
               </div>
+            </p-header>
 
-              <div class="spot-card-shell">
-                <button pButton type="button" class="spot-card-p" (click)="openSpotDetail(spot)">
-                  <div class="spot-card__header">
-                    <span class="spot-name">{{ spot.name }}</span>
-                    <span class="spot-cost">{{ spot.cost > 0 ? ('¥ ' + spot.cost) : '免费' }}</span>
-                  </div>
-                  <div class="spot-card__meta">
-                    <span>{{ spot.category }}</span>
-                    <span>·</span>
-                    <span>{{ spot.description }}</span>
-                  </div>
-                </button>
-
-                <!-- 手机端默认收起，避免每个景点下方常驻三个微按钮 -->
-                <button
-                  type="button"
-                  class="spot-tools-toggle-p"
-                  [attr.aria-expanded]="isToolsOpen(i, spotIndex)"
-                  (click)="toggleTools(i, spotIndex)"
-                >
-                  <span class="pi pi-ellipsis-h"></span>
-                  更多操作
-                </button>
-
-                <div class="spot-inline-tools" [class.is-open]="isToolsOpen(i, spotIndex)">
-                  <button pButton type="button" class="p-button-text tool-btn-p" [disabled]="spotIndex === 0" (click)="moveSpot(i, spotIndex, -1)">
-                    <span class="pi pi-arrow-up"></span>
-                  </button>
-                  <button pButton type="button" class="p-button-text tool-btn-p" [disabled]="spotIndex === day.spots.length - 1" (click)="moveSpot(i, spotIndex, 1)">
-                    <span class="pi pi-arrow-down"></span>
-                  </button>
-                  <button pButton type="button" class="p-button-outlined tool-btn-accent-p" (click)="requestReplacement(i, spotIndex, spot)">换景点</button>
-                  <button
-                    pButton
-                    type="button"
-                    class="p-button-text tool-btn-del-p"
-                    [disabled]="day.spots.length <= 1"
-                    [title]="day.spots.length <= 1 ? '每天至少保留一个景点' : '删除该景点'"
-                    (click)="removeSpot(i, spotIndex)"
-                  >删除</button>
-
-                  <!-- 手机端无原生拖拽：提供「移到其他天」的兜底入口（当天仅剩 1 个时不可移动） -->
-                  <select
-                    *ngIf="recommendation.days.length > 1 && day.spots.length > 1"
-                    class="move-day-select"
-                    title="移到其他天"
-                    (change)="moveSpotToDay(i, spotIndex, $any($event.target).value)"
-                  >
-                    <option value="" selected disabled>移至…</option>
-                    <option *ngFor="let target of recommendation.days; let di = index" [value]="di" [disabled]="di === i">
-                      第{{ target.day }}天
-                    </option>
-                  </select>
+            <div class="day-card" *ngFor="let day of recommendation.days; let i = index">
+              <div class="day-topbar">
+                <div class="day-topbar__left">
+                  <span class="day-badge">第 {{ day.day }} 天</span>
+                  <span class="day-weather" *ngIf="tripWeather[i] as w" [class.is-climate]="w.source === 'climate'" [class.is-none]="w.source === 'none'">
+                    <span class="dw-date">{{ w.dateLabel }}</span>
+                    <span class="dw-temp" *ngIf="w.max !== null">{{ w.min }}°~{{ w.max }}°</span>
+                    <span class="dw-label">{{ w.label }}</span>
+                  </span>
+                  <span class="day-focus">{{ day.focus }}</span>
+                  <span class="day-duration" *ngIf="dayDurations[i] as dur" [class.is-packed]="dur.packed">
+                    ⏱ 约 {{ dur.hours }} 小时{{ dur.packed ? ' · 偏紧凑' : '' }}
+                  </span>
                 </div>
 
-                <!-- 换景点面板挂在当前景点下方，而不是整天末尾 -->
+                <div class="day-advice" *ngIf="!weatherLoading && dailyAdjustments[i] as advice">
+                  <span class="advice-label">☀️ 天气适配</span>
+                  <p>{{ advice.note }}</p>
+                </div>
+              </div>
+
+              <h3 class="day-title">{{ day.title }}</h3>
+
+              <div class="timeline">
+                <div
+                  class="spot-row"
+                  *ngFor="let spot of day.spots; let spotIndex = index"
+                  [class.drop-before]="dropPosition(i, spotIndex) === 'before'"
+                  [class.drop-after]="dropPosition(i, spotIndex) === 'after'"
+                  (dragover)="onSpotDragOver(i, spotIndex, $event)"
+                  (dragleave)="onSpotDragLeave()"
+                  (drop)="onSpotDrop(i, spotIndex, $event)"
+                >
+                  <span
+                    class="drag-handle"
+                    [class.is-disabled]="day.spots.length <= 1"
+                    [attr.draggable]="day.spots.length > 1 ? 'true' : 'false'"
+                    [title]="day.spots.length > 1 ? '拖动调整顺序，可拖到其他天' : '当天只剩一个景点，不能移动'"
+                    (dragstart)="onSpotDragStart(i, spotIndex, $event)"
+                    (dragend)="onSpotDragEnd()"
+                  >⠿</span>
+
+                  <!-- 时间可点击修改 -->
+                  <div class="spot-time-cell">
+                    <input
+                      *ngIf="isEditingTime(i, spotIndex); else timeLabelTpl"
+                      class="spot-time-input"
+                      type="time"
+                      [value]="spot.time"
+                      (change)="commitSpotTime(i, spotIndex, $any($event.target).value)"
+                      (blur)="cancelTimeEdit()"
+                    />
+                    <ng-template #timeLabelTpl>
+                      <button type="button" class="spot-time-btn" title="点击修改时间" (click)="startEditTime(i, spotIndex)">
+                        {{ spot.time || '设时间' }}
+                      </button>
+                    </ng-template>
+                  </div>
+
+                  <div class="spot-card-shell">
+                    <button pButton type="button" class="spot-card-p" (click)="openSpotDetail(spot)">
+                      <div class="spot-card__header">
+                        <span class="spot-name">{{ spot.name }}</span>
+                        <span class="spot-cost">{{ spot.cost > 0 ? ('¥ ' + spot.cost) : '免费' }}</span>
+                      </div>
+                      <div class="spot-card__meta">
+                        <span>{{ spot.category }}</span>
+                        <span>·</span>
+                        <span>{{ spot.description }}</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="spot-tools-toggle-p"
+                      [attr.aria-expanded]="isToolsOpen(i, spotIndex)"
+                      (click)="toggleTools(i, spotIndex)"
+                    >
+                      <span class="pi pi-ellipsis-h"></span>
+                      更多操作
+                    </button>
+
+                    <div class="spot-inline-tools" [class.is-open]="isToolsOpen(i, spotIndex)">
+                      <button pButton type="button" class="p-button-text tool-btn-p" [disabled]="spotIndex === 0" (click)="moveSpot(i, spotIndex, -1)">
+                        <span class="pi pi-arrow-up"></span>
+                      </button>
+                      <button pButton type="button" class="p-button-text tool-btn-p" [disabled]="spotIndex === day.spots.length - 1" (click)="moveSpot(i, spotIndex, 1)">
+                        <span class="pi pi-arrow-down"></span>
+                      </button>
+                      <button pButton type="button" class="p-button-outlined tool-btn-accent-p" (click)="requestReplacement(i, spotIndex, spot)">换景点</button>
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-text tool-btn-del-p"
+                        [disabled]="day.spots.length <= 1"
+                        [title]="day.spots.length <= 1 ? '每天至少保留一个景点' : '删除该景点'"
+                        (click)="removeSpot(i, spotIndex)"
+                      >删除</button>
+
+                      <select
+                        *ngIf="recommendation.days.length > 1 && day.spots.length > 1"
+                        class="move-day-select"
+                        title="移到其他天"
+                        (change)="moveSpotToDay(i, spotIndex, $any($event.target).value)"
+                      >
+                        <option value="" selected disabled>移至…</option>
+                        <option *ngFor="let target of recommendation.days; let di = index" [value]="di" [disabled]="di === i">
+                          第{{ target.day }}天
+                        </option>
+                      </select>
+                    </div>
+
+                    <app-spot-replacement-panel
+                      *ngIf="replacementContext && replacementContext.dayIndex === i && replacementContext.spotIndex === spotIndex"
+                      [options]="replacementOptions"
+                      [notice]="replacementNotice"
+                      [loading]="replacementLoading"
+                      [allowManual]="!replacementLoading"
+                      [manualLoading]="manualLookupLoading"
+                      [pendingSpot]="pendingManualSpot"
+                      [pendingLocationText]="pendingManualLocationText"
+                      [pendingLocationOk]="pendingManualLocationOk"
+                      (cancel)="cancelReplacement()"
+                      (apply)="applyReplacement($event)"
+                      (lookup)="lookupManualSpot($event)"
+                      (confirmManual)="confirmManualSpot()"
+                      (discardManual)="discardManualSpot()"
+                    ></app-spot-replacement-panel>
+                  </div>
+                </div>
+
                 <app-spot-replacement-panel
-                  *ngIf="replacementContext && replacementContext.dayIndex === i && replacementContext.spotIndex === spotIndex"
-                  [options]="replacementOptions"
-                  [notice]="replacementNotice"
-                  [loading]="replacementLoading"
-                  [allowManual]="!replacementLoading"
+                  *ngIf="addContext && addContext.dayIndex === i"
+                  mode="add"
+                  [options]="addOptions"
+                  [notice]="addNotice"
+                  [loading]="addLoading"
+                  [allowManual]="!addLoading"
                   [manualLoading]="manualLookupLoading"
                   [pendingSpot]="pendingManualSpot"
                   [pendingLocationText]="pendingManualLocationText"
                   [pendingLocationOk]="pendingManualLocationOk"
-                  (cancel)="cancelReplacement()"
-                  (apply)="applyReplacement($event)"
+                  (cancel)="cancelAddition()"
+                  (apply)="applyAddition($event)"
                   (lookup)="lookupManualSpot($event)"
                   (confirmManual)="confirmManualSpot()"
                   (discardManual)="discardManualSpot()"
                 ></app-spot-replacement-panel>
+
+                <button
+                  *ngIf="!addContext || addContext.dayIndex !== i"
+                  pButton
+                  type="button"
+                  class="p-button-outlined add-spot-btn-p"
+                  [disabled]="day.spots.length >= 5"
+                  (click)="requestAddition(i)"
+                >＋ 添加景点{{ day.spots.length >= 5 ? '（当天已较满）' : '' }}</button>
               </div>
             </div>
+          </p-card>
+        </main>
 
-            <!-- 补景点：AI 候选 / 手动兜底 -->
-            <app-spot-replacement-panel
-              *ngIf="addContext && addContext.dayIndex === i"
-              mode="add"
-              [options]="addOptions"
-              [notice]="addNotice"
-              [loading]="addLoading"
-              [allowManual]="!addLoading"
-              [manualLoading]="manualLookupLoading"
-              [pendingSpot]="pendingManualSpot"
-              [pendingLocationText]="pendingManualLocationText"
-              [pendingLocationOk]="pendingManualLocationOk"
-              (cancel)="cancelAddition()"
-              (apply)="applyAddition($event)"
-              (lookup)="lookupManualSpot($event)"
-              (confirmManual)="confirmManualSpot()"
-              (discardManual)="discardManualSpot()"
-            ></app-spot-replacement-panel>
-
-            <button
-              *ngIf="!addContext || addContext.dayIndex !== i"
-              pButton
-              type="button"
-              class="p-button-outlined add-spot-btn-p"
-              [disabled]="day.spots.length >= 5"
-              (click)="requestAddition(i)"
-            >＋ 添加景点{{ day.spots.length >= 5 ? '（当天已较满）' : '' }}</button>
-          </div>
-        </div>
-      </p-card>
-    </main>
-
-    <aside class="result-side">
-      <!-- 偏好设置侧边卡 -->
-      <p-card class="side-card-p">
-        <p-header>
-          <div class="section-head compact">
-            <div>
-              <span class="kicker">旅程参数</span>
-              <h2 style="margin: 0;">我的偏好</h2>
-            </div>
-            <button pButton type="button" class="p-button-text" (click)="openEdit('destination')">调整</button>
-          </div>
-        </p-header>
-
-        <div class="preference-grid">
-          <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'destination'" (click)="openEdit('destination')">
-            <span class="pref-label">📍 目的地</span>
-            <strong>{{ destinationName }}</strong>
-          </button>
-          <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'startDate'" (click)="openEdit('startDate')">
-            <span class="pref-label">📅 日期</span>
-            <strong>{{ startDateSummary }}</strong>
-          </button>
-          <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'people' || editing === 'days'" (click)="openEdit('days')">
-            <span class="pref-label">👥 成员</span>
-            <strong>{{ form.people }} 人 · {{ companionLabel }}</strong>
-          </button>
-          <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'budget'" (click)="openEdit('budget')">
-            <span class="pref-label">💰 预算</span>
-            <strong>¥ {{ form.budget.toLocaleString('zh-CN') }}</strong>
-          </button>
-        </div>
-
-        <div class="pref-edit-zone" *ngIf="editing">
-          <div class="edit-panel">
-            <div class="editor" *ngIf="editing === 'destination'">
-              <p-dropdown
-                [options]="destinations"
-                optionLabel="name"
-                optionValue="id"
-                [(ngModel)]="form.destinationId"
-                (onChange)="selectDestination(form.destinationId)"
-                placeholder="选择目的地"
-                styleClass="full-width"
-              ></p-dropdown>
-              <input
-                *ngIf="isCustomDestination"
-                pInputText
-                type="text"
-                placeholder="输入你想去的地方"
-                [(ngModel)]="form.customDestination"
-                (ngModelChange)="onCustomDestinationChange($event)"
-                name="editCustomDestination"
-              />
-            </div>
-
-            <div class="editor" *ngIf="editing === 'companion'">
-              <div class="chips">
-                <button pButton *ngFor="let o of companionOptions" type="button" class="chip-p" [class.active]="form.companion === o.id" (click)="selectCompanion(o.id)">
-                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
-                </button>
+        <aside class="result-side">
+          <!-- 偏好设置侧边卡 -->
+          <p-card class="side-card-p">
+            <p-header>
+              <div class="section-head compact">
+                <div>
+                  <span class="kicker">旅程参数</span>
+                  <h2 style="margin: 0;">我的偏好</h2>
+                </div>
+                <button pButton type="button" class="p-button-text" (click)="openEdit('destination')">调整</button>
               </div>
+            </p-header>
+
+            <div class="preference-grid">
+              <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'destination'" (click)="openEdit('destination')">
+                <span class="pref-label">📍 目的地</span>
+                <strong>{{ destinationName }}</strong>
+              </button>
+              <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'startDate'" (click)="openEdit('startDate')">
+                <span class="pref-label">📅 日期</span>
+                <strong>{{ startDateSummary }}</strong>
+              </button>
+              <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'people' || editing === 'days'" (click)="openEdit('days')">
+                <span class="pref-label">👥 成员</span>
+                <strong>{{ form.people }} 人 · {{ companionLabel }}</strong>
+              </button>
+              <button pButton type="button" class="pref-tile-p" [class.edited]="editing === 'budget'" (click)="openEdit('budget')">
+                <span class="pref-label">💰 预算</span>
+                <strong>¥ {{ form.budget.toLocaleString('zh-CN') }}</strong>
+              </button>
             </div>
 
-            <div class="editor" *ngIf="editing === 'placeTypes'">
-              <div class="chips">
-                <button pButton *ngFor="let o of placeTypeOptions" type="button" class="chip-p" [class.active]="form.placeTypes.includes(o.id)" (click)="togglePlaceType(o.id)">
-                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
-                </button>
-              </div>
-            </div>
+            <div class="pref-edit-zone" *ngIf="editing">
+              <div class="edit-panel">
+                <div class="editor" *ngIf="editing === 'destination'">
+                  <p-dropdown
+                    [options]="destinations"
+                    optionLabel="name"
+                    optionValue="id"
+                    [(ngModel)]="form.destinationId"
+                    (onChange)="selectDestination(form.destinationId)"
+                    placeholder="选择目的地"
+                    styleClass="full-width"
+                  ></p-dropdown>
+                  <input
+                    *ngIf="isCustomDestination"
+                    pInputText
+                    type="text"
+                    placeholder="输入你想去的地方"
+                    [(ngModel)]="form.customDestination"
+                    (ngModelChange)="onCustomDestinationChange($event)"
+                    name="editCustomDestination"
+                  />
+                </div>
 
-            <div class="editor" *ngIf="editing === 'purpose'">
-              <div class="chips">
-                <button pButton *ngFor="let o of purposeOptions" type="button" class="chip-p" [class.active]="form.purpose === o.id" (click)="selectPurpose(o.id)">
-                  <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
-                </button>
-              </div>
-            </div>
-
-            <div class="editor" *ngIf="editing === 'days' || editing === 'people'">
-              <div class="stepper-row">
-                <div class="stepper">
-                  <span class="stepper-label">天数</span>
-                  <div class="stepper-control">
-                    <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('days')">
-                      <span class="pi pi-minus"></span>
-                    </button>
-                    <span class="stepper-value">{{ form.days }} 天</span>
-                    <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('days')">
-                      <span class="pi pi-plus"></span>
+                <div class="editor" *ngIf="editing === 'companion'">
+                  <div class="chips">
+                    <button pButton *ngFor="let o of companionOptions" type="button" class="chip-p" [class.active]="form.companion === o.id" (click)="selectCompanion(o.id)">
+                      <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
                     </button>
                   </div>
                 </div>
-                <div class="stepper">
-                  <span class="stepper-label">人数</span>
-                  <div class="stepper-control">
-                    <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('people')">
-                      <span class="pi pi-minus"></span>
-                    </button>
-                    <span class="stepper-value">{{ form.people }} 人</span>
-                    <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('people')">
-                      <span class="pi pi-plus"></span>
+
+                <div class="editor" *ngIf="editing === 'placeTypes'">
+                  <div class="chips">
+                    <button pButton *ngFor="let o of placeTypeOptions" type="button" class="chip-p" [class.active]="form.placeTypes.includes(o.id)" (click)="togglePlaceType(o.id)">
+                      <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
                     </button>
                   </div>
                 </div>
+
+                <div class="editor" *ngIf="editing === 'purpose'">
+                  <div class="chips">
+                    <button pButton *ngFor="let o of purposeOptions" type="button" class="chip-p" [class.active]="form.purpose === o.id" (click)="selectPurpose(o.id)">
+                      <span class="chip-icon">{{ o.icon }}</span>{{ o.label }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="editor" *ngIf="editing === 'days' || editing === 'people'">
+                  <div class="stepper-row">
+                    <div class="stepper">
+                      <span class="stepper-label">天数</span>
+                      <div class="stepper-control">
+                        <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('days')">
+                          <span class="pi pi-minus"></span>
+                        </button>
+                        <span class="stepper-value">{{ form.days }} 天</span>
+                        <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('days')">
+                          <span class="pi pi-plus"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="stepper">
+                      <span class="stepper-label">人数</span>
+                      <div class="stepper-control">
+                        <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="decrease('people')">
+                          <span class="pi pi-minus"></span>
+                        </button>
+                        <span class="stepper-value">{{ form.people }} 人</span>
+                        <button pButton type="button" class="p-button-outlined stepper-btn-p" (click)="increase('people')">
+                          <span class="pi pi-plus"></span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="editor" *ngIf="editing === 'startDate'">
+                  <p-calendar
+                    class="date-calendar"
+                    [(ngModel)]="form.startDate"
+                    [minDate]="minCalendarDate"
+                    [showIcon]="true"
+                    placeholder="选择出发日期"
+                    dateFormat="yy-mm-dd"
+                    appendTo="body"
+                  ></p-calendar>
+                  <div class="chips date-chips">
+                    <button pButton *ngFor="let q of quickDateOptions" type="button" class="chip-p" [class.active]="form.startDate === q.value" (click)="setStartDate(q.value)">{{ q.label }}</button>
+                  </div>
+                </div>
+
+                <div class="editor" *ngIf="editing === 'budget'">
+                  <div class="budget-value">¥ {{ budgetDisplay.toLocaleString('zh-CN') }}</div>
+                  <p-slider
+                    [(ngModel)]="budgetSliderIndex"
+                    [min]="0"
+                    [max]="budgetStops.length - 1"
+                    [step]="1"
+                    (onSlideEnd)="applyBudgetSlider()"
+                    [style]="{ width: '100%' }"
+                  ></p-slider>
+                  <div class="slider-scale">
+                    <span>¥{{ budgetStops[0].toLocaleString('zh-CN') }}</span>
+                    <span>¥{{ budgetStops[budgetStops.length - 1].toLocaleString('zh-CN') }}</span>
+                  </div>
+                  <div class="budget-quick">
+                    <button
+                      pButton
+                      type="button"
+                      class="chip-p"
+                      *ngFor="let v of budgetQuickStops"
+                      [class.active]="budgetDisplay === v"
+                      (click)="selectBudget(v)"
+                    >¥{{ v.toLocaleString('zh-CN') }}</button>
+                  </div>
+                </div>
+
+                <button pButton type="button" class="p-button-primary done-btn-p" (click)="closeEdit()">完成</button>
+              </div>
+            </div>
+          </p-card>
+
+          <!-- 出行提醒（天气 + 季节） -->
+          <p-card *ngIf="travelContext || !hasSeason || showSeasonAdvice" class="side-card-p">
+            <p-header>
+              <div class="section-head compact">
+                <div>
+                  <span class="kicker">环境信息</span>
+                  <h2 style="margin: 0;">出行提醒</h2>
+                </div>
+              </div>
+            </p-header>
+
+            <div class="weather-summary weather-skeleton" *ngIf="weatherLoading">
+              <span class="sk-line sk-w35"></span>
+              <span class="sk-line sk-w60 sk-h24"></span>
+              <span class="sk-line sk-w50"></span>
+            </div>
+            <div class="trip-weather-list" *ngIf="weatherLoading">
+              <div class="trip-weather-row" *ngFor="let _ of [1, 2, 3]">
+                <span class="sk-line sk-w25"></span>
+                <span class="sk-line sk-w45"></span>
+                <span class="sk-line sk-w30"></span>
               </div>
             </div>
 
-            <div class="editor" *ngIf="editing === 'startDate'">
-              <p-calendar
-                class="date-calendar"
-                [(ngModel)]="form.startDate"
-                [minDate]="minCalendarDate"
-                [showIcon]="true"
-                placeholder="选择出发日期"
-                dateFormat="yy-mm-dd"
-                appendTo="body"
-              ></p-calendar>
-              <div class="chips date-chips">
-                <button pButton *ngFor="let q of quickDateOptions" type="button" class="chip-p" [class.active]="form.startDate === q.value" (click)="setStartDate(q.value)">{{ q.label }}</button>
-              </div>
-            </div>
+            <ng-container *ngIf="!weatherLoading">
+              <ng-container *ngIf="tripWeather.length; else noTripWeatherTpl">
+                <div class="weather-summary">
+                  <div class="weather-pill">{{ tripWeather[0].summary }}</div>
+                  <div class="weather-temp" *ngIf="tripWeather[0].max !== null">
+                    <strong>{{ tripWeather[0].min ?? '-' }}°</strong>
+                    <span>~</span>
+                    <strong>{{ tripWeather[0].max }}°</strong>
+                  </div>
+                  <div class="weather-meta">
+                    <span>{{ tripWeather[0].dateLabel }} 出发</span>
+                    <span class="weather-source-badge" [class.is-climate]="tripWeather[0].source === 'climate'" [class.is-none]="tripWeather[0].source === 'none'">
+                      {{ tripWeather[0].label }}
+                    </span>
+                  </div>
+                </div>
 
-            <div class="editor" *ngIf="editing === 'budget'">
-              <div class="budget-value">¥ {{ budgetDisplay.toLocaleString('zh-CN') }}</div>
-              <p-slider
-                [(ngModel)]="budgetSliderIndex"
-                [min]="0"
-                [max]="budgetStops.length - 1"
-                [step]="1"
-                (onSlideEnd)="applyBudgetSlider()"
-                [style]="{ width: '100%' }"
-              ></p-slider>
-              <div class="slider-scale">
-                <span>¥{{ budgetStops[0].toLocaleString('zh-CN') }}</span>
-                <span>¥{{ budgetStops[budgetStops.length - 1].toLocaleString('zh-CN') }}</span>
+                <div class="trip-weather-list">
+                  <div class="trip-weather-row" *ngFor="let item of tripWeather">
+                    <span class="tw-day">第 {{ item.day }} 天</span>
+                    <span class="tw-date">{{ item.dateLabel }}</span>
+                    <span class="tw-temp">{{ item.min !== null ? (item.min + '°') : '-' }} ~ {{ item.max !== null ? (item.max + '°') : '-' }}</span>
+                    <span class="tw-rain" *ngIf="item.rainChance !== null">雨 {{ item.rainChance }}%</span>
+                    <span class="tw-source" [class.is-climate]="item.source === 'climate'" [class.is-none]="item.source === 'none'">
+                      {{ item.source === 'forecast' ? '预报' : item.source === 'climate' ? '气候' : '暂无' }}
+                    </span>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #noTripWeatherTpl>
+                <div class="weather-empty" *ngIf="!hasSeason">
+                  还没定日期？先设定出发日期，天气会逐天对齐到行程。
+                </div>
+                <div class="weather-empty" *ngIf="hasSeason">
+                  {{ season.dateLabel }} · {{ season.seasonLabel }} · {{ season.weatherTips[0] || '适合按季节舒适度安排' }}
+                </div>
+              </ng-template>
+
+              <div class="today-weather" *ngIf="showTodayWeather && weatherToday as today">
+                <span>当地今日天气（参考）</span>
+                <span>{{ today.date }} · {{ today.min ?? '-' }}°~{{ today.max ?? '-' }}° · 降雨 {{ today.rainChance ?? 0 }}%</span>
               </div>
-              <div class="budget-quick">
+            </ng-container>
+
+            <div class="smart-advice" *ngIf="smartAdvice.length">
+              <h3>AI 提示</h3>
+              <ul>
+                <li *ngFor="let item of smartAdvice">{{ item }}</li>
+              </ul>
+            </div>
+          </p-card>
+
+          <!-- 地图 -->
+          <p-card *ngIf="travelContext || recommendation.tips.length" class="side-card-p">
+            <p-header>
+              <div class="section-head compact">
+                <div>
+                  <span class="kicker">地图</span>
+                  <h2 style="margin: 0;">地区概览</h2>
+                </div>
+              </div>
+            </p-header>
+
+            <div class="map-wrap">
+              <div class="map-day-filter" *ngIf="itineraryPoints.length">
                 <button
                   pButton
                   type="button"
-                  class="chip-p"
-                  *ngFor="let v of budgetQuickStops"
-                  [class.active]="budgetDisplay === v"
-                  (click)="selectBudget(v)"
-                >¥{{ v.toLocaleString('zh-CN') }}</button>
+                  class="chip-p map-day-chip-p"
+                  [class.active]="activeMapDay === null"
+                  (click)="setMapDay(null)"
+                >全部</button>
+                <button
+                  pButton
+                  type="button"
+                  class="chip-p map-day-chip-p"
+                  *ngFor="let day of recommendation.days"
+                  [class.active]="activeMapDay === day.day"
+                  (click)="setMapDay(day.day)"
+                >第{{ day.day }}天</button>
+              </div>
+              <div id="travel-map" class="travel-map"></div>
+              <div class="map-skeleton" *ngIf="!mapReady">
+                <span class="map-skeleton__pulse"></span>
+                <span>正在加载地图…</span>
+              </div>
+              <div class="map-meta" *ngIf="mapReady && itineraryGeoLoading">
+                <p-progressSpinner strokeWidth="2" styleClass="map-spinner"></p-progressSpinner>
+                <span>正在定位行程景点…</span>
+              </div>
+              <div class="map-meta" *ngIf="mapReady && !itineraryGeoLoading && itineraryPoints.length">
+                <span>{{ itineraryPoints.length }} 个行程景点已标注（颜色区分天数，数字为当天顺序）</span>
+                <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+              </div>
+              <div class="map-meta" *ngIf="mapReady && !itineraryGeoLoading && !itineraryPoints.length && mapPoints.length">
+                <span>{{ mapPoints.length }} 个重点地点</span>
+                <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
+              </div>
+              <div class="map-meta map-meta-warn" *ngIf="mapReady && !itineraryGeoLoading && (geoFailedSpots.length || daysWithoutMarkers.length)">
+                <span *ngIf="daysWithoutMarkers.length">第 {{ daysWithoutMarkers.join('、') }} 天的景点暂无坐标，地图未标注</span>
+                <span *ngIf="geoFailedSpots.length">{{ geoFailedSpots.length }} 个景点未定位：{{ geoFailedLabel }}</span>
               </div>
             </div>
+          </p-card>
 
-            <button pButton type="button" class="p-button-primary done-btn-p" (click)="closeEdit()">完成</button>
+          <!-- 旅游贴士 -->
+          <p-card *ngIf="recommendation.tips.length" class="side-card-p">
+            <p-header>
+              <div class="section-head compact">
+                <div>
+                  <span class="kicker">建议</span>
+                  <h2 style="margin: 0;">旅游贴士</h2>
+                </div>
+              </div>
+            </p-header>
+
+            <ul class="tips">
+              <li class="tip" *ngFor="let tip of recommendation.tips">{{ tip }}</li>
+            </ul>
+          </p-card>
+        </aside>
+      </div>
+    </p-tabPanel>
+
+    <!-- ========== Tab 1: 预算 ========== -->
+    <p-tabPanel header="💰 预算">
+      <div class="budget-tab">
+        <!-- 预算总览条 -->
+        <div class="budget-overview">
+          <div class="bo-item">
+            <span class="bo-label">预算档位</span>
+            <strong class="bo-value level-{{ recommendation.budgetLevel }}">{{ recommendation.budgetLevelLabel }}</strong>
+          </div>
+          <div class="bo-item">
+            <span class="bo-label">预估总支出（{{ form.people }}人）</span>
+            <strong class="bo-value">¥ {{ recommendation.estimatedTotal.toLocaleString('zh-CN') }}</strong>
+          </div>
+          <div class="bo-item">
+            <span class="bo-label">用户设定预算</span>
+            <strong class="bo-value" [class.is-over]="recommendation.overBudget">¥ {{ form.budget.toLocaleString('zh-CN') }}</strong>
+          </div>
+          <div class="bo-item" *ngIf="recommendation.overBudget">
+            <span class="bo-label">超出幅度</span>
+            <strong class="bo-value is-over">+{{ overBudgetPercent }}%</strong>
           </div>
         </div>
-      </p-card>
 
-      <!-- 出行提醒（天气 + 季节） -->
-      <p-card *ngIf="travelContext || !hasSeason || showSeasonAdvice" class="side-card-p">
-        <p-header>
-          <div class="section-head compact">
-            <div>
-              <span class="kicker">环境信息</span>
-              <h2 style="margin: 0;">出行提醒</h2>
+        <!-- 住宿三档 -->
+        <p-card class="budget-card">
+          <p-header>
+            <div class="section-head compact">
+              <div>
+                <span class="kicker">住宿</span>
+                <h2 style="margin: 0;">每晚区间 · {{ form.days }} 天</h2>
+              </div>
+            </div>
+          </p-header>
+          <div class="hotel-tiers" *ngIf="bb?.accommodation?.tiers?.length">
+            <div
+              class="hotel-tier"
+              *ngFor="let tier of bb?.accommodation?.tiers ?? []"
+              [class.is-match]="tier.level === recommendation.budgetLevel"
+            >
+              <span class="ht-badge ht-badge-{{ tier.level }}">{{ tier.name }}</span>
+              <div class="ht-price">
+                <strong>¥ {{ tier.perNightLow.toLocaleString('zh-CN') }} – {{ tier.perNightHigh.toLocaleString('zh-CN') }}</strong>
+                <span class="ht-per">/ 晚</span>
+              </div>
+              <div class="ht-total">全程约 ¥ {{ (tier.perNightLow * form.days).toLocaleString('zh-CN') }} – ¥ {{ (tier.perNightHigh * form.days).toLocaleString('zh-CN') }}</div>
+              <p class="ht-note" *ngIf="tier.note">{{ tier.note }}</p>
             </div>
           </div>
-        </p-header>
+          <p class="budget-disclaimer">价格为参考区间，2024–2025 年当地典型价位，旺季/节假日上浮 20–50%</p>
+        </p-card>
 
-        <!-- 实时天气拉取中：骨架占位，避免文案先出现再被替换 -->
-        <div class="weather-summary weather-skeleton" *ngIf="weatherLoading">
-          <span class="sk-line sk-w35"></span>
-          <span class="sk-line sk-w60 sk-h24"></span>
-          <span class="sk-line sk-w50"></span>
+        <!-- 餐饮 + 门票 + 当地交通（三栏 / 手机端折叠） -->
+        <div class="budget-three-col">
+          <p-card class="budget-card budget-sub">
+            <p-header>
+              <div class="section-head compact">
+                <div><span class="kicker">餐饮</span><h2 style="margin: 0;">每人每天</h2></div>
+              </div>
+            </p-header>
+            <div class="sub-price">
+              <strong>¥ {{ bb?.food?.perPersonPerDayLow?.toLocaleString('zh-CN') ?? 0 }} – {{ bb?.food?.perPersonPerDayHigh?.toLocaleString('zh-CN') ?? 0 }}</strong>
+            </div>
+            <div class="sub-total" *ngIf="bb?.food">全程约 ¥ {{ (((bb?.food?.perPersonPerDayLow ?? 0) + (bb?.food?.perPersonPerDayHigh ?? 0)) / 2 * form.days * form.people).toLocaleString('zh-CN') }}（{{ form.people }}人 · {{ form.days }}天）</div>
+            <p class="sub-note" *ngIf="bb?.food?.note">{{ bb?.food?.note }}</p>
+          </p-card>
+
+          <p-card class="budget-card budget-sub">
+            <p-header>
+              <div class="section-head compact">
+                <div><span class="kicker">门票</span><h2 style="margin: 0;">行程合计（每人）</h2></div>
+              </div>
+            </p-header>
+            <div class="sub-price">
+              <strong>¥ {{ bb?.tickets?.totalLow?.toLocaleString('zh-CN') ?? 0 }} – {{ bb?.tickets?.totalHigh?.toLocaleString('zh-CN') ?? 0 }}</strong>
+            </div>
+            <p class="sub-note" *ngIf="bb?.tickets?.note">{{ bb?.tickets?.note }}</p>
+          </p-card>
+
+          <p-card class="budget-card budget-sub">
+            <p-header>
+              <div class="section-head compact">
+                <div><span class="kicker">当地交通</span><h2 style="margin: 0;">每人每天</h2></div>
+              </div>
+            </p-header>
+            <div class="sub-price">
+              <strong>¥ {{ bb?.transportLocal?.perPersonPerDayLow?.toLocaleString('zh-CN') ?? 0 }} – {{ bb?.transportLocal?.perPersonPerDayHigh?.toLocaleString('zh-CN') ?? 0 }}</strong>
+            </div>
+            <div class="sub-total" *ngIf="bb?.transportLocal">全程约 ¥ {{ (((bb?.transportLocal?.perPersonPerDayLow ?? 0) + (bb?.transportLocal?.perPersonPerDayHigh ?? 0)) / 2 * form.days * form.people).toLocaleString('zh-CN') }}</div>
+            <p class="sub-note" *ngIf="bb?.transportLocal?.note">{{ bb?.transportLocal?.note }}</p>
+          </p-card>
         </div>
-        <div class="trip-weather-list" *ngIf="weatherLoading">
-          <div class="trip-weather-row" *ngFor="let _ of [1, 2, 3]">
-            <span class="sk-line sk-w25"></span>
-            <span class="sk-line sk-w45"></span>
-            <span class="sk-line sk-w30"></span>
+
+        <!-- 城际交通 -->
+        <p-card class="budget-card">
+          <p-header>
+            <div class="section-head compact">
+              <div>
+                <span class="kicker">城际交通</span>
+                <h2 style="margin: 0;">往返票价参考</h2>
+              </div>
+            </div>
+          </p-header>
+          <div class="outbound-row" *ngIf="bb?.transportOutbound">
+            <div class="outbound-item" *ngIf="(bb?.transportOutbound?.airLow ?? 0) > 0">
+              <span class="ob-icon">✈️</span>
+              <div class="ob-info">
+                <div class="ob-label">飞机</div>
+                <strong>¥ {{ bb?.transportOutbound?.airLow?.toLocaleString('zh-CN') ?? 0 }} – {{ bb?.transportOutbound?.airHigh?.toLocaleString('zh-CN') ?? 0 }}</strong>
+              </div>
+            </div>
+            <div class="outbound-item" *ngIf="(bb?.transportOutbound?.railLow ?? 0) > 0">
+              <span class="ob-icon">🚄</span>
+              <div class="ob-info">
+                <div class="ob-label">高铁</div>
+                <strong>¥ {{ bb?.transportOutbound?.railLow?.toLocaleString('zh-CN') ?? 0 }} – {{ bb?.transportOutbound?.railHigh?.toLocaleString('zh-CN') ?? 0 }}</strong>
+              </div>
+            </div>
           </div>
-        </div>
+          <p class="sub-note" *ngIf="bb?.transportOutbound?.note">{{ bb?.transportOutbound?.note }}</p>
+          <p class="budget-disclaimer">城际交通未计入预估总支出，需根据出发地另行采购</p>
+        </p-card>
+      </div>
+    </p-tabPanel>
 
-        <ng-container *ngIf="!weatherLoading">
-          <ng-container *ngIf="tripWeather.length; else noTripWeatherTpl">
-            <!-- 行程首日天气：日期 + 来源徽标，避免把「今天」当成出发日 -->
-            <div class="weather-summary">
-              <div class="weather-pill">{{ tripWeather[0].summary }}</div>
-              <div class="weather-temp" *ngIf="tripWeather[0].max !== null">
-                <strong>{{ tripWeather[0].min ?? '-' }}°</strong>
-                <span>~</span>
-                <strong>{{ tripWeather[0].max }}°</strong>
-              </div>
-              <div class="weather-meta">
-                <span>{{ tripWeather[0].dateLabel }} 出发</span>
-                <span class="weather-source-badge" [class.is-climate]="tripWeather[0].source === 'climate'" [class.is-none]="tripWeather[0].source === 'none'">
-                  {{ tripWeather[0].label }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 逐天天气：与每日行程一一对应 -->
-            <div class="trip-weather-list">
-              <div class="trip-weather-row" *ngFor="let item of tripWeather">
-                <span class="tw-day">第 {{ item.day }} 天</span>
-                <span class="tw-date">{{ item.dateLabel }}</span>
-                <span class="tw-temp">{{ item.min !== null ? (item.min + '°') : '-' }} ~ {{ item.max !== null ? (item.max + '°') : '-' }}</span>
-                <span class="tw-rain" *ngIf="item.rainChance !== null">雨 {{ item.rainChance }}%</span>
-                <span class="tw-source" [class.is-climate]="item.source === 'climate'" [class.is-none]="item.source === 'none'">
-                  {{ item.source === 'forecast' ? '预报' : item.source === 'climate' ? '常年' : '暂无' }}
-                </span>
+    <!-- ========== Tab 2: 执行 ========== -->
+    <p-tabPanel header="✅ 执行">
+      <div class="exec-tab">
+        <!-- 交通方式三档 -->
+        <p-card class="exec-card">
+          <p-header>
+            <div class="section-head compact">
+              <div>
+                <span class="kicker">出行方式</span>
+                <h2 style="margin: 0;">怎么去 {{ destinationName }}</h2>
               </div>
             </div>
-          </ng-container>
-
-          <ng-template #noTripWeatherTpl>
-            <div class="weather-empty" *ngIf="!hasSeason">
-              还没定日期？先设定出发日期，天气会逐天对齐到行程。
+          </p-header>
+          <div class="transport-suggestions">
+            <div
+              class="transport-card"
+              *ngFor="let t of ep?.transportSuggestions"
+            >
+              <span class="tc-icon">{{ t.mode === 'air' ? '✈️' : t.mode === 'rail' ? '🚄' : t.mode === 'drive' ? '🚗' : '🚌' }}</span>
+              <div class="tc-body">
+                <div class="tc-row">
+                  <strong class="tc-label">{{ t.label }}</strong>
+                  <span class="tc-duration">{{ t.duration }}</span>
+                </div>
+                <div class="tc-price">
+                  <span class="tc-price-range">¥ {{ t.priceLow.toLocaleString('zh-CN') }} – {{ t.priceHigh.toLocaleString('zh-CN') }}</span>
+                  <span class="tc-price-per">/ 人单程</span>
+                </div>
+                <p class="tc-note">{{ t.note }}</p>
+              </div>
             </div>
-            <div class="weather-empty" *ngIf="hasSeason">
-              {{ season.dateLabel }} · {{ season.seasonLabel }} · {{ season.weatherTips[0] || '适合按季节舒适度安排' }}
-            </div>
-          </ng-template>
-
-          <!-- 当地今日天气：仅作临行参考，不再代表整个行程 -->
-          <div class="today-weather" *ngIf="showTodayWeather && weatherToday as today">
-            <span>当地今日天气（参考）</span>
-            <span>{{ today.date }} · {{ today.min ?? '-' }}°~{{ today.max ?? '-' }}° · 降雨 {{ today.rainChance ?? 0 }}%</span>
           </div>
-        </ng-container>
+        </p-card>
 
-        <div class="smart-advice" *ngIf="smartAdvice.length">
-          <h3>AI 提示</h3>
-          <ul>
-            <li *ngFor="let item of smartAdvice">{{ item }}</li>
+        <!-- 酒店建议三档 -->
+        <p-card class="exec-card">
+          <p-header>
+            <div class="section-head compact">
+              <div>
+                <span class="kicker">住宿建议</span>
+                <h2 style="margin: 0;">{{ destinationName }} 住哪里</h2>
+              </div>
+            </div>
+          </p-header>
+          <div class="exec-hotel-tiers">
+            <div
+              class="exec-hotel"
+              *ngFor="let h of ep?.hotelTiers"
+              [class.is-match]="h.level === recommendation.budgetLevel"
+            >
+              <span class="ht-badge ht-badge-{{ h.level }}">{{ h.name }}</span>
+              <div class="eh-price">¥ {{ h.perNightLow.toLocaleString('zh-CN') }} – {{ h.perNightHigh.toLocaleString('zh-CN') }} / 晚</div>
+              <p class="eh-note" *ngIf="h.note">{{ h.note }}</p>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- 出发前 Checklist -->
+        <p-card class="exec-card">
+          <p-header>
+            <div class="section-head compact">
+              <div>
+                <span class="kicker">出发前</span>
+                <h2 style="margin: 0;">执行 Checklist</h2>
+              </div>
+            </div>
+          </p-header>
+          <ul class="checklist">
+            <li class="check-item" *ngFor="let item of ep?.checklist; let idx = index">
+              <label class="check-label">
+                <input type="checkbox" class="check-box" />
+                <span class="check-text">{{ item }}</span>
+              </label>
+            </li>
           </ul>
-        </div>
-      </p-card>
+          <p class="check-tip">Checklist 由 AI 基于本次行程（{{ destinationName }} · {{ form.days }} 天 · {{ form.companion }} · {{ recommendation.budgetLevelLabel }}）动态生成</p>
+        </p-card>
+      </div>
+    </p-tabPanel>
 
-      <!-- 地图 -->
-      <p-card *ngIf="travelContext || recommendation.tips.length" class="side-card-p">
-        <p-header>
-          <div class="section-head compact">
-            <div>
-              <span class="kicker">地图</span>
-              <h2 style="margin: 0;">地区概览</h2>
-            </div>
-          </div>
-        </p-header>
-
-        <div class="map-wrap">
-          <!-- 按天筛选：只看某一天的路线，避免所有天挤在一张图上 -->
-          <div class="map-day-filter" *ngIf="itineraryPoints.length">
-            <button
-              pButton
-              type="button"
-              class="chip-p map-day-chip-p"
-              [class.active]="activeMapDay === null"
-              (click)="setMapDay(null)"
-            >全部</button>
-            <button
-              pButton
-              type="button"
-              class="chip-p map-day-chip-p"
-              *ngFor="let day of recommendation.days"
-              [class.active]="activeMapDay === day.day"
-              (click)="setMapDay(day.day)"
-            >第{{ day.day }}天</button>
-          </div>
-          <div id="travel-map" class="travel-map"></div>
-          <div class="map-skeleton" *ngIf="!mapReady">
-            <span class="map-skeleton__pulse"></span>
-            <span>正在加载地图…</span>
-          </div>
-          <div class="map-meta" *ngIf="mapReady && itineraryGeoLoading">
-            <p-progressSpinner strokeWidth="2" styleClass="map-spinner"></p-progressSpinner>
-            <span>正在定位行程景点…</span>
-          </div>
-          <div class="map-meta" *ngIf="mapReady && !itineraryGeoLoading && itineraryPoints.length">
-            <span>{{ itineraryPoints.length }} 个行程景点已标注（颜色区分天数，数字为当天顺序）</span>
-            <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
-          </div>
-          <div class="map-meta" *ngIf="mapReady && !itineraryGeoLoading && !itineraryPoints.length && mapPoints.length">
-            <span>{{ mapPoints.length }} 个重点地点</span>
-            <span>{{ travelContext?.geo?.displayName || recommendation.destinationName }}</span>
-          </div>
-          <div class="map-meta map-meta-warn" *ngIf="mapReady && !itineraryGeoLoading && (geoFailedSpots.length || daysWithoutMarkers.length)">
-            <span *ngIf="daysWithoutMarkers.length">第 {{ daysWithoutMarkers.join('、') }} 天的景点暂无坐标，地图未标注</span>
-            <span *ngIf="geoFailedSpots.length">{{ geoFailedSpots.length }} 个景点未定位：{{ geoFailedLabel }}</span>
-          </div>
-        </div>
-      </p-card>
-
-      <!-- 旅游贴士 -->
-      <p-card *ngIf="recommendation.tips.length" class="side-card-p">
-        <p-header>
-          <div class="section-head compact">
-            <div>
-              <span class="kicker">建议</span>
-              <h2 style="margin: 0;">旅游贴士</h2>
-            </div>
-          </div>
-        </p-header>
-
-        <ul class="tips">
-          <li class="tip" *ngFor="let tip of recommendation.tips">{{ tip }}</li>
-        </ul>
-      </p-card>
-    </aside>
-  </div>
+  </p-tabView>
   </ng-container>
 
-  <!-- 景点详情 Modal（抽取为子组件，内联模板暂不修改） -->
+  <!-- 景点详情 Modal -->
   <app-spot-detail-modal
     *ngIf="selectedSpot"
     [spot]="selectedSpot"
@@ -615,7 +817,7 @@
     (close)="closeSpotDetail()"
   ></app-spot-detail-modal>
 
-  <!-- 保存方案 Modal（抽取为子组件） -->
+  <!-- 保存方案 Modal -->
   <app-plan-save-dialog
     [open]="saveDialog.open"
     [name]="saveDialog.name"
@@ -625,7 +827,7 @@
     (save)="confirmSave($event)"
   ></app-plan-save-dialog>
 
-  <!-- 分享方案 Modal（抽取为子组件） -->
+  <!-- 分享方案 Modal -->
   <app-plan-share-dialog
     [open]="shareDialog.open"
     [loading]="shareDialog.loading"

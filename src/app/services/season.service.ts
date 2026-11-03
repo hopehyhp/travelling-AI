@@ -141,12 +141,17 @@ export class SeasonService {
   }
 
   /**
-   * 把「未来 7 天预报」和行程逐天对齐：
+   * 把「近期预报」和行程逐天对齐：
    * - 出发日落在预报窗口内 → 按日期精确匹配 forecast
-   * - 超出窗口 → 用目的地常年气候生成同日期的参考值，并标注来源
-   * - 无日期/无气候数据 → 返回空数组或 source='none'，绝不拿今天的天气冒充行程天气
+   * - 超出窗口 → 优先用目的地常年气候，其次用服务端气候接口的逐日参考
+   * - 无日期/无任何参考 → 返回空数组或 source='none'，绝不拿今天的天气冒充行程天气
    */
-  buildTripWeather(destination: Destination | null, prefs: TravelPreferences, forecast: WeatherDay[]): TripDayWeather[] {
+  buildTripWeather(
+    destination: Destination | null,
+    prefs: TravelPreferences,
+    forecast: WeatherDay[],
+    climateForecast: WeatherDay[] = []
+  ): TripDayWeather[] {
     const start = this.parseIso(prefs.startDate);
     if (!start) {
       return [];
@@ -154,6 +159,7 @@ export class SeasonService {
 
     const days = Math.max(1, Math.min(15, Number(prefs.days) || 1));
     const byDate = new Map((forecast ?? []).map(item => [item.date, item]));
+    const fallbackByDate = new Map((climateForecast ?? []).map(item => [item.date, item]));
     const climate = destination?.climate;
     const list: TripDayWeather[] = [];
 
@@ -175,7 +181,7 @@ export class SeasonService {
           rainChance: matched.rainChance,
           summary: matched.summary,
           source: 'forecast',
-          label: '7日预报'
+          label: '近期预报'
         });
         continue;
       }
@@ -191,6 +197,23 @@ export class SeasonService {
           summary: this.climateSummary(climate, month),
           source: 'climate',
           label: '常年同期参考'
+        });
+        continue;
+      }
+
+      // 自定义目的地没有本地气候档案时，用服务端气候接口给出的逐日参考兜底
+      const climateMatched = fallbackByDate.get(iso);
+      if (climateMatched) {
+        list.push({
+          day,
+          date: iso,
+          dateLabel,
+          max: climateMatched.max,
+          min: climateMatched.min,
+          rainChance: climateMatched.rainChance,
+          summary: climateMatched.summary,
+          source: 'climate',
+          label: '气候参考'
         });
         continue;
       }

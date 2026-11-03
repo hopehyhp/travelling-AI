@@ -138,6 +138,9 @@ export class ResultComponent implements OnInit, OnDestroy {
   /** 当前 travelContext 对应的目的地，切换目的地时避免用旧坐标做地理编码兜底 */
   private travelContextDestination: string | null = null;
 
+  /** Tab 切换：0=行程 1=预算 2=执行 */
+  activeTab = 0;
+
   private destroy$ = new Subject<void>();
 
   destinations = DESTINATIONS;
@@ -322,10 +325,11 @@ export class ResultComponent implements OnInit, OnDestroy {
     return !this.weatherLoading && !!this.travelContext;
   }
 
-  /** 与行程逐天对齐的天气：按出发日期匹配 7 日预报，超出窗口用常年气候兜底 */
+  /** 与行程逐天对齐的天气：按出发日期匹配近期预报，超出窗口用常年/气候参考兜底 */
   get tripWeather(): TripDayWeather[] {
     const forecast = this.travelContext?.weather?.forecast ?? [];
-    return this.seasonService.buildTripWeather(this.selectedDestination, this.form, forecast);
+    const climateForecast = this.travelContext?.climateForecast ?? [];
+    return this.seasonService.buildTripWeather(this.selectedDestination, this.form, forecast, climateForecast);
   }
 
   /** 当地实时天气仅在出发日临近（7 天内）或未定日期时作为参考展示 */
@@ -387,7 +391,7 @@ export class ResultComponent implements OnInit, OnDestroy {
       tag: '出行效率'
     });
 
-    // 只有出发日真正落在 7 日预报窗口内，才用天气下结论；否则宁可不展示天气卡
+    // 只有出发日真正落在预报窗口内，才用天气下结论；否则宁可不展示天气卡
     const firstTripDay = this.weatherLoading ? null : this.tripWeather[0];
     const weather = firstTripDay && firstTripDay.source === 'forecast' ? firstTripDay : null;
     if (weather) {
@@ -413,6 +417,24 @@ export class ResultComponent implements OnInit, OnDestroy {
     }
 
     return items.slice(0, 3);
+  }
+
+  // —— P0-1/2 新增：预算分项 & 执行计划 getter ——
+
+  /** 预算分项（兼容旧 AI 输出：没有 budgetBreakdown 时返回安全兜底） */
+  get bb() {
+    return this.recommendation?.budgetBreakdown;
+  }
+
+  /** 执行计划 */
+  get ep() {
+    return this.recommendation?.executionPlan;
+  }
+
+  /** 超出预算百分比（供模板使用，Angular 模板不能用全局 Math） */
+  get overBudgetPercent(): number {
+    if (!this.recommendation?.overBudget || this.form.budget <= 0) return 0;
+    return Math.round((this.recommendation.estimatedTotal / this.form.budget - 1) * 100);
   }
 
   get dailyAdjustments(): { day: number; title: string; slots: { label: string; text: string }[]; note: string }[] {

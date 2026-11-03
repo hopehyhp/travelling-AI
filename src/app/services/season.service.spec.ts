@@ -174,6 +174,55 @@ describe('SeasonService', () => {
       expect(context.packingList).toContain('按季节准备的换洗衣物');
     });
 
+    it('buildTripWeather 命中预报时使用预报数据', () => {
+      const list = service.buildTripWeather(
+        destination('sanya'),
+        prefs({ startDate: '2026-11-05', days: 1 }),
+        [{ date: '2026-11-05', max: 22, min: 12, rainChance: 10, summary: '晴' }]
+      );
+
+      expect(list.length).toBe(1);
+      expect(list[0].source).toBe('forecast');
+      expect(list[0].label).toBe('近期预报');
+      expect(list[0].max).toBe(22);
+    });
+
+    it('内置目的地超出预报窗口时用常年同期参考', () => {
+      const list = service.buildTripWeather(
+        destination('sanya'),
+        prefs({ startDate: '2026-12-20', days: 1 }),
+        []
+      );
+
+      expect(list[0].source).toBe('climate');
+      expect(list[0].label).toBe('常年同期参考');
+      expect(list[0].max).not.toBeNull();
+    });
+
+    it('自定义目的地超出窗口时用服务端气候参考', () => {
+      const list = service.buildTripWeather(
+        null,
+        prefs({ startDate: '2026-12-20', days: 1, destinationId: 'custom' }),
+        [],
+        [{ date: '2026-12-20', max: 18, min: 6, rainChance: null, summary: '气候参考：天气较适宜，适合外出游玩' }]
+      );
+
+      expect(list[0].source).toBe('climate');
+      expect(list[0].label).toBe('气候参考');
+      expect(list[0].max).toBe(18);
+    });
+
+    it('自定义目的地且没有任何参考时标记为暂无数据', () => {
+      const list = service.buildTripWeather(
+        null,
+        prefs({ startDate: '2026-12-20', days: 1, destinationId: 'custom' }),
+        []
+      );
+
+      expect(list[0].source).toBe('none');
+      expect(list[0].max).toBeNull();
+    });
+
     it('海外目的地追加证件与插头类物品', () => {
       const context = service.buildContext(
         destination('tokyo'),

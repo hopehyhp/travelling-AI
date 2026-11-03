@@ -62,6 +62,15 @@ const geocodeLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// 价格区间查询：每分钟 30 次（生成行程时查询，相对低频）
+const priceRangeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'RATE_LIMITED', message: '价格查询过于频繁' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // 目的地实时信息短缓存：同一目的地+日期 10 分钟内复用，避免每次改偏好都打满外网
 const travelIntelCache = new Map();
 const TRAVEL_INTEL_CACHE_TTL = 10 * 60 * 1000;
@@ -117,7 +126,8 @@ app.post('/api/events', eventsLimiter, optionalAuthMiddleware, async (req, res) 
 app.get('/api/travel-intelligence', async (req, res) => {
   const destination = String(req.query.destination || '').trim() || '目的地';
   const startDate = String(req.query.startDate || '').trim();
-  const cacheKey = `${destination}::${startDate}`;
+  const days = Math.max(0, Math.min(15, Number(req.query.days) || 0));
+  const cacheKey = `${destination}::${startDate}::${days}`;
   const cached = travelIntelCache.get(cacheKey);
   if (cached && Date.now() - cached.at < TRAVEL_INTEL_CACHE_TTL) {
     return res.json(cached.data);
@@ -130,10 +140,13 @@ app.get('/api/travel-intelligence', async (req, res) => {
     const places = await fetchPlaces(destination, fallbackGeo);
     // 天气依赖城市坐标，必须在其后；两者之间已无多余串行等待
     const weather = await fetchWeather(destination, startDate, places.geo);
+    // 超出预报窗口的行程日期：用气候接口补一份参考，避免自定义目的地全部显示「暂无」
+    const climateForecast = await fetchClimateFallback(places.geo, startDate, days, weather.forecast);
     const data = {
       destination,
       geo: places.geo,
       weather,
+      climateForecast,
       highlights: places.highlights,
       smartAdvice: buildSmartAdvice({ weather, destination, startDate })
     };
@@ -150,6 +163,7 @@ app.get('/api/travel-intelligence', async (req, res) => {
       destination,
       geo: fallbackGeo,
       weather: { today: null, forecast: [] },
+      climateForecast: [],
       highlights: [],
       smartAdvice: ['当前实时信息暂不可用，系统已回退到本地季节建议。']
     });
@@ -461,6 +475,79 @@ app.get('/api/geocode', geocodeLimiter, async (req, res) => {
   }
 });
 
+// ——— 价格区间查询：高德 POI ext 字段拿景点"人均消费" / 酒店参考价 ———
+/** 解析高德 POI ext 字段里的价格信息（ext 是 JSON 字符串） */
+function parseAmapPriceExt(extStr, poiType) {
+  const result = { avgPrice: null, priceRange: null, rating: null };
+  if (!extStr) return result;
+  try {
+    const ext = typeof extStr === 'string' ? JSON.parse(extStr) : extStr;
+    // industry_suggestion 里通常有人均消费
+    if (ext.industry_suggestion && typeof ext.industry_suggestion === 'object') {
+      const sug = ext.industry_suggestion;
+      if (sug.avgprice) result.avgPrice = Number(sug.avgprice) || null;
+      if (sug.rating) result.rating = Number(sug.rating) || null;
+    }
+    // biz_ext 里也可能有价格
+    if (ext.biz_ext && typeof ext.biz_ext === 'object') {
+      const biz = ext.biz_ext;
+      if (biz.cost && !result.avgPrice) result.avgPrice = Number(biz.cost) || null;
+      if (biz.min_cost || biz.max_cost) {
+        const lo = Number(biz.min_cost) || null;
+        const hi = Number(biz.max_cost) || null;
+        if (lo && hi) result.priceRange = { low: lo, high: hi };
+      }
+    }
+  } catch { /* ext 解析失败没关系，字段不全是常态 */ }
+  return result;
+}
+
+app.get('/api/price-range', priceRangeLimiter, async (req, res) => {
+  const spotsRaw = String(req.query.spots || '').trim();
+  const city = String(req.query.city || '').trim();
+  if (!spotsRaw) return res.status(400).json({ error: 'MISSING_SPOTS' });
+
+  const spotNames = spotsRaw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 15);
+  const isOversea = city && !/[\u4e00-\u9fa5]/.test(city);
+
+  // 没有高德 Key 或海外：直接返回空数组（让 AI 自己给参考价）
+  if (!AMAP_KEY || isOversea) {
+    return res.json({ source: 'ai', prices: spotNames.map((n) => ({ name: n })) });
+  }
+
+  try {
+    const results = [];
+    // 并发查询每个景点的价格信息（高德单次 text 搜索只返回一个 POI，需要逐个查）
+    await Promise.all(spotNames.map(async (name) => {
+      try {
+        const keyword = city ? `${name} ${city}` : name;
+        const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&output=JSON&offset=1&extensions=all`;
+        const amapResp = await fetch(url);
+        if (!amapResp.ok) return;
+        const amap = await amapResp.json();
+        if (amap.status !== '1' || !Array.isArray(amap.pois) || !amap.pois.length) return;
+        const poi = amap.pois[0];
+        const priceInfo = parseAmapPriceExt(poi.ext, poi.type);
+        results.push({
+          name,
+          matchedName: poi.name,
+          category: poi.type,
+          ...priceInfo
+        });
+      } catch { /* 单个查询失败不影响整体 */ }
+    }));
+
+    // 兜底：没匹配到的景点也返回条目（name only），便于 prompt 里引用
+    const matchedNames = new Set(results.map((r) => r.name));
+    spotNames.forEach((n) => { if (!matchedNames.has(n)) results.push({ name: n }); });
+
+    res.json({ source: 'amap', prices: results });
+  } catch (error) {
+    console.error('[price-range] failed:', error?.message);
+    res.json({ source: 'fallback', prices: spotNames.map((n) => ({ name: n })) });
+  }
+});
+
 /** 一次地理编码同时产出城市中心与周边地点，替代原先两次重复请求 */
 async function fetchPlaces(destination, fallbackGeo) {
   const query = encodeURIComponent(destination);
@@ -504,7 +591,7 @@ async function fetchWeather(destination, startDate, geo) {
   url.searchParams.set('longitude', String(geo.lng));
   url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_probability_max');
   url.searchParams.set('timezone', 'auto');
-  url.searchParams.set('forecast_days', '7');
+  url.searchParams.set('forecast_days', '16');
 
   const resp = await fetch(url.toString());
   if (!resp.ok) {
@@ -527,6 +614,69 @@ async function fetchWeather(destination, startDate, geo) {
 
   const today = forecast[0] || null;
   return { today, forecast };
+}
+
+/** 出发日起 days 天的日期序列（YYYY-MM-DD），日期非法或未提供时返回空数组 */
+function tripDateRange(startDate, days) {
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(startDate || '').trim());
+  if (!matched || days <= 0) return [];
+  const start = new Date(Number(matched[1]), Number(matched[2]) - 1, Number(matched[3]));
+  if (Number.isNaN(start.getTime())) return [];
+  const list = [];
+  for (let i = 0; i < days; i++) {
+    const day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    list.push(`${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`);
+  }
+  return list;
+}
+
+/**
+ * 预报窗口（16 天）之外的行程日期，调用 Open-Meteo Climate API 生成气候参考。
+ * 仅补齐缺失日期，接口失败时返回空数组，由前端回退到本地季节建议。
+ */
+async function fetchClimateFallback(geo, startDate, days, forecast) {
+  const dates = tripDateRange(startDate, days);
+  if (!dates.length) return [];
+  const covered = new Set((forecast || []).map((item) => item.date));
+  const missing = dates.filter((date) => !covered.has(date));
+  if (!missing.length) return [];
+
+  try {
+    const url = new URL('https://climate-api.open-meteo.com/v1/climate');
+    url.searchParams.set('latitude', String(geo.lat));
+    url.searchParams.set('longitude', String(geo.lng));
+    url.searchParams.set('start_date', missing[0]);
+    url.searchParams.set('end_date', missing[missing.length - 1]);
+    url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min');
+    url.searchParams.set('models', 'EC_Earth3P_HR');
+
+    const resp = await fetch(url.toString());
+    if (!resp.ok) {
+      throw new Error('climate lookup failed');
+    }
+
+    const json = await resp.json();
+    const daily = json && json.daily;
+    if (!daily || !Array.isArray(daily.time)) {
+      return [];
+    }
+
+    return daily.time.map((dateStr, index) => {
+      const max = Number(daily.temperature_2m_max?.[index]);
+      const min = Number(daily.temperature_2m_min?.[index]);
+      const valid = Number.isFinite(max) && Number.isFinite(min);
+      return {
+        date: dateStr,
+        max: valid ? Math.round(max * 10) / 10 : null,
+        min: valid ? Math.round(min * 10) / 10 : null,
+        rainChance: null,
+        summary: valid ? `气候参考：${inferSummary(max, 0)}` : '气候参考：数据暂缺'
+      };
+    });
+  } catch (error) {
+    console.error('[climate] fallback failed:', error && error.message ? error.message : error);
+    return [];
+  }
 }
 
 function inferSummary(maxTemp, rainChance) {

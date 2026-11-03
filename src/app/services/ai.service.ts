@@ -46,7 +46,8 @@ export class AiService {
     return this.http.get<TravelContext>('/api/travel-intelligence', {
       params: {
         destination: destinationName,
-        startDate: prefs.startDate || ''
+        startDate: prefs.startDate || '',
+        days: prefs.days
       }
     }).pipe(
       catchError(() => of(this.buildFallbackContext(destinationName)))
@@ -176,6 +177,7 @@ export class AiService {
         today: null,
         forecast: []
       },
+      climateForecast: [],
       highlights: [],
       smartAdvice: ['当前天气信息暂不可用，仍可根据本地季节建议安排行程。']
     };

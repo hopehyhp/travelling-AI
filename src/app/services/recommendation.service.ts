@@ -107,7 +107,40 @@ export class RecommendationService {
       attractionCount: picked.length,
       days,
       tips,
-      season
+      season,
+      /** 本地兜底也给出预算分项和执行计划，与 normalize.js 保持同结构 */
+      budgetBreakdown: {
+        accommodation: { tiers: [
+          { level: 'economy' as const, name: '经济型', perNightLow: 200, perNightHigh: 400, note: '交通便利，干净整洁' },
+          { level: 'comfort' as const, name: '舒适型', perNightLow: 400, perNightHigh: 700, note: '商圈附近，含早' },
+          { level: 'luxury' as const, name: '豪华型', perNightLow: 700, perNightHigh: 1200, note: '度假体验，江景/主题酒店' }
+        ]},
+        food: { perPersonPerDayLow: 120, perPersonPerDayHigh: 280, note: '建议尝试本地特色餐饮' },
+        tickets: { totalLow: 300, totalHigh: 600, note: '主要景点门票合计' },
+        transportLocal: { perPersonPerDayLow: 20, perPersonPerDayHigh: 50, note: '地铁公交为主' },
+        transportOutbound: { airLow: 600, airHigh: 1500, railLow: 400, railHigh: 800, note: '建议提前订票' }
+      },
+      executionPlan: {
+        transportSuggestions: [
+          { mode: 'air' as const, label: '飞机', priceLow: 600, priceHigh: 1500, duration: '约 2 小时', note: '远程首选，提前订有特价' },
+          { mode: 'rail' as const, label: '高铁', priceLow: 400, priceHigh: 800, duration: '约 3-4 小时', note: '准点舒适，市区到市区' },
+          { mode: 'drive' as const, label: '自驾', priceLow: 300, priceHigh: 500, duration: '约 8 小时+', note: '灵活自由，适合多人分摊' }
+        ],
+        hotelTiers: [
+          { level: 'economy' as const, name: '经济酒店', perNightLow: 200, perNightHigh: 400, note: '干净实惠，交通便利' },
+          { level: 'comfort' as const, name: '舒适酒店', perNightLow: 400, perNightHigh: 700, note: '商圈附近，含早' },
+          { level: 'luxury' as const, name: '度假酒店', perNightLow: 700, perNightHigh: 1200, note: '主题/江景/度假体验' }
+        ],
+        checklist: [
+          '确认出发前机票/高铁票价格是否更低',
+          '下载目的地离线地图',
+          '充电宝 + 数据线',
+          '身份证 + 学生证/老人证（有门票优惠）',
+          '洗漱用品 + 毛巾',
+          '防晒霜 + 墨镜',
+          '舒适的步行鞋'
+        ]
+      }
     };
   }
 

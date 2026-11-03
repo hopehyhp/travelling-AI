@@ -1,179 +1,172 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { FormsModule } from '@angular/forms';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { Router } from '@angular/router';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { AppComponent } from './app.component';
-import { QuestionnaireComponent } from './components/questionnaire/questionnaire.component';
-import { ResultComponent } from './components/result/result.component';
+import { AiService } from './services/ai.service';
+import { AuthService, AuthUser } from './services/auth.service';
+import { RecommendationService } from './services/recommendation.service';
+import { TrackingService } from './services/tracking.service';
+import { TravelStateService } from './services/travel-state.service';
+import { DEFAULT_PREFERENCES, Recommendation, TravelPreferences } from './models/travel.model';
 
-const SERVER_PAYLOAD = {
-  destinationName: '三亚',
-  summary: '三亚 · 3 天 2 人专属行程',
-  tags: ['海岛度假'],
-  budgetLevel: 'comfort',
-  budgetLevelLabel: '舒适型',
-  estimatedTotal: 4200,
-  overBudget: false,
-  attractionCount: 1,
-  days: [
-    {
-      day: 1,
-      title: '第 1 天',
-      focus: '海岛初体验',
-      spots: [{ time: '09:00', name: '亚龙湾', category: '景点', description: '细软沙滩', cost: 0, stay: '2–3 小时', reasons: ['适合海岛度假', '沙滩细软适合放松'] }]
-    }
-  ],
-  tips: ['注意防晒']
-};
+function makeRecommendation(): Recommendation {
+  return {
+    destinationName: '三亚',
+    summary: '三亚 · 3 天 2 人专属行程',
+    tags: ['海岛度假'],
+    budgetLevel: 'comfort',
+    budgetLevelLabel: '舒适型',
+    estimatedTotal: 4200,
+    overBudget: false,
+    attractionCount: 1,
+    days: [],
+    tips: ['注意防晒']
+  } as unknown as Recommendation;
+}
+
+function makePrefs(): TravelPreferences {
+  return { ...DEFAULT_PREFERENCES, placeTypes: [...DEFAULT_PREFERENCES.placeTypes] };
+}
 
 describe('AppComponent', () => {
-  let httpMock: HttpTestingController;
+  let regenerate$: Subject<TravelPreferences>;
+  let recommendation$: BehaviorSubject<Recommendation | null>;
+  let routerSpy: { url: string; navigate: jasmine.Spy };
+  let authSpy: { init: jasmine.Spy; logout: jasmine.Spy; currentUser$: BehaviorSubject<AuthUser | null> };
+  let aiSpy: { generate: jasmine.Spy };
+  let recommendationSpy: { generate: jasmine.Spy };
+  let stateStub: {
+    regenerate$: Subject<TravelPreferences>;
+    preferences: TravelPreferences;
+    recommendationChanges: () => BehaviorSubject<Recommendation | null>;
+    setRecommendation: jasmine.Spy;
+    restore: jasmine.Spy;
+  };
+  let trackingSpy: { track: jasmine.Spy };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [FormsModule, HttpClientTestingModule],
-      declarations: [AppComponent, QuestionnaireComponent, ResultComponent]
-    });
-    httpMock = TestBed.inject(HttpTestingController);
-  });
+    regenerate$ = new Subject<TravelPreferences>();
+    recommendation$ = new BehaviorSubject<Recommendation | null>(null);
+    routerSpy = { url: '/', navigate: jasmine.createSpy('navigate') };
+    authSpy = {
+      init: jasmine.createSpy('init'),
+      logout: jasmine.createSpy('logout'),
+      currentUser$: new BehaviorSubject<AuthUser | null>(null)
+    };
+    aiSpy = { generate: jasmine.createSpy('generate').and.returnValue(of(makeRecommendation())) };
+    recommendationSpy = { generate: jasmine.createSpy('generate').and.returnValue(makeRecommendation()) };
+    stateStub = {
+      regenerate$,
+      preferences: makePrefs(),
+      recommendationChanges: () => recommendation$,
+      setRecommendation: jasmine.createSpy('setRecommendation'),
+      restore: jasmine.createSpy('restore').and.returnValue(false)
+    };
+    trackingSpy = { track: jasmine.createSpy('track') };
 
-  afterEach(() => httpMock.verify());
+    TestBed.configureTestingModule({
+      declarations: [AppComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+      providers: [
+        { provide: Router, useValue: routerSpy },
+        { provide: AuthService, useValue: authSpy },
+        { provide: AiService, useValue: aiSpy },
+        { provide: RecommendationService, useValue: recommendationSpy },
+        { provide: TravelStateService, useValue: stateStub },
+        { provide: TrackingService, useValue: trackingSpy }
+      ]
+    });
+  });
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should start in landing view', () => {
+  it('should init auth and restore saved plan on init', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.view).toEqual('landing');
-  });
-
-  it('should switch to wizard view on start', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    app.onStart();
-    expect(app.view).toEqual('wizard');
-  });
-
-  it('should expose the travel idea entry and a returnable input page', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('我有旅行想法');
-    expect(fixture.nativeElement.textContent).toContain('开始定制');
+    expect(authSpy.init).toHaveBeenCalled();
+    expect(stateStub.restore).toHaveBeenCalled();
+  });
 
-    app.onIdeaStart();
+  it('should generate via AI on regenerate and navigate to /result', fakeAsync(() => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('3 天、2 人、情侣同行和 ¥5000');
-    expect(fixture.nativeElement.querySelector('textarea').maxLength).toBe(500);
 
-    app.onIdeaBack();
-    expect(app.view).toBe('landing');
+    regenerate$.next(makePrefs());
+    expect(aiSpy.generate).not.toHaveBeenCalled();
+
+    tick(500);
+    expect(aiSpy.generate).toHaveBeenCalled();
+    expect(stateStub.setRecommendation).toHaveBeenCalled();
+    expect(app.isGenerating).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/result']);
+    expect(trackingSpy.track).toHaveBeenCalledWith('generate_success', jasmine.any(Object));
+  }));
+
+  it('should not navigate when already on /result', fakeAsync(() => {
+    routerSpy.url = '/result';
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    regenerate$.next(makePrefs());
+    tick(500);
+
+    expect(stateStub.setRecommendation).toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  }));
+
+  it('should fall back to the local engine when AI generate fails', fakeAsync(() => {
+    aiSpy.generate.and.returnValue(throwError(() => new Error('network')));
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    regenerate$.next(makePrefs());
+    tick(500);
+
+    expect(recommendationSpy.generate).toHaveBeenCalledWith(stateStub.preferences);
+    expect(stateStub.setRecommendation).toHaveBeenCalled();
+    expect(app.isGenerating).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/result']);
+    expect(trackingSpy.track).toHaveBeenCalledWith('generate_fallback', jasmine.any(Object));
+  }));
+
+  it('should track hasRecommendation from state changes', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app.hasRecommendation).toBeFalse();
+
+    recommendation$.next(makeRecommendation());
+    expect(app.hasRecommendation).toBeTrue();
+
+    recommendation$.next(null);
+    expect(app.hasRecommendation).toBeFalse();
   });
 
-  it('should switch to result view on generate', fakeAsync(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    app.onGenerate({ ...app.preferences, placeTypes: [...app.preferences.placeTypes] });
-    expect(app.view).toEqual('generating');
-
-    tick(600);
-    const req = httpMock.expectOne('/api/generate');
-    expect(req.request.body.startDate).toEqual(app.preferences.startDate);
-    req.flush(SERVER_PAYLOAD);
-
-    expect(app.view).toEqual('result');
-    expect(app.recommendation).toBeTruthy();
-    expect(app.recommendation?.destinationName).toEqual('三亚');
-    expect(app.recommendation?.season).toBeTruthy();
-    expect(app.generating).toBeFalse();
-  }));
-
-  it('should fall back to the local engine when the request fails', fakeAsync(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    app.onGenerate({ ...app.preferences, placeTypes: [...app.preferences.placeTypes] });
-
-    tick(600);
-    httpMock.expectOne('/api/generate').error(new ProgressEvent('error'));
-
-    expect(app.view).toEqual('result');
-    expect(app.recommendation?.days.length).toEqual(app.preferences.days);
-    expect(app.recommendation?.season).toBeTruthy();
-  }));
-
-  it('should validate travel idea input before generation', () => {
+  it('should derive user label and initial', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
 
-    app.onIdeaStart();
-    app.ideaDraft = '   ';
-    app.onIdeaSubmit();
-    expect(app.view).toEqual('idea');
-    expect(app.ideaError).toContain('请填写');
-    httpMock.expectNone('/api/generate');
-
-    app.ideaDraft = 'a'.repeat(501);
-    app.onIdeaSubmit();
-    expect(app.ideaError).toContain('500');
-    expect(app.view).toEqual('idea');
-    httpMock.expectNone('/api/generate');
+    expect(app.userLabel({ id: 1, username: 'traveller' })).toBe('traveller');
+    expect(app.userLabel({ id: 1, username: 'traveller', nickname: ' 小呼 ' })).toBe('小呼');
+    expect(app.userInitial({ id: 1, username: 'traveller' })).toBe('T');
   });
 
-  it('should send the original travel idea in the generate request payload', fakeAsync(() => {
+  it('should navigate to /auth with redirectUrl on goAuth', () => {
+    routerSpy.url = '/wizard';
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
+    fixture.componentInstance.goAuth();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth'], { state: { redirectUrl: '/wizard' } });
+  });
 
-    app.onIdeaStart();
-    app.ideaDraft = '我想去三亚海岛度假，想看亚龙湾和蜈支洲岛。';
-    app.onIdeaSubmit();
-
-    expect(app.view).toEqual('generating');
-    expect(app.preferences.destinationId).toEqual('custom');
-    expect(app.preferences.travelIdea).toEqual('我想去三亚海岛度假，想看亚龙湾和蜈支洲岛。');
-    expect(app.preferences.days).toEqual(3);
-    expect(app.preferences.people).toEqual(2);
-    expect(app.preferences.companion).toEqual('couple');
-    expect(app.preferences.budget).toEqual(5000);
-
-    tick(600);
-    const req = httpMock.expectOne('/api/generate');
-    expect(req.request.body.travelIdea).toEqual(app.preferences.travelIdea);
-    req.flush({
-      destinationName: '三亚',
-      summary: '三亚 · 3 天 2 人专属行程',
-      tags: ['海岛度假'],
-      budgetLevel: 'comfort',
-      budgetLevelLabel: '舒适型',
-      estimatedTotal: 4200,
-      overBudget: false,
-      attractionCount: 1,
-      days: [{ day: 1, title: '第 1 天', focus: '海岛初体验', spots: [{ time: '09:00', name: '亚龙湾', category: '海滩海岛', description: '沙滩细软适合放松', cost: 0, stay: '2–3 小时', reasons: ['适合海岛度假'] }] }],
-      tips: ['注意防晒']
-    });
-
-    expect(app.view).toEqual('result');
-    expect(app.recommendation?.destinationName).toEqual('三亚');
-  }));
-
-  it('should explain the limits of local fallback for a travel idea', fakeAsync(() => {
+  it('should logout and navigate home on doLogout', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-
-    app.onIdeaStart();
-    app.ideaDraft = '我想去三亚看亚龙湾和蜈支洲岛。';
-    app.onIdeaSubmit();
-
-    tick(600);
-    httpMock.expectOne('/api/generate').error(new ProgressEvent('error'));
-
-    expect(app.view).toEqual('result');
-    expect(app.recommendation?.tips[0]).toContain('我想去三亚看亚龙湾和蜈支洲岛');
-    expect(app.recommendation?.tips[0]).toContain('本地兜底仅作参考');
-    expect(app.recommendation?.tips[0]).toContain('不代表自由文本已被完整逐项落实');
-  }));
-
+    fixture.componentInstance.doLogout();
+    expect(authSpy.logout).toHaveBeenCalled();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+  });
 });

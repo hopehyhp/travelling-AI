@@ -147,6 +147,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  margin: 16px 0;
   border: 1px solid rgba(109, 106, 233, 0.2);
   border-radius: 22px;
   padding: 22px 26px;
@@ -2016,5 +2017,584 @@
   .chip-p:not(.active):hover:not(:disabled) {
     transform: none !important;
     border-color: var(--border) !important;
+  }
+}
+
+/* ============================================================
+   Tab 切换容器 —— 一体式卡片（页签头 + 内容同属一张卡）
+   注意：PrimeNG 实际类名为全小写 p-tabview-nav / p-tabview-nav-link
+   active 状态由 li 上的 p-highlight 类标识
+   使用 ::ng-deep 穿透 Angular 样式封装以命中 PrimeNG 内部 DOM
+   ============================================================ */
+.result-tabs.p-tabview {
+  margin-top: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--border) !important;
+  /* 纯白实底，与页面浅灰蓝背景形成明确卡片边界 */
+  background: #ffffff !important;
+  box-shadow: var(--shadow) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  overflow: hidden;
+}
+
+/* 导航区：淡紫实底，与纯白容器形成柔和分层 */
+.result-tabs ::ng-deep .p-tabview-nav {
+  position: sticky;
+  top: var(--app-header-h);
+  z-index: 20;
+  /* 不透明淡紫，和下方白色内容区形成可感知的分层 */
+  background: #f7f6ff !important;
+  backdrop-filter: blur(12px);
+  border: none !important;
+  border-bottom: 1px solid rgba(109, 106, 233, 0.10) !important;
+  border-radius: 21px 21px 0 0 !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  gap: 4px !important;
+  width: 100% !important;
+  max-width: 100%;
+  margin: 0 !important;
+  box-shadow: none;
+}
+
+/* Tab 项（li） */
+.result-tabs ::ng-deep .p-tabview-nav > li {
+  padding: 9px 20px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  background: transparent !important;
+  user-select: none;
+  margin: 0 !important;
+}
+
+/* Tab 文字（a）默认色 */
+.result-tabs ::ng-deep .p-tabview-nav > li > .p-tabview-nav-link {
+  color: var(--text-soft) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Active 态：紫色渐变底 + 白字，与非 active 透明态形成强对比 */
+.result-tabs ::ng-deep .p-tabview-nav > li.p-highlight {
+  background: linear-gradient(135deg, #6d6ae9 0%, #7c3aed 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(109, 106, 233, 0.35);
+  transform: translateY(-1px);
+}
+.result-tabs ::ng-deep .p-tabview-nav > li.p-highlight > .p-tabview-nav-link {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Hover 态（非 active）：淡紫底 */
+.result-tabs ::ng-deep .p-tabview-nav > li:not(.p-highlight):hover {
+  background: rgba(109, 106, 233, 0.08) !important;
+}
+.result-tabs ::ng-deep .p-tabview-nav > li:not(.p-highlight):hover > .p-tabview-nav-link {
+  color: var(--primary) !important;
+}
+
+.result-tabs ::ng-deep .p-tabview-nav > li:not(.p-highlight):active {
+  transform: translateY(0);
+}
+
+/* 内容区：极淡紫白底，与外层纯白卡片、顶部淡紫 nav 形成三级层次
+   外层 result-tabs: #ffffff（纯白）
+   nav:              #f7f6ff（较深淡紫 — 交互选择区）
+   panels:           #faf9ff（极淡紫白 — 内容承载区）
+   这样 panels 既能看出是独立容器，又不会和 nav 抢层次
+*/
+.result-tabs ::ng-deep .p-tabview-panels {
+  border: none !important;
+  border-radius: 0 0 22px 22px !important;
+  background: #faf9ff !important;
+  padding: 20px !important;
+  box-shadow: none !important;
+  flex: 1 1 auto;
+}
+
+/* ============================================================
+   预算 Tab
+   ============================================================ */
+.budget-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.budget-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(109, 106, 233, 0.08), rgba(255, 255, 255, 0));
+  border: 1px solid var(--border);
+}
+
+.bo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bo-label {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.bo-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.bo-value.is-over {
+  color: var(--danger, #ef4444);
+}
+
+.bo-value.level-economy {
+  color: #059669;
+}
+
+.bo-value.level-comfort {
+  color: #7c3aed;
+}
+
+.bo-value.level-luxury {
+  color: #d97706;
+}
+
+/* 预算卡片通用 —— padding 对齐 itinerary/side 标准 */
+.budget-card.p-card {
+  border-radius: 22px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+.budget-card.p-card > .p-card-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 16px 24px !important;
+  background: linear-gradient(135deg, rgba(109, 106, 233, 0.04), rgba(255, 255, 255, 0)) !important;
+}
+
+.budget-card.p-card > .p-card-body > .p-card-content {
+  padding: 20px 24px !important;
+}
+
+/* 酒店三档卡 */
+.hotel-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hotel-tier {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.8);
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hotel-tier.is-match {
+  border-color: var(--primary);
+  background: rgba(109, 106, 233, 0.06);
+}
+
+.ht-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.ht-badge-economy {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+}
+
+.ht-badge-comfort {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+}
+
+.ht-badge-luxury {
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+}
+
+.ht-price {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ht-per {
+  font-size: 12px;
+  color: var(--text-soft);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.ht-total {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.ht-note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.budget-disclaimer {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-soft);
+  opacity: 0.75;
+}
+
+/* 预算三栏 */
+.budget-three-col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.budget-sub .sub-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.budget-sub .sub-total {
+  font-size: 12px;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.budget-sub .sub-note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+/* 城际交通 */
+.outbound-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.outbound-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.ob-icon {
+  font-size: 28px;
+}
+
+.ob-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ob-label {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+/* ============================================================
+   执行 Tab
+   ============================================================ */
+.exec-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exec-card.p-card {
+  border-radius: 22px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+.exec-card.p-card > .p-card-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 16px 24px !important;
+  background: linear-gradient(135deg, rgba(109, 106, 233, 0.04), rgba(255, 255, 255, 0)) !important;
+}
+
+.exec-card.p-card > .p-card-body > .p-card-content {
+  padding: 20px 24px !important;
+}
+
+/* 交通方式三档 */
+.transport-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.transport-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(109, 106, 233, 0.04), rgba(255, 255, 255, 0.9));
+  border: 1px solid var(--border);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.transport-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(109, 106, 233, 0.12);
+}
+
+.tc-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(109, 106, 233, 0.1);
+}
+
+.tc-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.tc-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tc-duration {
+  font-size: 12px;
+  color: var(--text-soft);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.tc-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.tc-price-range {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.tc-price-per {
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.tc-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+/* 执行-酒店三档（独立样式，不同于预算 Tab 的） */
+.exec-hotel-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.exec-hotel {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.8);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exec-hotel.is-match {
+  border-color: var(--primary);
+  background: rgba(109, 106, 233, 0.06);
+}
+
+.eh-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eh-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+/* Checklist */
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+.check-item {
+  margin: 0;
+}
+
+.check-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.check-label:hover {
+  background: rgba(109, 106, 233, 0.05);
+}
+
+.check-box {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.check-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.check-tip {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--text-soft);
+  text-align: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+/* ============================================================
+   移动端适配（≤ 768px）
+   ============================================================ */
+@media (max-width: 768px) {
+  .result-tabs.p-tabview {
+    margin-top: 12px;
+    border-radius: 18px;
+  }
+
+  .result-tabs ::ng-deep .p-tabview-nav {
+    padding: 8px 10px !important;
+    border-radius: 17px 17px 0 0 !important;
+    gap: 2px !important;
+  }
+
+  .result-tabs ::ng-deep .p-tabview-nav > li {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 7px 10px !important;
+    border-radius: 8px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .result-tabs ::ng-deep .p-tabview-nav > li > .p-tabview-nav-link {
+    flex: 1 1 auto;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px !important;
+  }
+
+  .result-tabs ::ng-deep .p-tabview-panels {
+    padding: 14px !important;
+    border-radius: 0 0 18px 18px !important;
+  }
+
+  .budget-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .budget-three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-tiers {
+    grid-template-columns: 1fr;
+  }
+
+  .transport-suggestions {
+    grid-template-columns: 1fr;
+  }
+
+  .exec-hotel-tiers {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .outbound-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .budget-overview {
+    grid-template-columns: 1fr 1fr;
   }
 }

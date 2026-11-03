@@ -56,6 +56,20 @@ ${ideaInstruction}
 ${seasonRequirement}
 10. 给出 4~6 条具体实用的旅行贴士，避免空话套话。
 
+### 预算分项要求（budgetBreakdown）
+必须按以下分类给出真实的价格区间（人民币），参考该城市/该目的地 2024-2025 年的实际物价水平，不要给凑整的假数字：
+- accommodation：住宿，分经济型/舒适型/豪华型三档的**每晚**区间，每档附 15-25 字说明（位置/配套/适合人群）
+- food：餐饮，**每人每天**区间，附一句建议（当地人常去/商圈集中/是否需要提前订）
+- tickets：景点门票，**整个行程的合计**区间，注意多景点时总金额，不是单日
+- transportLocal：当地交通，**每人每天**区间（地铁/公交/打车/景区接驳等合计）
+- transportOutbound：城际交通，每人单程区间（从附近主要出发地到目的地），如果是国内主要城市给出飞机和高铁两种
+
+### 执行计划要求（executionPlan）
+必须给出：
+- transportSuggestions：3 档出行方式，每档包含 mode(air/rail/drive/bus)、priceLow/priceHigh 为**每人单程**的真实区间、duration 为典型耗时（带小时数）、note 为 20-30 字的小建议
+- hotelTiers：3 档酒店建议（economy/comfort/luxury），每档 priceLow/priceHigh 为**每晚每间**的真实区间，note 说明地段/亮点
+- checklist：8-15 条动态 Checklist，结合目的地类型（海边→防晒/山区→防滑/历史城市→舒服鞋）、季节（冬季→保暖/夏季→防晒伞）、同行人（带娃→玩具/老人→降压药）、行程天数（长→充电宝/短→精简）
+
 ## 输出格式（极其重要）
 只输出一个 JSON 对象，不要输出任何解释文字，不要使用 Markdown 代码块。结构必须严格如下：
 
@@ -64,6 +78,45 @@ ${seasonRequirement}
   "tags": ["标签1", "标签2", "标签3", "标签4"],
   "budgetLevel": "economy",
   "estimatedTotal": 5000,
+  "budgetBreakdown": {
+    "accommodation": {
+      "tiers": [
+        { "level": "economy", "name": "经济型", "perNightLow": 200, "perNightHigh": 400, "note": "位于老城区，交通便利，干净整洁" },
+        { "level": "comfort", "name": "舒适型", "perNightLow": 400, "perNightHigh": 700, "note": "商圈附近，含早餐，适合家庭" },
+        { "level": "luxury", "name": "豪华型", "perNightLow": 700, "perNightHigh": 1200, "note": "江景/湖景房，度假体验" }
+      ]
+    },
+    "food": { "perPersonPerDayLow": 120, "perPersonPerDayHigh": 280, "note": "建议尝试春熙路、玉林路一带的本地小吃" },
+    "tickets": { "totalLow": 300, "totalHigh": 600, "note": "主要景点门票合计，部分景点旺季有涨价" },
+    "transportLocal": { "perPersonPerDayLow": 20, "perPersonPerDayHigh": 50, "note": "地铁公交为主，景区间打车" },
+    "transportOutbound": {
+      "airLow": 600, "airHigh": 1500, "railLow": 400, "railHigh": 800,
+      "note": "飞机约 2 小时，高铁约 3-4 小时，建议提前 14 天订票"
+    }
+  },
+  "executionPlan": {
+    "transportSuggestions": [
+      { "mode": "air", "label": "飞机", "priceLow": 600, "priceHigh": 1500, "duration": "约 2 小时", "note": "适合远程或旺季，提前订有特价票" },
+      { "mode": "rail", "label": "高铁", "priceLow": 400, "priceHigh": 800, "duration": "约 3.5 小时", "note": "准点舒适，市区到市区，行李方便" },
+      { "mode": "drive", "label": "自驾", "priceLow": 300, "priceHigh": 500, "duration": "约 8-10 小时", "note": "灵活自由，适合 2-4 人同行分摊成本" }
+    ],
+    "hotelTiers": [
+      { "level": "economy", "name": "经济酒店", "perNightLow": 200, "perNightHigh": 400, "note": "春熙路/太古里商圈附近，交通便利" },
+      { "level": "comfort", "name": "舒适酒店", "perNightLow": 400, "perNightHigh": 700, "note": "推荐 5 星以下精选，含自助早" },
+      { "level": "luxury", "name": "度假酒店", "perNightLow": 700, "perNightHigh": 1200, "note": "江景房或熊猫主题酒店" }
+    ],
+    "checklist": [
+      "确认出发前 7 天的机票/高铁票是否有更低价",
+      "下载目的地离线地图（成都地铁图）",
+      "带上薄外套（10 月早晚温差大）",
+      "穿一双舒服的徒步鞋（景点间步行多）",
+      "充电宝 + 数据线 + 转换插头",
+      "身份证 + 学生证/老人证（部分景点有优惠）",
+      "防晒霜 + 墨镜",
+      "洗漱用品 + 毛巾（经济型酒店可能需要自备）",
+      "提前预订热门餐厅（火锅/串串旺季排长队）"
+    ]
+  },
   "days": [
     {
       "day": 1,

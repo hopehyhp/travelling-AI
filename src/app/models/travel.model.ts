@@ -220,6 +220,50 @@ export interface DayPlan {
   spots: SpotPlan[];
 }
 
+/** 预算分项 —— 住宿档 */
+export interface AccommodationTier {
+  level: 'economy' | 'comfort' | 'luxury';
+  name: string;
+  perNightLow: number;
+  perNightHigh: number;
+  note: string;
+}
+
+/** 预算分项 —— 整体结构 */
+export interface BudgetBreakdown {
+  accommodation: { tiers: AccommodationTier[] };
+  food: { perPersonPerDayLow: number; perPersonPerDayHigh: number; note: string };
+  tickets: { totalLow: number; totalHigh: number; note: string };
+  transportLocal: { perPersonPerDayLow: number; perPersonPerDayHigh: number; note: string };
+  transportOutbound: { airLow: number; airHigh: number; railLow: number; railHigh: number; note: string };
+}
+
+/** 执行计划 —— 交通建议 */
+export interface TransportSuggestion {
+  mode: 'air' | 'rail' | 'drive' | 'bus' | 'train';
+  label: string;
+  priceLow: number;
+  priceHigh: number;
+  duration: string;
+  note: string;
+}
+
+/** 执行计划 —— 酒店建议 */
+export interface HotelTier {
+  level: 'economy' | 'comfort' | 'luxury';
+  name: string;
+  perNightLow: number;
+  perNightHigh: number;
+  note: string;
+}
+
+/** 执行计划 —— 整体结构 */
+export interface ExecutionPlan {
+  transportSuggestions: TransportSuggestion[];
+  hotelTiers: HotelTier[];
+  checklist: string[];
+}
+
 export interface Recommendation {
   destinationName: string;
   summary: string;
@@ -232,6 +276,8 @@ export interface Recommendation {
   days: DayPlan[];
   tips: string[];
   season: SeasonContext;
+  budgetBreakdown: BudgetBreakdown;
+  executionPlan: ExecutionPlan;
 }
 
 export interface SavedTravelPlan {
@@ -266,7 +312,7 @@ export interface WeatherDay {
   summary: string;
 }
 
-/** 天气数据来源：7 日预报 / 常年同期参考 / 无数据 */
+/** 天气数据来源：近期预报 / 常年同期或气候参考 / 无数据 */
 export type TripWeatherSource = 'forecast' | 'climate' | 'none';
 
 /** 与行程逐天对齐后的天气，保证「第 N 天」显示的是那一天，而不是今天的天气 */
@@ -282,7 +328,7 @@ export interface TripDayWeather {
   rainChance: number | null;
   summary: string;
   source: TripWeatherSource;
-  /** 来源标签：7日预报 / 常年同期参考 / 暂无数据 */
+  /** 来源标签：近期预报 / 常年同期参考 / 气候参考 / 暂无数据 */
   label: string;
 }
 
@@ -304,6 +350,8 @@ export interface TravelContext {
     today: WeatherDay | null;
     forecast: WeatherDay[];
   };
+  /** 预报窗口之外的行程日期：气候接口给出的参考（可能为空） */
+  climateForecast?: WeatherDay[];
   highlights: TravelMapPoint[];
   smartAdvice: string[];
 }
