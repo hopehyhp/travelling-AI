@@ -769,8 +769,13 @@ async function callDeepSeek(input) {
 const PORT = Number(process.env.PORT) || 3000;
 
 // ---- 生产环境：同一个服务同时托管 Angular 构建产物 ----
-const clientDir = path.join(__dirname, '..', 'dist', 'travelling-ai');
-if (fs.existsSync(path.join(clientDir, 'index.html'))) {
+// 兼容两种部署结构：dist/travelling-ai（本地构建默认）或 dist 直接存放产物
+const clientDirCandidates = [
+  path.join(__dirname, '..', 'dist', 'travelling-ai'),
+  path.join(__dirname, '..', 'dist'),
+];
+const clientDir = clientDirCandidates.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
+if (clientDir) {
   app.use(express.static(clientDir));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) {
@@ -780,7 +785,7 @@ if (fs.existsSync(path.join(clientDir, 'index.html'))) {
   });
   console.log(`[server] serving Angular build from ${clientDir}`);
 } else {
-  console.warn(`[server] Angular build not found at ${clientDir}; running in API-only mode. Run "npm run build" first.`);
+  console.warn(`[server] Angular build not found (checked: ${clientDirCandidates.join(', ')}); running in API-only mode. Run "npm run build" first.`);
 }
 
 app.listen(PORT, () => {
