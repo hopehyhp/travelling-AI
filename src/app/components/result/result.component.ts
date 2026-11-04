@@ -285,14 +285,13 @@ export class ResultComponent implements OnInit, OnDestroy {
     return `${season.dateLabel} · ${season.seasonIcon}${season.seasonLabel}`;
   }
 
-  get minDate(): string {
-    return this.seasonService.todayIso();
-  }
-
-  /** p-calendar 需要 Date 对象 */
-  get minCalendarDate(): Date {
-    return new Date(this.minDate + 'T00:00:00');
-  }
+  /**
+   * p-calendar 需要 Date 对象，且必须是稳定实例。
+   * 若改成每次变更检测都返回新 Date 的 getter，PrimeNG 的 minDate setter
+   * 会不断重建月份数据，日期单元格被整批替换，真实点击（mousedown 与 click
+   * 落在不同节点）将无法选中日期。
+   */
+  readonly minCalendarDate: Date = new Date(new Date().setHours(0, 0, 0, 0));
 
   get quickDateOptions(): { label: string; value: string }[] {
     return this.seasonService.quickDateOptions();
