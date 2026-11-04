@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  🌐 网站示例：<a href="http://travel.hopehu.xyz">http://travel.hopehu.xyz</a>
+  🌐 网站示例：<a href="http://travel.hopehu.xyz">呼呼去哪儿</a>
 </p>
 ---
 
